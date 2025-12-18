@@ -73,25 +73,84 @@ export interface AppearanceConfig {
   cardColor: string;
   textColor: string;
   accentColor: string;
-  // Tipografia de productos
+  // Header
+  headerFontFamily: string;
+  headerFontSize: string;
+  headerFontWeight: string;
+  headerFontStyle: string;
+  headerBgColor: string;
+  headerTextColorCustom: string;
+  showHeader: boolean;
+  headerShowChannel: boolean;
+  headerShowTime: boolean;
+  // Timer
+  timerFontFamily: string;
+  timerFontSize: string;
+  timerFontWeight: string;
+  timerFontStyle: string;
+  timerTextColor: string;
+  showTimer: boolean;
+  // Cliente
+  clientFontFamily: string;
+  clientFontSize: string;
+  clientFontWeight: string;
+  clientFontStyle: string;
+  clientTextColor: string;
+  clientBgColor: string;
+  showClient: boolean;
+  // Cantidad
+  quantityFontFamily: string;
+  quantityFontSize: string;
+  quantityFontWeight: string;
+  quantityFontStyle: string;
+  quantityTextColor: string;
+  showQuantity: boolean;
+  // Producto
   productFontFamily: string;
   productFontSize: string;
   productFontWeight: string;
-  // Tipografia de modificadores
+  productFontStyle: string;
+  productTextColor: string;
+  productBgColor: string;
+  productUppercase: boolean;
+  // Subitem
+  subitemFontFamily: string;
+  subitemFontSize: string;
+  subitemFontWeight: string;
+  subitemFontStyle: string;
+  subitemTextColor: string;
+  subitemBgColor: string;
+  subitemIndent: number;
+  showSubitems: boolean;
+  // Modificador
   modifierFontFamily: string;
   modifierFontSize: string;
-  modifierFontColor: string;
+  modifierFontWeight: string;
   modifierFontStyle: string;
-  // Cabecera de orden
-  headerFontFamily: string;
-  headerFontSize: string;
-  headerShowChannel: boolean;
-  headerShowTime: boolean;
-  // Disposicion adicional
+  modifierFontColor: string;
+  modifierBgColor: string;
+  modifierIndent: number;
+  showModifiers: boolean;
+  // Notas especiales
+  notesFontFamily: string;
+  notesFontSize: string;
+  notesFontWeight: string;
+  notesFontStyle: string;
+  notesTextColor: string;
+  notesBgColor: string;
+  notesIndent: number;
+  showNotes: boolean;
+  // Canal
+  channelFontFamily: string;
+  channelFontSize: string;
+  channelFontWeight: string;
+  channelFontStyle: string;
+  channelTextColor: string;
+  channelUppercase: boolean;
+  showChannel: boolean;
+  // Disposicion
   rows: number;
   maxItemsPerColumn: number;
-  // Opciones de visualizacion
-  showTimer: boolean;
   showOrderNumber: boolean;
   animationEnabled: boolean;
   cardColors: CardColorConfig[];
@@ -325,22 +384,89 @@ export const updateAppearanceSchema = z.object({
   textColor: z.string().optional(),
   accentColor: z.string().optional(),
 
+  // Tipografia header
+  headerFontFamily: z.string().optional(),
+  headerFontSize: z.string().optional(),
+  headerFontWeight: z.string().optional(),
+  headerFontStyle: z.string().optional(),
+  headerBgColor: z.string().optional(),
+  headerTextColorCustom: z.string().optional(),
+  showHeader: z.boolean().optional(),
+  headerShowChannel: z.boolean().optional(),
+  headerShowTime: z.boolean().optional(),
+
+  // Tipografia timer
+  timerFontFamily: z.string().optional(),
+  timerFontSize: z.string().optional(),
+  timerFontWeight: z.string().optional(),
+  timerFontStyle: z.string().optional(),
+  timerTextColor: z.string().optional(),
+  showTimer: z.boolean().optional(),
+
+  // Tipografia cliente
+  clientFontFamily: z.string().optional(),
+  clientFontSize: z.string().optional(),
+  clientFontWeight: z.string().optional(),
+  clientFontStyle: z.string().optional(),
+  clientTextColor: z.string().optional(),
+  clientBgColor: z.string().optional(),
+  showClient: z.boolean().optional(),
+
+  // Tipografia cantidad
+  quantityFontFamily: z.string().optional(),
+  quantityFontSize: z.string().optional(),
+  quantityFontWeight: z.string().optional(),
+  quantityFontStyle: z.string().optional(),
+  quantityTextColor: z.string().optional(),
+  showQuantity: z.boolean().optional(),
+
   // Tipografia de productos
   productFontFamily: z.string().optional(),
   productFontSize: z.string().optional(),
   productFontWeight: z.string().optional(),
+  productFontStyle: z.string().optional(),
+  productTextColor: z.string().optional(),
+  productBgColor: z.string().optional(),
+  productUppercase: z.boolean().optional(),
+
+  // Tipografia subitems
+  subitemFontFamily: z.string().optional(),
+  subitemFontSize: z.string().optional(),
+  subitemFontWeight: z.string().optional(),
+  subitemFontStyle: z.string().optional(),
+  subitemTextColor: z.string().optional(),
+  subitemBgColor: z.string().optional(),
+  subitemIndent: z.number().int().min(0).max(100).optional(),
+  showSubitems: z.boolean().optional(),
 
   // Tipografia de modificadores
   modifierFontFamily: z.string().optional(),
   modifierFontSize: z.string().optional(),
-  modifierFontColor: z.string().optional(),
+  modifierFontWeight: z.string().optional(),
   modifierFontStyle: z.string().optional(),
+  modifierFontColor: z.string().optional(),
+  modifierBgColor: z.string().optional(),
+  modifierIndent: z.number().int().min(0).max(100).optional(),
+  showModifiers: z.boolean().optional(),
 
-  // Cabecera de orden
-  headerFontFamily: z.string().optional(),
-  headerFontSize: z.string().optional(),
-  headerShowChannel: z.boolean().optional(),
-  headerShowTime: z.boolean().optional(),
+  // Tipografia notas especiales
+  notesFontFamily: z.string().optional(),
+  notesFontSize: z.string().optional(),
+  notesFontWeight: z.string().optional(),
+  notesFontStyle: z.string().optional(),
+  notesTextColor: z.string().optional(),
+  notesBgColor: z.string().optional(),
+  notesIndent: z.number().int().min(0).max(100).optional(),
+  showNotes: z.boolean().optional(),
+
+  // Tipografia canal/footer
+  channelFontFamily: z.string().optional(),
+  channelFontSize: z.string().optional(),
+  channelFontWeight: z.string().optional(),
+  channelFontStyle: z.string().optional(),
+  channelTextColor: z.string().optional(),
+  channelUppercase: z.boolean().optional(),
+  showChannel: z.boolean().optional(),
 
   // Disposicion
   columns: z.number().int().min(1).max(10).optional(),
@@ -348,7 +474,6 @@ export const updateAppearanceSchema = z.object({
   maxItemsPerColumn: z.number().int().min(1).max(20).optional(),
 
   // Opciones de visualizacion
-  showTimer: z.boolean().optional(),
   showOrderNumber: z.boolean().optional(),
   animationEnabled: z.boolean().optional(),
 

@@ -5,6 +5,7 @@
  */
 
 import sql from 'mssql';
+import { redis } from '../config/redis';
 
 // Estructura de comanda del sistema .NET
 interface KDS2Comanda {
@@ -84,8 +85,10 @@ class MirrorKDSService {
   private pool: sql.ConnectionPool | null = null;
   private config: MirrorConfig | null = null;
   private isConnected = false;
-  // Cache de timestamps de primera vista - para timer "desde ahora"
+  // Cache local de timestamps (backup de Redis)
   private orderFirstSeen: Map<string, Date> = new Map();
+  // Prefijo para keys de Redis
+  private readonly REDIS_KEY_PREFIX = 'mirror:order:created:';
 
   /**
    * Verificar si el mirror está configurado
@@ -213,11 +216,18 @@ class MirrorKDSService {
       for (const orderId of this.orderFirstSeen.keys()) {
         if (!currentOrderIds.has(orderId)) {
           this.orderFirstSeen.delete(orderId);
+          // También limpiar de Redis (la orden ya fue procesada)
+          try {
+            await redis.del(`${this.REDIS_KEY_PREFIX}${orderId}`);
+          } catch {
+            // Ignorar errores de Redis en limpieza
+          }
         }
       }
 
-      // Mapear a formato de nuestro frontend
-      return result.recordset.map((row) => {
+      // Mapear a formato de nuestro frontend (async para Redis)
+      const orders: MirrorOrder[] = [];
+      for (const row of result.recordset) {
         let comanda: KDS2Comanda;
         try {
           comanda = JSON.parse(row.datosComanda);
@@ -231,8 +241,10 @@ class MirrorKDSService {
           };
         }
 
-        return this.mapToMirrorOrder(comanda, row);
-      });
+        const order = await this.mapToMirrorOrder(comanda, row);
+        orders.push(order);
+      }
+      return orders;
     } catch (error) {
       console.error('[Mirror KDS] Error obteniendo ordenes:', error);
       throw error;
@@ -274,11 +286,11 @@ class MirrorKDSService {
   /**
    * Mapear comanda del sistema .NET a nuestro formato
    */
-  private mapToMirrorOrder(
+  private async mapToMirrorOrder(
     comanda: KDS2Comanda,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     row: any
-  ): MirrorOrder {
+  ): Promise<MirrorOrder> {
 
     // Extraer items de productos
     const items: MirrorOrder['items'] = [];
@@ -332,17 +344,33 @@ class MirrorKDSService {
     }
 
     // Timer "desde ahora": usar el momento en que vimos la orden por primera vez
-    // Esto evita el problema de fechas viejas en la BD
+    // Persistir en Redis para que sobreviva reinicios del servidor
     let createdAt: Date;
     const orderId = row.IdOrden;
+    const redisKey = `${this.REDIS_KEY_PREFIX}${orderId}`;
 
+    // Primero intentar obtener de cache local (más rápido)
     if (this.orderFirstSeen.has(orderId)) {
-      // Ya vimos esta orden antes, usar el timestamp guardado
       createdAt = this.orderFirstSeen.get(orderId)!;
     } else {
-      // Primera vez que vemos esta orden, guardar timestamp actual
-      createdAt = new Date();
-      this.orderFirstSeen.set(orderId, createdAt);
+      // Intentar obtener de Redis (sobrevive reinicios)
+      try {
+        const savedTimestamp = await redis.get(redisKey);
+        if (savedTimestamp) {
+          createdAt = new Date(savedTimestamp);
+          this.orderFirstSeen.set(orderId, createdAt);
+        } else {
+          // Primera vez que vemos esta orden, guardar timestamp actual
+          createdAt = new Date();
+          this.orderFirstSeen.set(orderId, createdAt);
+          // Guardar en Redis con expiración de 24 horas
+          await redis.set(redisKey, createdAt.toISOString(), 'EX', 86400);
+        }
+      } catch {
+        // Si Redis falla, usar timestamp actual
+        createdAt = new Date();
+        this.orderFirstSeen.set(orderId, createdAt);
+      }
     }
 
     return {

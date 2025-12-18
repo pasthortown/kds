@@ -95,7 +95,8 @@ export function Screens() {
     loadData();
 
     // Conectar WebSocket para recibir cambios de estado en tiempo real
-    const socketUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3001';
+    // Usar el mismo host pero puerto 3000 donde está el backend
+    const socketUrl = `${window.location.protocol}//${window.location.hostname}:3000`;
     const socket = io(socketUrl, {
       transports: ['websocket'],
     });

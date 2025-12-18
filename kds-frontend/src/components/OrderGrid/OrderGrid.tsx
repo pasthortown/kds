@@ -73,7 +73,7 @@ export function OrderGrid() {
     small: 12, medium: 14, large: 16, xlarge: 20, xxlarge: 24,
   };
   const modifierFontSizes: Record<string, number> = {
-    xsmall: 10, small: 11, medium: 12, large: 14, xlarge: 16, xxlarge: 18,
+    xsmall: 14, small: 15, medium: 16, large: 18, xlarge: 20, xxlarge: 22,
   };
 
   // Obtener tamaños de fuente configurados

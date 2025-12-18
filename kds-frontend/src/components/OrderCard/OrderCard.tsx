@@ -41,9 +41,9 @@ const getFontSize = (size?: string, type: 'header' | 'product' | 'modifier' | 't
     client: { xsmall: '10px', small: '11px', medium: '12px', large: '14px', xlarge: '16px', xxlarge: '18px' },
     quantity: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
     product: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
-    subitem: { xsmall: '9px', small: '10px', medium: '11px', large: '12px', xlarge: '14px', xxlarge: '16px' },
-    modifier: { xsmall: '9px', small: '10px', medium: '11px', large: '12px', xlarge: '14px', xxlarge: '16px' },
-    notes: { xsmall: '9px', small: '10px', medium: '11px', large: '12px', xlarge: '14px', xxlarge: '16px' },
+    subitem: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
+    modifier: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
+    notes: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
     channel: { xsmall: '9px', small: '10px', medium: '11px', large: '12px', xlarge: '14px', xxlarge: '16px' },
   };
   return sizes[type]?.[size || 'medium'] || sizes[type]?.medium || '14px';
@@ -57,6 +57,11 @@ const getFontWeight = (weight?: string): number => {
 const getFontStyle = (style?: string): React.CSSProperties['fontStyle'] => {
   if (style === 'italic') return 'italic';
   return 'normal';
+};
+
+// Convertir texto a Title Case (primera letra de cada palabra en mayúscula)
+const toTitleCase = (text: string): string => {
+  return text.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
 };
 
 // Clip-path para efecto de papel rasgado en el borde inferior (primera parte)
@@ -382,7 +387,7 @@ export function OrderCard({
                         lineHeight: 1.4,
                       }}
                     >
-                      {subitem.quantity}x {subitem.name}
+                      {subitem.quantity}x {toTitleCase(subitem.name)}
                     </div>
                   ))}
                 </div>
@@ -408,7 +413,7 @@ export function OrderCard({
                         lineHeight: 1.4,
                       }}
                     >
-                      {mod.trim()}
+                      {toTitleCase(mod.trim())}
                     </div>
                   ))}
                 </div>
@@ -427,7 +432,7 @@ export function OrderCard({
                     color: config.notesTextColor,
                   }}
                 >
-                  * {item.notes}
+                  * {toTitleCase(item.notes)}
                 </div>
               )}
             </div>

@@ -69,7 +69,7 @@ export function SLA() {
       setScreens(data);
       if (data.length > 0 && !selectedScreenId) {
         setSelectedScreenId(data[0].id);
-        loadSLAForScreen(data[0]);
+        loadSLAForScreen(data[0].id);
       }
     } catch (error) {
       message.error('Error al cargar pantallas');
@@ -78,47 +78,50 @@ export function SLA() {
     }
   };
 
-  const loadSLAForScreen = (screen: Screen) => {
-    const cardColors = screen.appearance?.cardColors || [];
+  const loadSLAForScreen = async (screenId: string) => {
+    try {
+      // Cargar configuración completa de la pantalla incluyendo cardColors
+      const { data } = await screensApi.getConfig(screenId);
+      const cardColors = data.appearance?.cardColors || [];
 
-    // Ordenar por orden
-    const sorted = [...cardColors].sort((a, b) => a.order - b.order);
+      // Ordenar por orden
+      const sorted = [...cardColors].sort((a: CardColor, b: CardColor) => a.order - b.order);
 
-    // Convertir a formato SLA (3 rangos)
-    const sla: SLAConfig = { ...DEFAULT_SLA };
+      // Convertir a formato SLA (3 rangos)
+      const sla: SLAConfig = { ...DEFAULT_SLA };
 
-    if (sorted.length >= 1) {
-      const [mins, secs] = sorted[0].minutes.split(':').map(Number);
-      sla.onTime = { minutes: mins, seconds: secs || 0, color: sorted[0].color };
+      if (sorted.length >= 1) {
+        const [mins, secs] = sorted[0].minutes.split(':').map(Number);
+        sla.onTime = { minutes: mins, seconds: secs || 0, color: sorted[0].color };
+      }
+      if (sorted.length >= 2) {
+        const [mins, secs] = sorted[1].minutes.split(':').map(Number);
+        sla.caution = { minutes: mins, seconds: secs || 0, color: sorted[1].color };
+      }
+      if (sorted.length >= 3) {
+        const [mins, secs] = sorted[2].minutes.split(':').map(Number);
+        sla.late = { minutes: mins, seconds: secs || 0, color: sorted[2].color };
+      }
+
+      form.setFieldsValue({
+        onTimeMinutes: sla.onTime.minutes,
+        onTimeSeconds: sla.onTime.seconds,
+        onTimeColor: sla.onTime.color,
+        cautionMinutes: sla.caution.minutes,
+        cautionSeconds: sla.caution.seconds,
+        cautionColor: sla.caution.color,
+        lateMinutes: sla.late.minutes,
+        lateSeconds: sla.late.seconds,
+        lateColor: sla.late.color,
+      });
+    } catch (error) {
+      message.error('Error al cargar configuración de SLA');
     }
-    if (sorted.length >= 2) {
-      const [mins, secs] = sorted[1].minutes.split(':').map(Number);
-      sla.caution = { minutes: mins, seconds: secs || 0, color: sorted[1].color };
-    }
-    if (sorted.length >= 3) {
-      const [mins, secs] = sorted[2].minutes.split(':').map(Number);
-      sla.late = { minutes: mins, seconds: secs || 0, color: sorted[2].color };
-    }
-
-    form.setFieldsValue({
-      onTimeMinutes: sla.onTime.minutes,
-      onTimeSeconds: sla.onTime.seconds,
-      onTimeColor: sla.onTime.color,
-      cautionMinutes: sla.caution.minutes,
-      cautionSeconds: sla.caution.seconds,
-      cautionColor: sla.caution.color,
-      lateMinutes: sla.late.minutes,
-      lateSeconds: sla.late.seconds,
-      lateColor: sla.late.color,
-    });
   };
 
   const handleScreenChange = (screenId: string) => {
     setSelectedScreenId(screenId);
-    const screen = screens.find(s => s.id === screenId);
-    if (screen) {
-      loadSLAForScreen(screen);
-    }
+    loadSLAForScreen(screenId);
   };
 
   const handleSave = async () => {
@@ -130,9 +133,19 @@ export function SLA() {
       if (!screen) return;
 
       // Convertir colores si vienen como objeto Color de antd
+      // Asegurar formato #rrggbb (6 caracteres hex, sin alpha)
       const getColorString = (color: string | Color): string => {
-        if (typeof color === 'string') return color;
-        return color.toHexString();
+        let hex: string;
+        if (typeof color === 'string') {
+          hex = color;
+        } else {
+          hex = color.toHexString();
+        }
+        // Si tiene alpha (#rrggbbaa), truncar a #rrggbb
+        if (hex.length === 9) {
+          hex = hex.slice(0, 7);
+        }
+        return hex;
       };
 
       // Crear los 3 CardColors

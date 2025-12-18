@@ -407,7 +407,12 @@ function TypographySection({
         {showVisibilityToggle && (
           <Col span={6}>
             <Form.Item
-              name={prefix === 'header' ? 'showHeader' : `show${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`}
+              name={
+                prefix === 'header' ? 'showHeader' :
+                prefix === 'modifier' ? 'showModifiers' :
+                prefix === 'subitem' ? 'showSubitems' :
+                `show${prefix.charAt(0).toUpperCase() + prefix.slice(1)}`
+              }
               label="Visible"
               valuePropName="checked"
               style={{ marginBottom: 8 }}
@@ -630,24 +635,53 @@ export function Appearance() {
     if (!selectedScreenId) return;
 
     try {
-      const values = await form.validateFields();
+      // Helper function to convert color value to hex string (6 chars, no alpha)
+      const toHexString = (value: unknown): string => {
+        if (!value) return '';
+        if (typeof value === 'string') {
+          // Truncate alpha if present (#rrggbbaa -> #rrggbb)
+          return value.length === 9 ? value.slice(0, 7) : value;
+        }
+        if (typeof value === 'object' && 'toHexString' in (value as Record<string, unknown>)) {
+          const hex = (value as Color).toHexString();
+          return hex.length === 9 ? hex.slice(0, 7) : hex;
+        }
+        return '';
+      };
 
-      // Convert Color objects to hex strings
-      const processedValues = { ...values };
-      Object.keys(processedValues).forEach((key) => {
-        if (
-          processedValues[key] &&
-          typeof processedValues[key] === 'object' &&
-          'toHexString' in processedValues[key]
-        ) {
-          processedValues[key] = (processedValues[key] as Color).toHexString();
+      // Use the config state directly since it's always up-to-date via handleFormChange
+      // This ensures we capture ALL values, even those that ColorPicker might not sync correctly
+      const processedValues: Record<string, unknown> = {};
+
+      // List of color fields
+      const colorFields = [
+        'backgroundColor', 'headerColor', 'headerTextColor', 'cardColor',
+        'textColor', 'accentColor', 'headerBgColor', 'headerTextColorCustom',
+        'timerTextColor', 'clientTextColor', 'clientBgColor', 'quantityTextColor',
+        'productTextColor', 'productBgColor', 'subitemTextColor', 'subitemBgColor',
+        'modifierFontColor', 'modifierBgColor', 'notesTextColor', 'notesBgColor',
+        'channelTextColor'
+      ];
+
+      // Process all fields from config state
+      Object.keys(config).forEach((key) => {
+        const value = config[key as keyof AppearanceConfig];
+
+        if (colorFields.includes(key)) {
+          // Convert color to hex string
+          processedValues[key] = toHexString(value);
+        } else if (key === 'columns') {
+          // Map columns to columnsPerScreen for backend
+          processedValues['columnsPerScreen'] = value;
+        } else {
+          processedValues[key] = value;
         }
       });
 
       await screensApi.updateAppearance(selectedScreenId, processedValues);
       message.success('Configuracion guardada');
-      setConfig(processedValues);
     } catch (error) {
+      console.error('Error saving:', error);
       message.error('Error guardando configuracion');
     }
   };

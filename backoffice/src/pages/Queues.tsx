@@ -17,7 +17,6 @@ import {
   Statistic,
   Row,
   Col,
-  Divider,
 } from 'antd';
 import {
   PlusOutlined,
@@ -32,17 +31,23 @@ import { queuesApi } from '../services/api';
 
 interface Channel {
   id: string;
-  type: 'MAXPOINT' | 'API' | 'WEBHOOK';
-  name: string;
-  config: any;
-  enabled: boolean;
+  channel: string;
+  color: string;
+  priority: number;
+  active: boolean;
 }
 
 interface Filter {
   id: string;
-  field: string;
-  operator: 'EQUALS' | 'CONTAINS' | 'IN' | 'NOT_EQUALS';
-  value: string;
+  pattern: string;
+  suppress: boolean;
+  active: boolean;
+}
+
+interface ScreenBasic {
+  id: string;
+  name: string;
+  status: string;
 }
 
 interface QueueStats {
@@ -56,11 +61,11 @@ interface Queue {
   id: string;
   name: string;
   description: string | null;
-  balanceMode: 'ROUND_ROBIN' | 'LEAST_LOADED' | 'MANUAL';
-  priority: number;
+  distribution: 'DISTRIBUTED' | 'SINGLE';
+  active: boolean;
   channels: Channel[];
   filters: Filter[];
-  screensCount: number;
+  screens: ScreenBasic[];
   stats?: QueueStats;
 }
 
@@ -108,7 +113,7 @@ export function Queues() {
   const handleCreate = () => {
     setEditingQueue(null);
     form.resetFields();
-    form.setFieldsValue({ balanceMode: 'ROUND_ROBIN', priority: 0 });
+    form.setFieldsValue({ distribution: 'DISTRIBUTED' });
     setModalOpen(true);
   };
 
@@ -117,8 +122,7 @@ export function Queues() {
     form.setFieldsValue({
       name: queue.name,
       description: queue.description,
-      balanceMode: queue.balanceMode,
-      priority: queue.priority,
+      distribution: queue.distribution,
     });
     setModalOpen(true);
   };
@@ -236,31 +240,28 @@ export function Queues() {
       ),
     },
     {
-      title: 'Balance',
-      dataIndex: 'balanceMode',
-      key: 'balanceMode',
+      title: 'Distribución',
+      dataIndex: 'distribution',
+      key: 'distribution',
       width: 120,
       render: (mode: string) => {
         const colors: Record<string, string> = {
-          ROUND_ROBIN: 'blue',
-          LEAST_LOADED: 'green',
-          MANUAL: 'orange',
+          DISTRIBUTED: 'blue',
+          SINGLE: 'orange',
         };
         const labels: Record<string, string> = {
-          ROUND_ROBIN: 'Round Robin',
-          LEAST_LOADED: 'Menos Cargada',
-          MANUAL: 'Manual',
+          DISTRIBUTED: 'Distribuida',
+          SINGLE: 'Única',
         };
         return <Tag color={colors[mode]}>{labels[mode] || mode}</Tag>;
       },
     },
     {
       title: 'Pantallas',
-      dataIndex: 'screensCount',
       key: 'screensCount',
       width: 90,
       align: 'center' as const,
-      render: (count: number) => <Tag>{count}</Tag>,
+      render: (_: any, record: Queue) => <Tag>{record.screens?.length || 0}</Tag>,
     },
     {
       title: 'Canales',
@@ -270,8 +271,8 @@ export function Queues() {
         <Space size={2} wrap>
           {record.channels.length > 0 ? (
             record.channels.map((ch) => (
-              <Tag key={ch.id} color={ch.enabled ? 'green' : 'default'} style={{ margin: 0 }}>
-                {ch.type}
+              <Tag key={ch.id} color={ch.active ? ch.color : 'default'} style={{ margin: 0 }}>
+                {ch.channel}
               </Tag>
             ))
           ) : (
@@ -386,13 +387,12 @@ export function Queues() {
                     <List.Item.Meta
                       title={
                         <Space>
-                          {channel.name}
-                          <Tag color={channel.enabled ? 'green' : 'default'}>
-                            {channel.type}
+                          {channel.channel}
+                          <Tag color={channel.active ? channel.color : 'default'}>
+                            Prioridad: {channel.priority}
                           </Tag>
                         </Space>
                       }
-                      description={JSON.stringify(channel.config)}
                     />
                   </List.Item>
                 )}
@@ -436,7 +436,14 @@ export function Queues() {
                     ]}
                   >
                     <List.Item.Meta
-                      title={`${filter.field} ${filter.operator} ${filter.value}`}
+                      title={
+                        <Space>
+                          <span>{filter.pattern}</span>
+                          <Tag color={filter.suppress ? 'red' : 'green'}>
+                            {filter.suppress ? 'Ocultar' : 'Mostrar'}
+                          </Tag>
+                        </Space>
+                      }
                     />
                   </List.Item>
                 )}
@@ -496,22 +503,18 @@ export function Queues() {
             <Input.TextArea placeholder="Descripcion de la cola" rows={2} />
           </Form.Item>
           <Form.Item
-            name="balanceMode"
-            label="Modo de Balance"
+            name="distribution"
+            label="Tipo de Distribución"
             rules={[{ required: true }]}
           >
             <Select>
-              <Select.Option value="ROUND_ROBIN">
-                Round Robin - Distribucion equitativa
+              <Select.Option value="DISTRIBUTED">
+                Distribuida - Balanceado entre pantallas
               </Select.Option>
-              <Select.Option value="LEAST_LOADED">
-                Menos Cargada - Asignar al que tenga menos ordenes
+              <Select.Option value="SINGLE">
+                Única - Una sola pantalla
               </Select.Option>
-              <Select.Option value="MANUAL">Manual - Sin balanceo automatico</Select.Option>
             </Select>
-          </Form.Item>
-          <Form.Item name="priority" label="Prioridad">
-            <InputNumber min={0} max={100} />
           </Form.Item>
         </Form>
       </Modal>
@@ -526,34 +529,14 @@ export function Queues() {
         cancelText="Cancelar"
       >
         <Form form={channelForm} layout="vertical">
-          <Form.Item name="name" label="Nombre" rules={[{ required: true }]}>
-            <Input placeholder="Canal MAXPOINT" />
+          <Form.Item name="channel" label="Nombre del Canal" rules={[{ required: true }]}>
+            <Input placeholder="Ej: KIOSKO, UBER, RAPPI" />
           </Form.Item>
-          <Form.Item name="type" label="Tipo" rules={[{ required: true }]}>
-            <Select>
-              <Select.Option value="MAXPOINT">MAXPOINT (SQL Server)</Select.Option>
-              <Select.Option value="API">API REST</Select.Option>
-              <Select.Option value="WEBHOOK">Webhook</Select.Option>
-            </Select>
+          <Form.Item name="color" label="Color">
+            <Input type="color" defaultValue="#4a90e2" style={{ width: 100, height: 32 }} />
           </Form.Item>
-          <Form.Item name="enabled" label="Habilitado" valuePropName="checked">
-            <Select defaultValue={true}>
-              <Select.Option value={true}>Si</Select.Option>
-              <Select.Option value={false}>No</Select.Option>
-            </Select>
-          </Form.Item>
-          <Divider>Configuracion</Divider>
-          <Form.Item
-            name={['config', 'connectionString']}
-            label="Connection String (MAXPOINT)"
-          >
-            <Input.TextArea
-              placeholder="Server=...;Database=...;User Id=...;Password=..."
-              rows={2}
-            />
-          </Form.Item>
-          <Form.Item name={['config', 'pollingInterval']} label="Intervalo Polling (ms)">
-            <InputNumber min={1000} max={60000} step={1000} defaultValue={3000} />
+          <Form.Item name="priority" label="Prioridad">
+            <InputNumber min={0} max={100} defaultValue={0} />
           </Form.Item>
         </Form>
       </Modal>
@@ -568,24 +551,14 @@ export function Queues() {
         cancelText="Cancelar"
       >
         <Form form={filterForm} layout="vertical">
-          <Form.Item name="field" label="Campo" rules={[{ required: true }]}>
-            <Select>
-              <Select.Option value="linea">Linea</Select.Option>
-              <Select.Option value="orderType">Tipo de Orden</Select.Option>
-              <Select.Option value="channel">Canal</Select.Option>
-              <Select.Option value="store">Tienda</Select.Option>
-            </Select>
+          <Form.Item name="pattern" label="Patrón" rules={[{ required: true }]}>
+            <Input placeholder="Ej: SANDUCHE, TWISTER, RUSTER" />
           </Form.Item>
-          <Form.Item name="operator" label="Operador" rules={[{ required: true }]}>
+          <Form.Item name="suppress" label="Acción" initialValue={false}>
             <Select>
-              <Select.Option value="EQUALS">Igual a</Select.Option>
-              <Select.Option value="NOT_EQUALS">Diferente de</Select.Option>
-              <Select.Option value="CONTAINS">Contiene</Select.Option>
-              <Select.Option value="IN">En lista</Select.Option>
+              <Select.Option value={false}>Mostrar productos que coincidan</Select.Option>
+              <Select.Option value={true}>Ocultar productos que coincidan</Select.Option>
             </Select>
-          </Form.Item>
-          <Form.Item name="value" label="Valor" rules={[{ required: true }]}>
-            <Input placeholder="Ej: SANDUCHE o 1,2,3 para lista" />
           </Form.Item>
         </Form>
       </Modal>

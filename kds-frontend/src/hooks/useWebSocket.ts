@@ -6,9 +6,11 @@ import { useScreenStore } from '../store/screenStore';
 import type { WsOrdersUpdate, ScreenConfig } from '../types';
 
 const HEARTBEAT_INTERVAL = 5000; // 5 segundos
+const ORDERS_POLL_INTERVAL = 2000; // 2 segundos - polling de órdenes
 
 export function useWebSocket(screenId: string, apiKey: string) {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const ordersPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { setConfig, setLoading, setError } = useConfigStore();
   const { setOrders, removeOrder } = useOrderStore();
@@ -81,10 +83,18 @@ export function useWebSocket(screenId: string, apiKey: string) {
       updateHeartbeat();
     }, HEARTBEAT_INTERVAL);
 
+    // Iniciar polling de órdenes cada 2 segundos
+    ordersPollRef.current = setInterval(() => {
+      socketService.requestOrders();
+    }, ORDERS_POLL_INTERVAL);
+
     // Cleanup
     return () => {
       if (heartbeatRef.current) {
         clearInterval(heartbeatRef.current);
+      }
+      if (ordersPollRef.current) {
+        clearInterval(ordersPollRef.current);
       }
       socketService.disconnect();
     };
