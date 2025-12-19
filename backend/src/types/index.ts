@@ -275,26 +275,6 @@ export interface Queue {
 }
 
 // ============================================
-// MXP TYPES (MAXPOINT)
-// ============================================
-
-export interface MxpOrder {
-  OrderId: string;
-  Channel: string;
-  CustomerName: string;
-  OrderNumber: string;
-  CreatedAt: Date;
-}
-
-export interface MxpOrderItem {
-  OrderId: string;
-  ProductName: string;
-  Quantity: number;
-  Notes: string;
-  Modifier: string;
-}
-
-// ============================================
 // WEBSOCKET EVENTS
 // ============================================
 

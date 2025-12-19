@@ -26,7 +26,10 @@ export const useOrderStore = create<OrderState>((set) => ({
 
   setOrders: (orders) =>
     set({
-      orders: orders.sort(
+      // Deduplicar por ID, conservando la última aparición de cada orden
+      orders: Array.from(
+        orders.reduce((map, order) => map.set(order.id, order), new Map<string, Order>()).values()
+      ).sort(
         (a, b) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       ),

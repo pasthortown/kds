@@ -21,14 +21,7 @@ const envSchema = z.object({
   JWT_ACCESS_EXPIRATION: z.string().default('15m'),
   JWT_REFRESH_EXPIRATION: z.string().default('7d'),
 
-  // MAXPOINT
-  MXP_HOST: z.string().default(''),
-  MXP_USER: z.string().default(''),
-  MXP_PASSWORD: z.string().default(''),
-  MXP_DATABASE: z.string().default(''),
-  MXP_PORT: z.string().default('1433').transform(Number),
-
-  // Polling
+  // Polling (solo para limpieza, MaxPoint lo maneja el servicio sync)
   POLLING_INTERVAL: z.string().default('2000').transform(Number),
   ORDER_LIFETIME_HOURS: z.string().default('4').transform(Number),
 

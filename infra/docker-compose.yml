@@ -99,19 +99,11 @@ services:
       JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET:?Error: JWT_REFRESH_SECRET es requerido}"
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
-      # MAXPOINT
-      MXP_HOST: ${MXP_HOST:-${MXP_SERVER:-}}
-      MXP_PORT: ${MXP_PORT:-1433}
-      MXP_SERVER: ${MXP_SERVER:-}
-      MXP_DATABASE: ${MXP_DATABASE:-MAXPOINT}
-      MXP_USER: ${MXP_USER:-}
-      MXP_PASSWORD: ${MXP_PASSWORD:-}
-      MXP_POLLING_INTERVAL: ${MXP_POLLING_INTERVAL:-3000}
-      MXP_ENABLED: ${MXP_ENABLED:-false}
       # Configuracion
       HEARTBEAT_INTERVAL: ${HEARTBEAT_INTERVAL:-10000}
       HEARTBEAT_TIMEOUT: ${HEARTBEAT_TIMEOUT:-30000}
       TZ: ${TZ:-America/Mexico_City}
+      # NOTA: La conexion a MaxPoint la maneja el servicio sync (.NET)
     ports:
       - "${BACKEND_PORT:-3000}:3000"
     healthcheck:
@@ -177,6 +169,32 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # ---------------------------------------------------------------------------
+  # Sync Service - Sincronizacion MaxPoint -> KDS2 (.NET)
+  # ---------------------------------------------------------------------------
+  sync:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.sync
+    container_name: kds-sync
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-America/Mexico_City}
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8100
+    volumes:
+      # Logs persistentes
+      - sync_logs:/app/logs
+    ports:
+      - "${SYNC_PORT:-8100}:8100"
+    networks:
+      - kds-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
 # -----------------------------------------------------------------------------
 # Volumenes persistentes
 # -----------------------------------------------------------------------------
@@ -187,6 +205,9 @@ volumes:
   redis_data:
     driver: local
     name: kds-redis-data
+  sync_logs:
+    driver: local
+    name: kds-sync-logs
 
 # -----------------------------------------------------------------------------
 # Red interna

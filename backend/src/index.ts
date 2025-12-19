@@ -7,7 +7,6 @@ import { createServer } from 'http';
 import { env } from './config/env';
 import { checkDatabaseConnection, disconnectDatabase } from './config/database';
 import { checkRedisConnection, disconnectRedis } from './config/redis';
-import { checkMxpConnection, disconnectMxp } from './config/mxp';
 import { websocketService } from './services/websocket.service';
 import { pollingService } from './services/polling.service';
 import { authService } from './services/auth.service';
@@ -104,25 +103,15 @@ async function start(): Promise<void> {
   }
   logger.info('Redis connected');
 
-  // MXP es opcional - puede no estar disponible en desarrollo
-  logger.info('Checking MXP connection...');
-  const mxpOk = await checkMxpConnection();
-  if (mxpOk) {
-    logger.info('MXP connected');
-  } else {
-    logger.warn('MXP connection failed - polling will be disabled');
-  }
-
   // Crear usuario admin por defecto
   await authService.ensureAdminExists();
 
   // Inicializar WebSocket
   websocketService.initialize(httpServer);
 
-  // Iniciar polling (si MXP está disponible)
-  if (mxpOk) {
-    pollingService.start();
-  }
+  // Iniciar servicio de limpieza periódica
+  // NOTA: La lectura de MaxPoint la realiza el servicio sync (.NET)
+  pollingService.start();
 
   // Iniciar limpieza periódica de heartbeats
   setInterval(async () => {
@@ -157,9 +146,6 @@ async function shutdown(signal: string): Promise<void> {
 
   await disconnectRedis();
   logger.info('Redis disconnected');
-
-  await disconnectMxp();
-  logger.info('MXP disconnected');
 
   logger.info('Graceful shutdown complete');
   process.exit(0);

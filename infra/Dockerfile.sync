@@ -1,0 +1,61 @@
+# =============================================================================
+# KDS Sync Service - Sincronizacion MaxPoint -> KDS2
+# =============================================================================
+# Servicio .NET 6.0 que lee ordenes de MaxPoint y las inserta en KDS2
+# =============================================================================
+
+FROM mcr.microsoft.com/dotnet/aspnet:6.0-alpine
+
+LABEL maintainer="KDS System"
+LABEL description="Servicio de sincronizacion MaxPoint -> KDS2"
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Instalar dependencias necesarias para SQL Server client
+RUN apk add --no-cache \
+    icu-libs \
+    krb5-libs \
+    libgcc \
+    libintl \
+    libssl3 \
+    libstdc++ \
+    zlib \
+    tzdata
+
+# Configurar timezone
+ENV TZ=America/Mexico_City
+RUN cp /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+# Habilitar globalization para .NET
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
+
+# Copiar archivos de la aplicacion
+COPY sync/ .
+
+# Dar permisos al entrypoint
+RUN chmod +x /app/docker-entrypoint.sh 2>/dev/null || true
+
+# WORKAROUND: La app .NET busca rutas con backslash de Windows
+# La app busca '/app\config.txt' que en Linux se interpreta diferente
+# Crear archivo en múltiples ubicaciones posibles
+RUN /bin/sh -c 'cp /app/config.txt /app/\\config.txt' && \
+    /bin/sh -c 'cp /app/config.txt /\\config.txt' && \
+    /bin/sh -c 'cp /app/config.txt "/app\\config.txt"' 2>/dev/null || true
+
+# Crear directorio de logs
+RUN mkdir -p /app/logs && chmod 777 /app/logs
+
+# Exponer puerto de la API
+EXPOSE 8100
+
+# Variable de entorno para ASP.NET Core
+ENV ASPNETCORE_URLS=http://+:8100
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Healthcheck - deshabilitado temporalmente ya que la app puede no tener endpoint /health
+# HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+#     CMD wget --no-verbose --tries=1 --spider http://localhost:8100/health || exit 1
+
+# Ejecutar la aplicacion desde el directorio de trabajo
+CMD ["dotnet", "KDS.dll"]

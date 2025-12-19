@@ -72,7 +72,6 @@ export function createComponentLogger(component: string) {
 }
 
 // Loggers específicos
-export const mxpLogger = createComponentLogger('MXP');
 export const balancerLogger = createComponentLogger('BALANCER');
 export const screenLogger = createComponentLogger('SCREEN');
 export const orderLogger = createComponentLogger('ORDER');

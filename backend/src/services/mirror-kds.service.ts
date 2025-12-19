@@ -5,7 +5,6 @@
  */
 
 import sql from 'mssql';
-import { redis } from '../config/redis';
 
 // Estructura de comanda del sistema .NET
 interface KDS2Comanda {
@@ -85,10 +84,6 @@ class MirrorKDSService {
   private pool: sql.ConnectionPool | null = null;
   private config: MirrorConfig | null = null;
   private isConnected = false;
-  // Cache local de timestamps (backup de Redis)
-  private orderFirstSeen: Map<string, Date> = new Map();
-  // Prefijo para keys de Redis
-  private readonly REDIS_KEY_PREFIX = 'mirror:order:created:';
 
   /**
    * Verificar si el mirror está configurado
@@ -209,23 +204,7 @@ class MirrorKDSService {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const result = await request.query<any>(query);
 
-      // IDs de órdenes actuales en pantalla
-      const currentOrderIds = new Set(result.recordset.map((row: { IdOrden: string }) => row.IdOrden));
-
-      // Limpiar caché de órdenes que ya no están en pantalla
-      for (const orderId of this.orderFirstSeen.keys()) {
-        if (!currentOrderIds.has(orderId)) {
-          this.orderFirstSeen.delete(orderId);
-          // También limpiar de Redis (la orden ya fue procesada)
-          try {
-            await redis.del(`${this.REDIS_KEY_PREFIX}${orderId}`);
-          } catch {
-            // Ignorar errores de Redis en limpieza
-          }
-        }
-      }
-
-      // Mapear a formato de nuestro frontend (async para Redis)
+      // Mapear a formato de nuestro frontend
       const orders: MirrorOrder[] = [];
       for (const row of result.recordset) {
         let comanda: KDS2Comanda;
@@ -343,34 +322,21 @@ class MirrorKDSService {
       }
     }
 
-    // Timer "desde ahora": usar el momento en que vimos la orden por primera vez
-    // Persistir en Redis para que sobreviva reinicios del servidor
+    // Usar el createdAt original de la comanda (viene del KDS2 remoto)
+    // Prioridad: comanda.createdAt > row.fechaCreacion > new Date()
     let createdAt: Date;
-    const orderId = row.IdOrden;
-    const redisKey = `${this.REDIS_KEY_PREFIX}${orderId}`;
-
-    // Primero intentar obtener de cache local (más rápido)
-    if (this.orderFirstSeen.has(orderId)) {
-      createdAt = this.orderFirstSeen.get(orderId)!;
+    if (comanda.createdAt) {
+      createdAt = new Date(comanda.createdAt);
+    } else if (row.fechaCreacion) {
+      createdAt = new Date(row.fechaCreacion);
     } else {
-      // Intentar obtener de Redis (sobrevive reinicios)
-      try {
-        const savedTimestamp = await redis.get(redisKey);
-        if (savedTimestamp) {
-          createdAt = new Date(savedTimestamp);
-          this.orderFirstSeen.set(orderId, createdAt);
-        } else {
-          // Primera vez que vemos esta orden, guardar timestamp actual
-          createdAt = new Date();
-          this.orderFirstSeen.set(orderId, createdAt);
-          // Guardar en Redis con expiración de 24 horas
-          await redis.set(redisKey, createdAt.toISOString(), 'EX', 86400);
-        }
-      } catch {
-        // Si Redis falla, usar timestamp actual
-        createdAt = new Date();
-        this.orderFirstSeen.set(orderId, createdAt);
-      }
+      // Fallback: usar timestamp actual solo si no hay fecha original
+      createdAt = new Date();
+    }
+
+    // Validar que la fecha sea válida
+    if (isNaN(createdAt.getTime())) {
+      createdAt = new Date();
     }
 
     return {
