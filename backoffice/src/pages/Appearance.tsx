@@ -369,8 +369,12 @@ function TypographySection({
         </Col>
         <Col span={4}>
           <Form.Item
-            name={prefix === 'modifier' ? 'modifierFontColor' : `${prefix}TextColor`}
-            label="Color"
+            name={
+              prefix === 'modifier' ? 'modifierFontColor' :
+              prefix === 'header' ? 'headerTextColorCustom' :
+              `${prefix}TextColor`
+            }
+            label={prefix === 'header' ? 'Color' : 'Color'}
             style={{ marginBottom: 8 }}
           >
             <ColorPicker size="small" format="hex" showText />
