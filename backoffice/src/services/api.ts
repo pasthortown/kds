@@ -181,4 +181,14 @@ export const mirrorApi = {
   disconnect: () => api.post('/mirror/disconnect'),
 };
 
+// Reports (Reportes del Dashboard)
+export const reportsApi = {
+  // Obtiene todos los datos del dashboard para reportes (JSON)
+  getDashboardReport: (timeLimit?: number) =>
+    api.get('/reports/dashboard', { params: { timeLimit } }),
+  // Obtiene resumen diario (JSON)
+  getDailySummary: (date?: string) =>
+    api.get('/reports/daily-summary', { params: { date } }),
+};
+
 export default api;

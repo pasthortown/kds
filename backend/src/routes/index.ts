@@ -9,6 +9,7 @@ import * as queueController from '../controllers/queue.controller';
 import * as orderController from '../controllers/order.controller';
 import * as configController from '../controllers/config.controller';
 import * as mirrorController from '../controllers/mirror.controller';
+import * as reportController from '../controllers/report.controller';
 
 const router = Router();
 
@@ -361,5 +362,11 @@ router.post(
   authorize('ADMIN'),
   mirrorController.disconnectMirror
 );
+
+// ============================================
+// REPORT ROUTES
+// ============================================
+router.get('/reports/dashboard', authenticate, reportController.getDashboardReport);
+router.get('/reports/daily-summary', authenticate, reportController.getDailySummary);
 
 export default router;

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Statistic, Table, Tag, Spin, Select, Button, Tooltip } from 'antd';
 import {
   DesktopOutlined,
@@ -92,7 +92,6 @@ export function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [timeLimit, setTimeLimit] = useState(5); // minutos
   const [selectedScreen, setSelectedScreen] = useState<string>('all');
-  const chartRef = useRef<ChartJS<'doughnut'>>(null);
 
   useEffect(() => {
     loadData();
@@ -215,7 +214,12 @@ export function Dashboard() {
   // Columnas para tabla de pantallas
   const screenColumns = [
     { title: 'Nombre', dataIndex: 'name', key: 'name' },
-    { title: 'IP', dataIndex: 'ip', key: 'ip' },
+    {
+      title: 'URL',
+      dataIndex: 'number',
+      key: 'url',
+      render: (number: number) => `/kds${number}`,
+    },
     { title: 'Cola', dataIndex: 'queueName', key: 'queueName' },
     {
       title: 'Estado',
@@ -445,7 +449,7 @@ export function Dashboard() {
         <Col span={8}>
           <Card title="Rendimiento de Tiempo" size="small">
             <div style={{ height: 250, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Doughnut ref={chartRef} data={timePerformanceData} options={doughnutOptions} />
+              <Doughnut data={timePerformanceData} options={doughnutOptions} />
               <div style={{ marginTop: 8, fontSize: 24, fontWeight: 'bold', color: onTimePercentage >= 80 ? '#52c41a' : '#ff4d4f' }}>
                 {onTimePercentage}% a tiempo
               </div>

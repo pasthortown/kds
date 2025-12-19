@@ -103,6 +103,8 @@ services:
       HEARTBEAT_INTERVAL: ${HEARTBEAT_INTERVAL:-10000}
       HEARTBEAT_TIMEOUT: ${HEARTBEAT_TIMEOUT:-30000}
       TZ: ${TZ:-America/Mexico_City}
+      # Restaurant
+      RESTAURANT_ID: ${RESTAURANT_ID:-}
       # NOTA: La conexion a MaxPoint la maneja el servicio sync (.NET)
     ports:
       - "${BACKEND_PORT:-3000}:3000"

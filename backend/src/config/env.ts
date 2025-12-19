@@ -39,6 +39,9 @@ const envSchema = z.object({
   // Admin
   ADMIN_EMAIL: z.string().email().default('admin@kds.local'),
   ADMIN_PASSWORD: z.string().min(6).default('admin123'),
+
+  // Restaurant
+  RESTAURANT_ID: z.string().default(''),
 });
 
 // Parsear y validar
