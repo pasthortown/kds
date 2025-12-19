@@ -1,5 +1,4 @@
 Condiciones Minimas:
-KDS2 debe desaparecer, nos debemos independizar de esta base de datos para lograr que todo lo referente a configuracion y a ordenes este solamente en la base de datos postgresql
 Debe existir un camino para recibir las ordenes a traves de API esto estaria en backend, y debe cada orden recibidad almmacenarse y si ya existe una con ese ID debe actualizarse en la base de datos postgresql, a su vez una vez recibida la orden o la actualizacion debe notificarse por ws que hay cambios en las ordenes a mostrar y el front debe refrescar las ordenes en pantalla.
 La configuracion visual y condiciones de colas deben estar tambien en postgresql unicamente no en archivos de texto
 El backoffice es para configurar colas, visualizaciones y esto debe comunicarse correctamente con el API del backend

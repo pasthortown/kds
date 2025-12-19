@@ -1,0 +1,50 @@
+# =============================================================================
+# KDS Sync Service - Docker Compose
+# =============================================================================
+# Servicio de sincronización de órdenes desde MaxPoint al backend KDS
+#
+# IMPORTANTE: Este servicio intenta conectarse a MaxPoint (SQL Server).
+# En desarrollo local sin acceso a MaxPoint, el servicio fallará al
+# intentar leer órdenes, pero esto es un error esperado.
+#
+# Uso:
+#   docker compose -f sync/docker-compose.yml up -d
+#   docker compose -f sync/docker-compose.yml logs -f
+#   docker compose -f sync/docker-compose.yml down
+# =============================================================================
+
+version: '3.8'
+
+services:
+  sync:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kds-sync-dev
+    restart: unless-stopped
+    ports:
+      - "8100:8100"
+    volumes:
+      # Montar config.dev.txt como config.txt
+      - ./config.dev.txt:/app/config.txt:ro
+      # Directorio de logs
+      - ./logs:/app/logs
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DOTNET_RUNNING_IN_CONTAINER=true
+    extra_hosts:
+      # Permite al contenedor acceder al host (backend en localhost:3000)
+      - "host.docker.internal:host-gateway"
+    networks:
+      - kds-dev-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8100/api/debug/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  kds-dev-network:
+    external: true
+    name: kds-dev-network

@@ -1,0 +1,89 @@
+{
+	"Generales": {
+		"lecturaComandas": 2,
+		"tiempoVida": 4,
+		"diasRetencionLog": 30,
+		"comandaYcounters": true,
+		"cuentaProductos": true,
+		"ingresoPorBase": true
+	},
+	"ConexionMXP": {
+		"ip": "172.25.25.42",
+		"usuario": "sa",
+		"clave": "claveSA",
+		"catalogo": "MAXPOINT_KXXX"
+	},
+	"ConexionBackend": {
+		"url": "http://host.docker.internal:3000",
+		"email": "admin@kds.local",
+		"password": "admin123"
+	},
+	"ConexionNATS": {
+		"Url": "nats://localhost:4222",
+		"Tema": "nuevaComanda"
+	},
+	"Comandas": {
+		"imprimirTCP": true,
+		"tiempoComandasVivas": 300,
+		"teclaBorradoComandas": "/",
+		"reintentosBase": 3,
+		"impresoraNombre": "PRN01C02",
+		"impresoraIP": "X.X.X.X",
+		"impresoraPuerto": 9100,
+		"imprimirSinPantallasActivas": false,
+		"columnasDetalles": 24,
+		"fuenteDetalles": "grande"
+	},
+	"Colas": [
+		{
+			"nombre": "LINEAS",
+			"distribucion": "D",
+			"canales": ["APP", "LOCAL", "LLEVAR", "RAPPI", "TICTUK", "PEDIDOSYA", "LUNCH", "PICKUP", "CALLCENTER", "KIOSCO", "MercadoPago", "RAPPI-TURBO"],
+			"filtros": []
+		},
+		{
+			"nombre": "SANDWICH",
+			"distribucion": "D",
+			"canales": ["APP", "LOCAL", "LLEVAR", "RAPPI", "TICTUK", "PEDIDOSYA", "LUNCH", "PICKUP", "CALLCENTER", "KIOSCO", "MercadoPago", "RAPPI-TURBO"],
+			"filtros": ["H. ", "AGRE", "SIN", "EXTRA"]
+		}
+	],
+	"Pantallas": [
+		{
+			"nombre": "Pantalla1",
+			"ip": "10.211.14.200",
+			"cola": "LINEAS",
+			"imprime": "NO",
+			"impresoraNombre": "",
+			"impresoraIP": "",
+			"impresoraPuerto": 9100,
+			"contar": [],
+			"filtros": [],
+			"propiedades": "{}"
+		},
+		{
+			"nombre": "Pantalla2",
+			"ip": "10.211.14.201",
+			"cola": "LINEAS",
+			"imprime": "NO",
+			"impresoraNombre": "",
+			"impresoraIP": "",
+			"impresoraPuerto": 9100,
+			"contar": [],
+			"filtros": [],
+			"propiedades": "{}"
+		},
+		{
+			"nombre": "Pantalla3",
+			"ip": "10.211.14.202",
+			"cola": "SANDWICH",
+			"imprime": "NO",
+			"impresoraNombre": "",
+			"impresoraIP": "",
+			"impresoraPuerto": 9100,
+			"contar": [],
+			"filtros": [],
+			"propiedades": "{}"
+		}
+	]
+}

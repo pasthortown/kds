@@ -1,0 +1,280 @@
+--EN MXP
+alter PROC SP_BuscarComandasKDS as
+BEGIN
+
+	declare @rst_id int
+	set @rst_id = (Select top 1 rst_id from Restaurante)
+	
+	DECLARE @codigoProcesar TABLE
+	(
+		codigo INT
+	)
+
+	insert into @codigoProcesar
+	exec config.sp_ColeccionRestauranteGenerica @rst_id, 'KDS', 'PROCESAR ORDENES'
+
+	SELECT cf.cfac_id, cm.imp_varchar3 as idCabeceraOrdenPedido, c.cdn_id as cadena, 'SALON' as tipo, r.rst_id as restaurante
+    FROM Canal_Movimiento as cm with (nolock) 
+    INNER JOIN Cabecera_Factura as cf with (nolock)  on cm.imp_varchar3 = cf.IDCabeceraOrdenPedido
+    INNER JOIN Restaurante  as r with (nolock) on cf.rst_id = r.rst_id
+    INNER JOIN Cadena  as c with (nolock) on r.cdn_id = c.cdn_id
+    WHERE cm.imp_float1 = (Select codigo from @codigoProcesar) and cm.imp_varchar1 in ('','COCINA')
+    UNION ALL
+    SELECT cc.codigoCupon as cfac_id, cm.imp_varchar3 as idCabeceraOrdenPedido, c.cdn_id as cadena, 'LUNCH' as tipo, r.rst_id as restaurante
+    from Canal_Movimiento  as cm with (nolock) 
+    inner join CuponCanjeado  as cc with (nolock) on cc.varchar2 = cm.imp_varchar3
+    inner join Periodo as p with (nolock) on cc.IDPeriodo = p.IDPeriodo
+    INNER JOIN Restaurante  as r with (nolock) on r.rst_id = p.rst_id
+    INNER JOIN Cadena as c  with (nolock)  on r.cdn_id = c.cdn_id
+    WHERE cm.imp_float1 = (Select codigo from @codigoProcesar) and cm.imp_varchar1 in ('','COCINA')
+END
+
+CREATE PROC SP_ActualizarCanalMovimientoKDS (@idComanda varchar(40), @valorEstado float) as
+BEGIN
+	UPDATE Canal_Movimiento set imp_float1 = @valorEstado where imp_varchar3 =@idComanda and (imp_varchar1 = 'COCINA' or imp_varchar1 ='')
+END
+--EN MXP
+ALTER PROCEDURE [pedido].[USP_AgrupacionProductosKds] (
+	@IDCabeceraOrdenPedido	VARCHAR(40),
+    @esLunch INT
+) AS
+BEGIN
+	SET NOCOUNT ON;
+	SET ANSI_NULLS ON;
+	SET QUOTED_IDENTIFIER ON;
+
+	DECLARE
+		@menuActivo VARCHAR(40),
+		@numeroCuenta int,
+		@json VARCHAR(MAX);
+
+	SET @menuActivo = (config.fn_estado('Menu', 'Activo'));
+
+	Declare @tmp_productosKDS TABLE
+	(
+		tipo int,
+		plu_id varchar(20),
+		magp_desc_impresion varchar(50),
+		dop_Cantidad int,
+		IDDetalleOrdenPedido varchar(40),
+		dop_varchar1 varchar(40),
+		dop_creacionFecha datetime,
+		dop_precio float,
+		Comentario varchar(300),
+		ordenImpresion int,
+		descripcionProducto varchar(300),
+		content varchar(200),
+		ordenGrupo int,
+		ordenInternoGrupo int,
+		Clasificacion varchar(100)
+	)
+
+	IF @esLunch = 1
+	BEGIN
+		SET @json = (SELECT CuponCanjeadoVarchar1 FROM CuponCanjeado WHERE varchar2 = @IDCabeceraOrdenPedido)
+
+		insert into @tmp_productosKDS
+		SELECT DISTINCT
+			1									AS tipo,
+			CAST(plu.plu_id AS VARCHAR)			AS plu_id,
+			map.magp_impresion + ' ' + CASE WHEN c.cla_Nombre = 'Llevar' THEN '[LLEVAR]' ELSE '' END AS magp_desc_impresion,
+			dop.dop_cantidad,
+			dop.IDDetalleOrdenPedido,
+			dop.dop_varchar1,
+			dop.dop_creacionfecha,
+			dop.dop_precio,
+			CASE
+				WHEN dop.IDDetalleOrdenPedido IN (
+						SELECT IDDetalleOrdenPedido FROM dbo.Texto_Detalle_Orden_Pedido
+					) THEN 1
+				ELSE 0
+			END									AS Comentario,
+			dop.dop_float1						AS ordenImpresion,
+			ISNULL(pro.descripcionProducto,'')		AS descripcionProducto,
+			ISNULL((
+				SELECT pcdd.variableV
+				FROM PlusColeccionDeDatos pcdd
+				LEFT JOIN ColeccionDeDatosPlus cddp ON cddp.ID_ColeccionDeDatosPlus = pcdd.ID_ColeccionDeDatosPlus
+				LEFT JOIN ColeccionPlus cp ON cp.ID_ColeccionPlus = cddp.ID_ColeccionPlus
+				WHERE pcdd.plu_id = plu.plu_id
+				AND cp.Descripcion = 'CONTENIDO KDS'
+				AND cddp.Descripcion = 'DESCRIPCION'
+			), '') AS content,
+			0 ordenGrupo,
+			0 ordenInternoGrupo,
+			'' as Clasificacion
+		FROM	config.fn_lecturaJsonLunch(@json) AS dop
+		INNER JOIN Menu_AgrupacionProducto AS map WITH (NOLOCK) ON map.plu_id = dop.plu_id
+		INNER JOIN Plus					AS plu WITH (NOLOCK) ON plu.plu_id = dop.plu_id
+		INNER JOIN Clasificacion		AS c ON c.IDClasificacion = plu.IDClasificacion
+		LEFT JOIN [trade].[configuracion_producto] AS pro ON pro.plu_id = plu.plu_id
+		WHERE dop.IDCabeceraOrdenPedido = @IDCabeceraOrdenPedido
+			--AND dop.dop_estado <> 0
+			AND dop.dop_anulacion = 1
+			AND map.magp_desc_impresion NOT IN ('NO APLICA')
+			AND map.IDStatus = @menuActivo
+		ORDER BY dop.dop_creacionfecha;
+	END
+	ELSE
+	BEGIN
+		SET @numeroCuenta = (select top 1 dop.dop_cuenta from Detalle_Orden_Pedido dop WHERE dop.IDCabeceraOrdenPedido = @IDCabeceraOrdenPedido)
+		
+		DECLARE @ID_productos_canal TABLE (IDDetalleOrdenPedido VARCHAR(100));
+		INSERT INTO @ID_productos_canal (IDDetalleOrdenPedido) (SELECT IDDetalleOrdenPedido FROM [config].[GetIDDetalleOrdenPedidoCanalByCabeceraOrdenPedido](@IDCabeceraOrdenPedido, @numeroCuenta));
+
+		insert into @tmp_productosKDS				   
+		SELECT DISTINCT
+			1									AS tipo,
+			CAST(plu.plu_id AS VARCHAR)			AS plu_id,
+			map.magp_impresion + ' ' + CASE WHEN c.cla_Nombre = 'Llevar' THEN '[LLEVAR]' ELSE '' END AS magp_desc_impresion,
+			dop.dop_cantidad,
+			dop.IDDetalleOrdenPedido,
+			dop.dop_varchar1,
+			dop.dop_creacionfecha,
+			dop.dop_precio,
+			CASE
+				WHEN dop.IDDetalleOrdenPedido IN (
+						SELECT IDDetalleOrdenPedido FROM dbo.Texto_Detalle_Orden_Pedido
+					) THEN 1
+				ELSE 0
+			END									AS Comentario,
+			dop.dop_float1						AS ordenImpresion,
+			ISNULL(pro.descripcionProducto,'')		AS descripcionProducto,
+			ISNULL((
+				SELECT pcdd.variableV
+				FROM PlusColeccionDeDatos pcdd
+				LEFT JOIN ColeccionDeDatosPlus cddp ON cddp.ID_ColeccionDeDatosPlus = pcdd.ID_ColeccionDeDatosPlus
+				LEFT JOIN ColeccionPlus cp ON cp.ID_ColeccionPlus = cddp.ID_ColeccionPlus
+				WHERE pcdd.plu_id = plu.plu_id
+				AND cp.Descripcion = 'CONTENIDO KDS'
+				AND cddp.Descripcion = 'DESCRIPCION'
+			), '') AS content,
+			0 ordenGrupo,
+			0 ordenInternoGrupo,
+			'' as Clasificacion
+ 
+		FROM	Cabecera_Orden_Pedido		AS odp WITH (NOLOCK)
+		INNER JOIN Detalle_Orden_Pedido AS dop WITH (NOLOCK) ON odp.IDCabeceraOrdenPedido = dop.IDCabeceraOrdenPedido
+		INNER JOIN Menu_AgrupacionProducto AS map WITH (NOLOCK) ON map.plu_id = dop.plu_id
+		INNER JOIN Plus					AS plu WITH (NOLOCK) ON plu.plu_id = dop.plu_id
+		INNER JOIN Clasificacion		AS c ON c.IDClasificacion = plu.IDClasificacion
+		LEFT JOIN [trade].[configuracion_producto] AS pro ON pro.plu_id = plu.plu_id
+		LEFT OUTER JOIN @ID_productos_canal as ipc ON (ipc.IDDetalleOrdenPedido = dop.IDDetalleOrdenPedido AND ipc.IDDetalleOrdenPedido IS NULL)
+		WHERE dop.IDCabeceraOrdenPedido = @IDCabeceraOrdenPedido
+			AND dop.dop_cuenta = @numeroCuenta
+			--AND dop.dop_estado <> 0
+			AND dop.dop_anulacion = 1
+			AND map.magp_desc_impresion NOT IN ('NO APLICA')
+			AND map.IDStatus = @menuActivo
+		ORDER BY dop.dop_creacionfecha, dop.dop_float1 desc;
+	END
+
+Declare @cantidadEnCero int
+Declare @cantidadRegistros int
+
+set @cantidadEnCero = (Select count(*) from @tmp_productosKDS where ordenImpresion = 0)
+set @cantidadRegistros = (Select count(*) from @tmp_productosKDS)
+if (@cantidadEnCero = @cantidadRegistros) 
+BEGIN
+	Update @tmp_productosKDS set ordenImpresion = 1 where dop_precio > 0
+END
+
+ DECLARE productosCursor CURSOR FOR
+SELECT IDDetalleOrdenPedido, plu_id, ordenImpresion
+from @tmp_ProductosKDS
+ORDER BY dop_creacionfecha, ordenImpresion desc
+
+Declare @IDDetalleOrdenPedido varchar(40), @plu_id varchar(20), @ordenImpresion int, @numero int, @pluCabecara varchar(20)
+
+OPEN productosCursor
+
+set @numero = 0
+FETCH NEXT FROM productosCursor
+INTO @IDDetalleOrdenPedido, @plu_id, @ordenImpresion
+
+WHILE @@FETCH_STATUS = 0
+BEGIN
+
+	if @ordenImpresion = 1
+	begin
+		set @numero+= 1
+		update @tmp_ProductosKDS set OrdenGrupo = @numero, ordenInternoGrupo = 0 where IDDetalleOrdenPedido = @IDDetalleOrdenPedido
+		set @pluCabecara = @plu_id
+	end
+	else
+	begin
+		update @tmp_ProductosKDS set OrdenGrupo = @numero where IDDetalleOrdenPedido = @IDDetalleOrdenPedido
+		update @tmp_ProductosKDS set ordenInternoGrupo =  (select top 1 Plu_Pregunta.orden from Plu_Pregunta 
+		left join Pregunta_Sugerida on Pregunta_Sugerida.IDPreguntaSugerida = Plu_Pregunta.IDPreguntaSugerida
+		left join Respuestas on Respuestas.IDPreguntaSugerida = Pregunta_Sugerida.IDPreguntaSugerida
+		where Plu_Pregunta.plu_id = @pluCabecara and Respuestas.plu_id = @plu_id order by Plu_Pregunta.orden)
+		where IDDetalleOrdenPedido = @IDDetalleOrdenPedido
+	end
+
+	-- Actualización para clasificación. Esto ayuda a no modificar los códigos que traen los PLUS y los ordenan
+	-- Tomar como variable para actualizar @IDDetalleOrdenPedido ya que es única en el pedido y además
+	if @ordenImpresion = 1
+	begin
+		update  @tmp_ProductosKDS set Clasificacion = 'CABECERA' where IDDetalleOrdenPedido = @IDDetalleOrdenPedido
+	end
+	else
+	BEGIN
+		update  @tmp_ProductosKDS set Clasificacion = 'COMPONENTE' where IDDetalleOrdenPedido = @IDDetalleOrdenPedido
+
+	END
+
+	--print 'plucabecera'
+	--print @pluCabecara
+	--print 'plu_id'
+	--print @plu_id
+	FETCH NEXT FROM productosCursor
+	INTO @IDDetalleOrdenPedido, @plu_id, @ordenImpresion
+END
+CLOSE productosCursor;
+DEALLOCATE productosCursor;
+
+select * from @tmp_ProductosKDS order by ordenGrupo, ordenInternoGrupo
+
+
+END
+--En MXP
+CREATE OR ALTER PROCEDURE [dbo].[datosAdicionalesKds] (
+	@IDCabeceraOrdenPedido	VARCHAR(40),
+    @esLunch INT
+)
+AS
+BEGIN
+	IF @esLunch = 1
+	BEGIN
+		SELECT cc.CuponCanjeadoVarchar2 as cliente, e.est_nombre as estacion, up.usr_descripcion as usuarioEstacion,
+		-1 as turno, '' as nombre, up.usr_usuario as UsuarioCajero,
+		up.usr_usuario as usuarioCajero,
+		cc.fechaCanje as Fecha,
+		'' as Direccion
+		FROM CuponCanjeado cc
+		INNER JOIN Control_Estacion ce on ce.IDControlEstacion = cc.IDControlEstacion
+		INNER JOIN Users_Pos up on up.IDUsersPos = ce.IDUsersPos
+		INNER JOIN Estacion e on e.IDEstacion = ce.IDEstacion
+		WHERE cc.varchar2 = @IDCabeceraOrdenPedido
+	END
+	ELSE
+	BEGIN
+		SELECT cf.Cabecera_FacturaVarchar1 as cliente, e.est_nombre as estacion, up.usr_descripcion as usuarioEstacion,
+		case when cop.odp_float1 is null then -1 else RIGHT(cf.cfac_id,2) end as turno,
+		case when up.usr_descripcion = 'DELIVERYMXP' THEN ''
+			when up.usr_descripcion like '%PICKUP1' THEN ''
+			else isnull(cop.odp_observacion,'')
+			end as nombre,
+		up.usr_usuario as usuarioCajero,
+		cf.cfac_fechacreacion as Fecha,
+		case when up.usr_descripcion = 'DELIVERYMXP' and cop.Cabecera_Orden_PedidoVarchar4 is null  THEN  isnull(cop.odp_observacion,'')
+			when up.usr_descripcion = 'DELIVERYMXP' and cop.Cabecera_Orden_PedidoVarchar4 is not null  THEN  cop.Cabecera_Orden_PedidoVarchar4
+			when up.usr_descripcion like '%PICKUP1' THEN REPLACE(cop.odp_observacion,'<br>','')
+			else '' end as Direccion
+        FROM Cabecera_Factura cf
+        INNER JOIN Estacion e on cf.IDEstacion = e.IDEstacion
+		INNER JOIN Cabecera_Orden_Pedido cop on cop.IDCabeceraOrdenPedido = cf.IDCabeceraOrdenPedido
+        INNER JOIN Users_Pos up on cf.IDUsersPos = up.IDUsersPos
+		WHERE cf.IDCabeceraOrdenPedido = @IDCabeceraOrdenPedido
+	END
+END
