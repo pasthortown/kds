@@ -1,0 +1,16 @@
+Condiciones Minimas:
+KDS2 debe desaparecer, nos debemos independizar de esta base de datos para lograr que todo lo referente a configuracion y a ordenes este solamente en la base de datos postgresql
+Debe existir un camino para recibir las ordenes a traves de API esto estaria en backend, y debe cada orden recibidad almmacenarse y si ya existe una con ese ID debe actualizarse en la base de datos postgresql, a su vez una vez recibida la orden o la actualizacion debe notificarse por ws que hay cambios en las ordenes a mostrar y el front debe refrescar las ordenes en pantalla.
+La configuracion visual y condiciones de colas deben estar tambien en postgresql unicamente no en archivos de texto
+El backoffice es para configurar colas, visualizaciones y esto debe comunicarse correctamente con el API del backend
+El backend constituye el unico intermediario entre front y backoffice.
+
+En modo polling como dependemos de la disponibilidad de maxpoint activado la comunicacion por API, el sistema debe seguir trabajando consultando periodicamente a postgresql para actualizar las ordenes.
+En modo API sera maxpoint quien remita directo al API este a su vez al ws para notificar cambios y actualiar ordenes
+Hay configuraciones que se modifican y no esta guardando correctamente esto hay que corregir.
+
+Nuevas Funcionalidades
+Corregir Reportes.- Los datos de los reportes (dashboard) deben ser disponibilizados en un endpoint en el API de backend para que sean consumidos a futuro por el departamento de BI, hay que documentar esa respiuesta que sera en json y el api debe estar documentado con swagger
+Tiempo Real.- Es necesario modificar maxpoint para que durante la toma de pedido se envie al API la orden en curso a tiempo real enviando los cambios que ocurran en estado PROCESANDO,y  cuando pase a facturacion la orden debe indicarse como TOMADA, para controlar en el front con ese estado la apariencia de la orden de tal forma que el cocinero sepa que esa orden esta en curso.
+Colores por canal.- Si es Salon Kiosko Llevar Domicilio debe tener un color identificativo.
+Color de la cantidad.- El color de la cantidad cambia pero si es un color muy claro no se lo visualiza hay qeu corregir el tono usado, y mucho mejor si se coloca como parametor de configuracion en backoffice y se establece el color para cada situacion en fucion del SLA
