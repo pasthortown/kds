@@ -45,6 +45,7 @@ export interface ApiProduct {
   amount?: number;
   category?: string;
   content?: string[];
+  comments?: string;  // Comentarios adicionales del producto
   products?: ApiSubProduct[];
 }
 
@@ -54,6 +55,7 @@ export interface ApiSubProduct {
   amount?: number;
   category?: string;
   content?: string[];
+  comments?: string;  // Comentarios adicionales del subproducto
 }
 
 /**
@@ -290,6 +292,7 @@ export class ApiTicketService {
         quantity: product.amount || 1,
         notes: product.content?.join(', ') || null,
         modifier: null,
+        comments: product.comments || null,
       });
 
       // Agregar subproductos si existen
@@ -300,6 +303,7 @@ export class ApiTicketService {
             quantity: subProduct.amount || 1,
             notes: subProduct.content?.join(', ') || null,
             modifier: null,
+            comments: subProduct.comments || null,
           });
         }
       }
@@ -335,6 +339,7 @@ export class ApiTicketService {
         name: item.name,
         amount: item.quantity,
         content: item.notes ? [item.notes] : [],
+        comments: item.comments || undefined,
         products: [],
       })),
       otrosDatos: {

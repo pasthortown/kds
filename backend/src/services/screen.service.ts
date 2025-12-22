@@ -246,6 +246,15 @@ export class ScreenService {
             notesBgColor: screen.appearance.notesBgColor,
             notesIndent: screen.appearance.notesIndent,
             showNotes: screen.appearance.showNotes,
+            // Comentarios
+            commentsFontFamily: screen.appearance.commentsFontFamily,
+            commentsFontSize: screen.appearance.commentsFontSize,
+            commentsFontWeight: screen.appearance.commentsFontWeight,
+            commentsFontStyle: screen.appearance.commentsFontStyle,
+            commentsTextColor: screen.appearance.commentsTextColor,
+            commentsBgColor: screen.appearance.commentsBgColor,
+            commentsIndent: screen.appearance.commentsIndent,
+            showComments: screen.appearance.showComments,
             // Canal
             channelFontFamily: screen.appearance.channelFontFamily,
             channelFontSize: screen.appearance.channelFontSize,

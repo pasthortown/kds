@@ -34,7 +34,7 @@ const defaultChannelColors: Record<string, string> = {
   'app': '#bd10e0',
 };
 
-const getFontSize = (size?: string, type: 'header' | 'product' | 'modifier' | 'timer' | 'client' | 'quantity' | 'subitem' | 'notes' | 'channel' = 'product'): string => {
+const getFontSize = (size?: string, type: 'header' | 'product' | 'modifier' | 'timer' | 'client' | 'quantity' | 'subitem' | 'notes' | 'comments' | 'channel' = 'product'): string => {
   const sizes: Record<string, Record<string, string>> = {
     header: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
     timer: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
@@ -44,6 +44,7 @@ const getFontSize = (size?: string, type: 'header' | 'product' | 'modifier' | 't
     subitem: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
     modifier: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
     notes: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
+    comments: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
     channel: { xsmall: '9px', small: '10px', medium: '11px', large: '12px', xlarge: '14px', xxlarge: '16px' },
   };
   return sizes[type]?.[size || 'medium'] || sizes[type]?.medium || '14px';
@@ -185,6 +186,15 @@ export function OrderCard({
     notesTextColor: appearance.notesTextColor || '#ff9800',
     notesIndent: appearance.notesIndent || 24,
     showNotes: appearance.showNotes !== false,
+
+    // Comments
+    commentsFontFamily: appearance.commentsFontFamily || 'Inter, sans-serif',
+    commentsFontSize: appearance.commentsFontSize || 'small',
+    commentsFontWeight: appearance.commentsFontWeight || 'normal',
+    commentsFontStyle: appearance.commentsFontStyle || 'italic',
+    commentsTextColor: appearance.commentsTextColor || '#4CAF50',
+    commentsIndent: appearance.commentsIndent || 24,
+    showComments: appearance.showComments !== false,
 
     // Channel
     channelFontFamily: appearance.channelFontFamily || 'Inter, sans-serif',
@@ -433,6 +443,23 @@ export function OrderCard({
                   }}
                 >
                   * {toTitleCase(item.notes)}
+                </div>
+              )}
+
+              {/* Comentarios */}
+              {config.showComments && item.comments && (
+                <div
+                  style={{
+                    paddingLeft: `${config.commentsIndent}px`,
+                    marginTop: '2px',
+                    fontFamily: config.commentsFontFamily,
+                    fontWeight: getFontWeight(config.commentsFontWeight),
+                    fontStyle: getFontStyle(config.commentsFontStyle),
+                    fontSize: getFontSize(config.commentsFontSize, 'comments'),
+                    color: config.commentsTextColor,
+                  }}
+                >
+                  {toTitleCase(item.comments)}
                 </div>
               )}
             </div>

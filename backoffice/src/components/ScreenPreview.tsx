@@ -6,6 +6,7 @@ interface OrderItem {
   quantity: number;
   modifier?: string;
   notes?: string;
+  comments?: string;
   subitems?: Array<{ name: string; quantity: number }>;
 }
 
@@ -88,6 +89,14 @@ interface ScreenAppearance {
   notesTextColor?: string;
   notesIndent?: number;
   showNotes?: boolean;
+  // Comments
+  commentsFontFamily?: string;
+  commentsFontSize?: string;
+  commentsFontWeight?: string;
+  commentsFontStyle?: string;
+  commentsTextColor?: string;
+  commentsIndent?: number;
+  showComments?: boolean;
   // Channel
   channelFontFamily?: string;
   channelFontSize?: string;
@@ -134,6 +143,7 @@ const sampleOrders: PreviewOrder[] = [
       {
         name: 'Super Combo Familiar',
         quantity: 1,
+        comments: 'VIP - descuento 10%',
         subitems: [
           { name: 'Pollo Original 8pcs', quantity: 1 },
           { name: 'Papas Grandes', quantity: 2 },
@@ -141,8 +151,8 @@ const sampleOrders: PreviewOrder[] = [
         ]
       },
       { name: 'Alitas BBQ x12', quantity: 1, modifier: 'Extra picante, Sin cebolla' },
-      { name: 'Ensalada Coleslaw', quantity: 2 },
-      { name: 'Sundae Chocolate', quantity: 2, notes: 'Sin crema batida' },
+      { name: 'Ensalada Coleslaw', quantity: 2, comments: 'Entregar primero' },
+      { name: 'Sundae Chocolate', quantity: 2, notes: 'Sin crema batida', comments: 'Cliente frecuente' },
     ],
     createdAt: new Date(Date.now() - 45000), // 45 segundos
     status: 'PENDING',
@@ -153,9 +163,9 @@ const sampleOrders: PreviewOrder[] = [
     channel: 'PedidosYa',
     customerName: 'Maria Lopez',
     items: [
-      { name: 'Big Box Familiar', quantity: 1, modifier: 'Sin ensalada' },
+      { name: 'Big Box Familiar', quantity: 1, modifier: 'Sin ensalada', comments: 'Pago con tarjeta' },
       { name: 'Twister Clasico', quantity: 2, modifier: 'Sin cebolla, extra salsa' },
-      { name: 'Papas Medianas', quantity: 2 },
+      { name: 'Papas Medianas', quantity: 2, comments: 'Bien calientes' },
     ],
     createdAt: new Date(Date.now() - 180000), // 3 min
     status: 'PENDING',
@@ -166,7 +176,7 @@ const sampleOrders: PreviewOrder[] = [
     channel: 'RAPPI',
     customerName: 'Carlos Ruiz',
     items: [
-      { name: 'Combo Mega Box', quantity: 1 },
+      { name: 'Combo Mega Box', quantity: 1, comments: 'Verificar salsas' },
       { name: 'Nuggets x20', quantity: 1, modifier: 'Con salsa BBQ' },
       { name: 'Helado Vainilla', quantity: 2, notes: 'Llevar servilletas extra' },
     ],
@@ -179,7 +189,7 @@ const sampleOrders: PreviewOrder[] = [
     channel: 'Kiosko-Efectivo',
     customerName: 'Ana Torres',
     items: [
-      { name: 'Twister Supreme', quantity: 2 },
+      { name: 'Twister Supreme', quantity: 2, comments: 'Prioridad alta' },
       { name: 'Papas Medianas', quantity: 2 },
     ],
     createdAt: new Date(Date.now() - 480000), // 8 min
@@ -208,6 +218,7 @@ const getFontSize = (size?: string, type: string = 'product'): string => {
     subitem: { xsmall: '7px', small: '8px', medium: '9px', large: '10px', xlarge: '11px', xxlarge: '12px' },
     modifier: { xsmall: '7px', small: '8px', medium: '9px', large: '10px', xlarge: '11px', xxlarge: '12px' },
     notes: { xsmall: '7px', small: '8px', medium: '9px', large: '10px', xlarge: '11px', xxlarge: '12px' },
+    comments: { xsmall: '7px', small: '8px', medium: '9px', large: '10px', xlarge: '11px', xxlarge: '12px' },
     channel: { xsmall: '7px', small: '8px', medium: '9px', large: '10px', xlarge: '11px', xxlarge: '12px' },
   };
   return sizes[type]?.[size || 'medium'] || sizes[type]?.medium || '11px';
@@ -328,6 +339,15 @@ export function ScreenPreview({
     notesTextColor: appearance.notesTextColor || '#ff9800',
     notesIndent: appearance.notesIndent ?? 20,
     showNotes: appearance.showNotes !== false,
+
+    // Comments
+    commentsFontFamily: appearance.commentsFontFamily || 'Inter, sans-serif',
+    commentsFontSize: appearance.commentsFontSize || 'small',
+    commentsFontWeight: appearance.commentsFontWeight || 'normal',
+    commentsFontStyle: appearance.commentsFontStyle || 'italic',
+    commentsTextColor: appearance.commentsTextColor || '#4CAF50',
+    commentsIndent: appearance.commentsIndent ?? 20,
+    showComments: appearance.showComments !== false,
 
     // Channel
     channelFontFamily: appearance.channelFontFamily || 'Inter, sans-serif',
@@ -629,6 +649,23 @@ export function ScreenPreview({
                     }}
                   >
                     * {item.notes}
+                  </div>
+                )}
+
+                {/* Comentarios */}
+                {config.showComments && item.comments && (
+                  <div
+                    style={{
+                      paddingLeft: `${config.commentsIndent}px`,
+                      marginTop: '1px',
+                      fontFamily: config.commentsFontFamily,
+                      fontWeight: getFontWeight(config.commentsFontWeight),
+                      fontStyle: getFontStyle(config.commentsFontStyle),
+                      fontSize: getFontSize(config.commentsFontSize, 'comments'),
+                      color: config.commentsTextColor,
+                    }}
+                  >
+                    {item.comments}
                   </div>
                 )}
               </div>

@@ -496,7 +496,14 @@ export const generateTestOrders = asyncHandler(
       const screen = screens[Math.floor(Math.random() * screens.length)];
       const channel = channels[Math.floor(Math.random() * channels.length)];
 
-      let items: Array<{ name: string; quantity: number; modifier: string | null }> = [];
+      let items: Array<{ name: string; quantity: number; modifier: string | null; comments: string | null }> = [];
+
+      // Comentarios de ejemplo para items
+      const itemComments = [
+        'Cliente VIP', 'Urgente', 'Entregar primero', 'Verificar cantidad',
+        'Pago con tarjeta', 'Cliente frecuente', 'Revisar antes de entregar',
+        'Pedido especial', 'Sin prisa', 'Prioridad alta', null, null, null, null
+      ];
 
       // Determinar tipo de orden
       const random = Math.random();
@@ -506,11 +513,17 @@ export const generateTestOrders = asyncHandler(
       if (isExtraLongOrder) {
         // Usar plantilla de orden extra larga (fiesta/evento)
         const template = extraLongOrderTemplates[Math.floor(Math.random() * extraLongOrderTemplates.length)];
-        items = [...template.items];
+        items = template.items.map(item => ({
+          ...item,
+          comments: Math.random() > 0.7 ? itemComments[Math.floor(Math.random() * itemComments.length)] : null
+        }));
       } else if (isLongOrder) {
         // Usar una plantilla de orden larga
         const template = longOrderTemplates[Math.floor(Math.random() * longOrderTemplates.length)];
-        items = [...template.items];
+        items = template.items.map(item => ({
+          ...item,
+          comments: Math.random() > 0.7 ? itemComments[Math.floor(Math.random() * itemComments.length)] : null
+        }));
       } else {
         // Generar orden normal con más variación
         const numItems = Math.floor(Math.random() * 6) + 2; // 2-7 items
@@ -528,10 +541,16 @@ export const generateTestOrders = asyncHandler(
             modifier = Math.random() > 0.4 ? simpleModifiers[Math.floor(Math.random() * simpleModifiers.length)] : null;
           }
 
+          // 30% de probabilidad de tener comentario
+          const comment = Math.random() > 0.7
+            ? itemComments[Math.floor(Math.random() * itemComments.length)]
+            : null;
+
           items.push({
             name: product.name,
             quantity: Math.floor(Math.random() * 4) + 1, // 1-4 cantidad
             modifier,
+            comments: comment,
           });
         }
       }

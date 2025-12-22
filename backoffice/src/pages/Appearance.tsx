@@ -149,6 +149,18 @@ interface AppearanceConfig {
   showNotes: boolean;
 
   // ============================================
+  // TIPOGRAFÍA COMENTARIOS
+  // ============================================
+  commentsFontFamily: string;
+  commentsFontSize: string;
+  commentsFontWeight: string;
+  commentsFontStyle: string;
+  commentsTextColor: string;
+  commentsBgColor: string;
+  commentsIndent: number;
+  showComments: boolean;
+
+  // ============================================
   // TIPOGRAFÍA CANAL/FOOTER
   // ============================================
   channelFontFamily: string;
@@ -285,6 +297,16 @@ const defaultConfig: AppearanceConfig = {
   notesBgColor: '',
   notesIndent: 24,
   showNotes: true,
+
+  // Comments
+  commentsFontFamily: 'Inter, sans-serif',
+  commentsFontSize: 'small',
+  commentsFontWeight: 'normal',
+  commentsFontStyle: 'italic',
+  commentsTextColor: '#4CAF50',
+  commentsBgColor: '',
+  commentsIndent: 24,
+  showComments: true,
 
   // Channel
   channelFontFamily: 'Inter, sans-serif',
@@ -603,6 +625,16 @@ export function Appearance() {
           notesIndent: appearance.notesIndent ?? defaultConfig.notesIndent,
           showNotes: appearance.showNotes ?? defaultConfig.showNotes,
 
+          // Comments
+          commentsFontFamily: appearance.commentsFontFamily || defaultConfig.commentsFontFamily,
+          commentsFontSize: appearance.commentsFontSize || defaultConfig.commentsFontSize,
+          commentsFontWeight: appearance.commentsFontWeight || defaultConfig.commentsFontWeight,
+          commentsFontStyle: appearance.commentsFontStyle || defaultConfig.commentsFontStyle,
+          commentsTextColor: appearance.commentsTextColor || defaultConfig.commentsTextColor,
+          commentsBgColor: appearance.commentsBgColor || defaultConfig.commentsBgColor,
+          commentsIndent: appearance.commentsIndent ?? defaultConfig.commentsIndent,
+          showComments: appearance.showComments ?? defaultConfig.showComments,
+
           // Channel
           channelFontFamily: appearance.channelFontFamily || defaultConfig.channelFontFamily,
           channelFontSize: appearance.channelFontSize || defaultConfig.channelFontSize,
@@ -664,7 +696,7 @@ export function Appearance() {
         'timerTextColor', 'clientTextColor', 'clientBgColor', 'quantityTextColor',
         'productTextColor', 'productBgColor', 'subitemTextColor', 'subitemBgColor',
         'modifierFontColor', 'modifierBgColor', 'notesTextColor', 'notesBgColor',
-        'channelTextColor'
+        'commentsTextColor', 'commentsBgColor', 'channelTextColor'
       ];
 
       // Process all fields from config state
@@ -797,6 +829,16 @@ export function Appearance() {
           notesBgColor: appearance.notesBgColor || defaultConfig.notesBgColor,
           notesIndent: appearance.notesIndent ?? defaultConfig.notesIndent,
           showNotes: appearance.showNotes ?? defaultConfig.showNotes,
+
+          // Comments
+          commentsFontFamily: appearance.commentsFontFamily || defaultConfig.commentsFontFamily,
+          commentsFontSize: appearance.commentsFontSize || defaultConfig.commentsFontSize,
+          commentsFontWeight: appearance.commentsFontWeight || defaultConfig.commentsFontWeight,
+          commentsFontStyle: appearance.commentsFontStyle || defaultConfig.commentsFontStyle,
+          commentsTextColor: appearance.commentsTextColor || defaultConfig.commentsTextColor,
+          commentsBgColor: appearance.commentsBgColor || defaultConfig.commentsBgColor,
+          commentsIndent: appearance.commentsIndent ?? defaultConfig.commentsIndent,
+          showComments: appearance.showComments ?? defaultConfig.showComments,
 
           // Channel
           channelFontFamily: appearance.channelFontFamily || defaultConfig.channelFontFamily,
@@ -1118,6 +1160,24 @@ export function Appearance() {
                 />
               </Panel>
 
+              {/* Comentarios */}
+              <Panel
+                header={
+                  <Text strong>
+                    Comentarios <Text type="secondary">(comentarios del producto)</Text>
+                  </Text>
+                }
+                key="comments"
+              >
+                <TypographySection
+                  prefix="comments"
+                  showVisibilityToggle={true}
+                  showIndent={true}
+                  showBgColor={true}
+                  form={form}
+                />
+              </Panel>
+
               {/* Canal */}
               <Panel
                 header={
@@ -1254,6 +1314,14 @@ export function Appearance() {
               notesTextColor: config.notesTextColor,
               notesIndent: config.notesIndent,
               showNotes: config.showNotes,
+              // Comments
+              commentsFontFamily: config.commentsFontFamily,
+              commentsFontSize: config.commentsFontSize,
+              commentsFontWeight: config.commentsFontWeight,
+              commentsFontStyle: config.commentsFontStyle,
+              commentsTextColor: config.commentsTextColor,
+              commentsIndent: config.commentsIndent,
+              showComments: config.showComments,
               // Channel
               channelFontFamily: config.channelFontFamily,
               channelFontSize: config.channelFontSize,

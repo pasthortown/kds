@@ -44,6 +44,7 @@ export class OrderService {
                 quantity: item.quantity,
                 notes: item.notes,
                 modifier: item.modifier,
+                comments: item.comments,
               })),
             },
           },
@@ -66,6 +67,7 @@ export class OrderService {
             quantity: item.quantity,
             notes: item.notes || undefined,
             modifier: item.modifier || undefined,
+            comments: item.comments || undefined,
           })),
           // Campos opcionales para impresión/visualización
           comments: created.comments || undefined,
@@ -126,6 +128,7 @@ export class OrderService {
           quantity: item.quantity,
           notes: item.notes || undefined,
           modifier: item.modifier || undefined,
+          comments: item.comments || undefined,
         })),
         // Campos opcionales para impresión/visualización
         comments: order.comments || undefined,
@@ -186,6 +189,7 @@ export class OrderService {
           quantity: item.quantity,
           notes: item.notes || undefined,
           modifier: item.modifier || undefined,
+          comments: item.comments || undefined,
         })),
         // Campos opcionales para impresión/visualización
         comments: order.comments || undefined,
@@ -246,6 +250,7 @@ export class OrderService {
         quantity: item.quantity,
         notes: item.notes || undefined,
         modifier: item.modifier || undefined,
+        comments: item.comments || undefined,
       })),
       // Campos opcionales para impresión/visualización
       comments: order.comments || undefined,

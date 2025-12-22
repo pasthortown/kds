@@ -206,6 +206,7 @@ export class BalancerService {
         quantity: item.quantity,
         notes: item.notes || undefined,
         modifier: item.modifier || undefined,
+        comments: item.comments || undefined,
       })),
       // Campos opcionales para impresión/visualización
       comments: order.comments || undefined,

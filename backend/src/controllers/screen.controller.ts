@@ -237,6 +237,15 @@ export const updateAppearance = asyncHandler(
       notesBgColor: data.notesBgColor,
       notesIndent: data.notesIndent,
       showNotes: data.showNotes,
+      // Comentarios
+      commentsFontFamily: data.commentsFontFamily,
+      commentsFontSize: data.commentsFontSize,
+      commentsFontWeight: data.commentsFontWeight,
+      commentsFontStyle: data.commentsFontStyle,
+      commentsTextColor: data.commentsTextColor,
+      commentsBgColor: data.commentsBgColor,
+      commentsIndent: data.commentsIndent,
+      showComments: data.showComments,
       // Canal
       channelFontFamily: data.channelFontFamily,
       channelFontSize: data.channelFontSize,

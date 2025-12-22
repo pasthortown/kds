@@ -8,6 +8,7 @@ export interface OrderItem {
   quantity: number;
   notes?: string;
   modifier?: string;
+  comments?: string;
 }
 
 export interface Order {
@@ -170,6 +171,18 @@ export interface AppearanceConfig {
   notesBgColor?: string;
   notesIndent?: number;
   showNotes?: boolean;
+
+  // ============================================
+  // TIPOGRAFÍA COMENTARIOS (comentarios del producto)
+  // ============================================
+  commentsFontFamily?: string;
+  commentsFontSize?: string;
+  commentsFontWeight?: string;
+  commentsFontStyle?: string;
+  commentsTextColor?: string;
+  commentsBgColor?: string;
+  commentsIndent?: number;
+  showComments?: boolean;
 
   // ============================================
   // TIPOGRAFÍA CANAL/FOOTER (KIOSKO-EFECTIVO)

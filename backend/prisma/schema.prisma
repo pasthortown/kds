@@ -258,6 +258,18 @@ model Appearance {
   showNotes            Boolean @default(true)
 
   // ============================================
+  // TIPOGRAFÍA COMENTARIOS (comentarios del producto)
+  // ============================================
+  commentsFontFamily   String  @default("Inter, sans-serif")
+  commentsFontSize     String  @default("small")
+  commentsFontWeight   String  @default("normal")
+  commentsFontStyle    String  @default("italic")
+  commentsTextColor    String  @default("#4CAF50")
+  commentsBgColor      String  @default("")
+  commentsIndent       Int     @default(24)
+  showComments         Boolean @default(true)
+
+  // ============================================
   // TIPOGRAFÍA CANAL/FOOTER (KIOSKO-EFECTIVO)
   // ============================================
   channelFontFamily    String  @default("Inter, sans-serif")
@@ -429,6 +441,7 @@ model OrderItem {
   quantity Int     @default(1)
   notes    String?
   modifier String?
+  comments String? // Comentarios adicionales del producto
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }

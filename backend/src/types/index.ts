@@ -140,6 +140,15 @@ export interface AppearanceConfig {
   notesBgColor: string;
   notesIndent: number;
   showNotes: boolean;
+  // Comentarios
+  commentsFontFamily: string;
+  commentsFontSize: string;
+  commentsFontWeight: string;
+  commentsFontStyle: string;
+  commentsTextColor: string;
+  commentsBgColor: string;
+  commentsIndent: number;
+  showComments: boolean;
   // Canal
   channelFontFamily: string;
   channelFontSize: string;
@@ -231,6 +240,7 @@ export interface OrderItem {
   quantity: number;
   notes?: string;
   modifier?: string;
+  comments?: string;
 }
 
 export interface Order {
@@ -442,6 +452,16 @@ export const updateAppearanceSchema = z.object({
   notesBgColor: z.string().optional(),
   notesIndent: z.number().int().min(0).max(100).optional(),
   showNotes: z.boolean().optional(),
+
+  // Tipografia comentarios
+  commentsFontFamily: z.string().optional(),
+  commentsFontSize: z.string().optional(),
+  commentsFontWeight: z.string().optional(),
+  commentsFontStyle: z.string().optional(),
+  commentsTextColor: z.string().optional(),
+  commentsBgColor: z.string().optional(),
+  commentsIndent: z.number().int().min(0).max(100).optional(),
+  showComments: z.boolean().optional(),
 
   // Tipografia canal/footer
   channelFontFamily: z.string().optional(),
