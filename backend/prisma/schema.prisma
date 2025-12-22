@@ -403,6 +403,11 @@ model Order {
   finishedAt    DateTime?
   printedAt     DateTime?
 
+  // Campos adicionales para impresión/visualización (nullable, TEXT para soportar contenido largo)
+  comments      String?     @db.Text // Comentarios adicionales de la orden
+  templateHTML  String?     @db.Text // Plantilla HTML para renderizado
+  valuesHTML    String?     @db.Text // Valores HTML para la plantilla
+
   screen Screen? @relation(fields: [screenId], references: [id])
   items  OrderItem[]
 

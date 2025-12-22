@@ -33,6 +33,10 @@ export interface ApiComanda {
     Direccion?: string;
   };
   impresion?: string;
+  // Campos adicionales para impresión/visualización (nullable)
+  comments?: string;      // Comentarios adicionales de la orden
+  templateHTML?: string;  // Plantilla HTML para renderizado
+  valuesHTML?: string;    // Valores HTML para la plantilla
 }
 
 export interface ApiProduct {
@@ -250,7 +254,7 @@ export class ApiTicketService {
   private convertToInternalFormat(comanda: ApiComanda): any {
     const items = this.flattenProducts(comanda.products);
 
-    return {
+    const orderData: any = {
       externalId: comanda.orderId || comanda.id,
       channel: `${comanda.channel.name}-${comanda.channel.type}`,
       customerName: comanda.customer?.name || comanda.otrosDatos?.llamarPor || '',
@@ -258,6 +262,19 @@ export class ApiTicketService {
       items,
       createdAt: comanda.createdAt ? new Date(comanda.createdAt) : new Date(),
     };
+
+    // Agregar campos opcionales solo si tienen valor
+    if (comanda.comments) {
+      orderData.comments = comanda.comments;
+    }
+    if (comanda.templateHTML) {
+      orderData.templateHTML = comanda.templateHTML;
+    }
+    if (comanda.valuesHTML) {
+      orderData.valuesHTML = comanda.valuesHTML;
+    }
+
+    return orderData;
   }
 
   /**
@@ -297,7 +314,7 @@ export class ApiTicketService {
   private convertToApiFormat(order: any): ApiComanda {
     const [channelName, channelType] = (order.channel || '-').split('-');
 
-    return {
+    const apiComanda: ApiComanda = {
       id: order.id,
       orderId: order.externalId,
       createdAt: order.createdAt.toISOString(),
@@ -328,6 +345,19 @@ export class ApiTicketService {
         Direccion: '',
       },
     };
+
+    // Agregar campos opcionales solo si tienen valor
+    if (order.comments) {
+      apiComanda.comments = order.comments;
+    }
+    if (order.templateHTML) {
+      apiComanda.templateHTML = order.templateHTML;
+    }
+    if (order.valuesHTML) {
+      apiComanda.valuesHTML = order.valuesHTML;
+    }
+
+    return apiComanda;
   }
 }
 

@@ -34,6 +34,10 @@ export class OrderService {
             customerName: order.customerName,
             identifier: order.identifier,
             status: 'PENDING',
+            // Campos opcionales para impresión/visualización
+            comments: order.comments || null,
+            templateHTML: order.templateHTML || null,
+            valuesHTML: order.valuesHTML || null,
             items: {
               create: order.items.map((item) => ({
                 name: item.name,
@@ -63,6 +67,10 @@ export class OrderService {
             notes: item.notes || undefined,
             modifier: item.modifier || undefined,
           })),
+          // Campos opcionales para impresión/visualización
+          comments: created.comments || undefined,
+          templateHTML: created.templateHTML || undefined,
+          valuesHTML: created.valuesHTML || undefined,
         });
 
         orderLogger.debug(`Order created: ${created.identifier}`);
@@ -119,6 +127,10 @@ export class OrderService {
           notes: item.notes || undefined,
           modifier: item.modifier || undefined,
         })),
+        // Campos opcionales para impresión/visualización
+        comments: order.comments || undefined,
+        templateHTML: order.templateHTML || undefined,
+        valuesHTML: order.valuesHTML || undefined,
       };
     } catch (error) {
       orderLogger.error(`Error finishing order ${orderId}`, { error });
@@ -175,6 +187,10 @@ export class OrderService {
           notes: item.notes || undefined,
           modifier: item.modifier || undefined,
         })),
+        // Campos opcionales para impresión/visualización
+        comments: order.comments || undefined,
+        templateHTML: order.templateHTML || undefined,
+        valuesHTML: order.valuesHTML || undefined,
       };
     } catch (error) {
       orderLogger.error(`Error restoring order ${orderId}`, { error });
@@ -231,6 +247,10 @@ export class OrderService {
         notes: item.notes || undefined,
         modifier: item.modifier || undefined,
       })),
+      // Campos opcionales para impresión/visualización
+      comments: order.comments || undefined,
+      templateHTML: order.templateHTML || undefined,
+      valuesHTML: order.valuesHTML || undefined,
     }));
   }
 

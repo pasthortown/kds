@@ -207,6 +207,10 @@ export class BalancerService {
         notes: item.notes || undefined,
         modifier: item.modifier || undefined,
       })),
+      // Campos opcionales para impresión/visualización
+      comments: order.comments || undefined,
+      templateHTML: order.templateHTML || undefined,
+      valuesHTML: order.valuesHTML || undefined,
     }));
   }
 

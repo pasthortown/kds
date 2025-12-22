@@ -245,6 +245,10 @@ export interface Order {
   createdAt: Date;
   finishedAt?: Date;
   items: OrderItem[];
+  // Campos adicionales para impresión/visualización
+  comments?: string;      // Comentarios adicionales de la orden
+  templateHTML?: string;  // Plantilla HTML para renderizado
+  valuesHTML?: string;    // Valores HTML para la plantilla
 }
 
 // ============================================
