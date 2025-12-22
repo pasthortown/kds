@@ -575,7 +575,6 @@ export function Appearance() {
     setEditingChannel(channel);
     channelForm.setFieldsValue({
       name: channel.name,
-      displayName: channel.displayName,
       backgroundColor: channel.backgroundColor,
       textColor: channel.textColor,
       priority: channel.priority,
@@ -1395,7 +1394,7 @@ export function Appearance() {
                       fontSize: 13,
                     }}
                   >
-                    {record.displayName || record.name}
+                    {record.name}
                   </Tag>
                 ),
               },
@@ -1403,15 +1402,8 @@ export function Appearance() {
                 title: 'Nombre',
                 dataIndex: 'name',
                 key: 'name',
-                render: (name: string, record: Channel) => (
-                  <div>
-                    <div style={{ fontWeight: 500 }}>{name}</div>
-                    {record.displayName && (
-                      <div style={{ fontSize: 11, color: '#888' }}>
-                        Muestra: {record.displayName}
-                      </div>
-                    )}
-                  </div>
+                render: (name: string) => (
+                  <div style={{ fontWeight: 500 }}>{name}</div>
                 ),
               },
               {
@@ -1514,14 +1506,6 @@ export function Appearance() {
                 <Input placeholder="PedidosYa" />
               </Form.Item>
 
-              <Form.Item
-                name="displayName"
-                label="Nombre para Mostrar"
-                tooltip="Opcional. Si se especifica, se mostrara en lugar del nombre"
-              >
-                <Input placeholder="Pedidos Ya" />
-              </Form.Item>
-
               <Form.Item label="Colores" required>
                 <Space size="large">
                   <Form.Item
@@ -1550,7 +1534,6 @@ export function Appearance() {
                     const bgColor = channelForm.getFieldValue('backgroundColor');
                     const txtColor = channelForm.getFieldValue('textColor');
                     const name = channelForm.getFieldValue('name') || 'Canal';
-                    const displayName = channelForm.getFieldValue('displayName');
 
                     const backgroundColor = typeof bgColor === 'string'
                       ? bgColor
@@ -1569,7 +1552,7 @@ export function Appearance() {
                           fontSize: 14,
                         }}
                       >
-                        {displayName || name}
+                        {name}
                       </Tag>
                     );
                   }}
