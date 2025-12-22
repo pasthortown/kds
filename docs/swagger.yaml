@@ -1,0 +1,2130 @@
+openapi: 3.0.3
+info:
+  title: KDS API - Kitchen Display System
+  description: |
+    API REST del Sistema de Pantallas de Cocina (KDS) para KFC.
+
+    ## Autenticación
+    La API utiliza JWT (JSON Web Tokens) para autenticación.
+    Incluye el token en el header `Authorization: Bearer <token>`.
+
+    ## Roles
+    - **ADMIN**: Acceso completo a todas las operaciones
+    - **OPERATOR**: Puede gestionar pantallas y órdenes
+    - **VIEWER**: Solo lectura
+
+    ## Endpoints Públicos
+    Los siguientes endpoints no requieren autenticación:
+    - `POST /auth/login`
+    - `POST /auth/refresh`
+    - `GET /config/health`
+    - `GET /screens/by-number/{number}`
+  version: 2.0.0
+  contact:
+    name: KFC Ecuador - DSI
+    email: dsi@kfc.com.ec
+  license:
+    name: Proprietary
+
+servers:
+  - url: http://localhost:3000/api
+    description: Desarrollo
+  - url: https://kds.kfc.com.ec/api
+    description: Producción
+
+tags:
+  - name: Auth
+    description: Autenticación y gestión de sesiones
+  - name: Users
+    description: Gestión de usuarios del sistema
+  - name: Screens
+    description: Gestión de pantallas KDS
+  - name: Queues
+    description: Gestión de colas y canales
+  - name: Orders
+    description: Gestión de órdenes
+  - name: Config
+    description: Configuración del sistema
+  - name: Reports
+    description: Reportes y estadísticas
+  - name: Mirror
+    description: Espejo de datos remotos (solo lectura)
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido del endpoint /auth/login
+
+  schemas:
+    # === AUTH ===
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@kfc.com.ec
+        password:
+          type: string
+          format: password
+          example: cx-dsi2025
+
+    LoginResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: Token JWT para autenticación (expira en 15 min)
+        refreshToken:
+          type: string
+          description: Token para renovar el accessToken (expira en 7 días)
+        user:
+          $ref: '#/components/schemas/UserBasic'
+
+    UserBasic:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    UserRole:
+      type: string
+      enum: [ADMIN, OPERATOR, VIEWER]
+
+    # === USER ===
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - password
+        - name
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        name:
+          type: string
+          minLength: 2
+        role:
+          $ref: '#/components/schemas/UserRole'
+
+    # === SCREEN ===
+    ScreenStatus:
+      type: string
+      enum: [ONLINE, OFFLINE, STANDBY]
+
+    Screen:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+        name:
+          type: string
+        queueId:
+          type: string
+        queueName:
+          type: string
+        status:
+          $ref: '#/components/schemas/ScreenStatus'
+        lastHeartbeat:
+          type: string
+          format: date-time
+          nullable: true
+        apiKey:
+          type: string
+
+    ScreenConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+        name:
+          type: string
+        status:
+          $ref: '#/components/schemas/ScreenStatus'
+        queue:
+          $ref: '#/components/schemas/QueueBasic'
+        appearance:
+          $ref: '#/components/schemas/Appearance'
+        preference:
+          $ref: '#/components/schemas/Preference'
+        keyboard:
+          $ref: '#/components/schemas/KeyboardConfig'
+        printer:
+          $ref: '#/components/schemas/PrinterConfig'
+
+    Appearance:
+      type: object
+      properties:
+        fontSize:
+          type: string
+          example: "20px"
+        fontFamily:
+          type: string
+          example: "Arimo-Medium"
+        columnsPerScreen:
+          type: integer
+          example: 4
+        columnSize:
+          type: string
+          example: "260px"
+        rows:
+          type: integer
+          example: 3
+        theme:
+          type: string
+          enum: [DARK, LIGHT]
+        backgroundColor:
+          type: string
+          example: "#1a1a1a"
+        headerColor:
+          type: string
+        cardColor:
+          type: string
+        textColor:
+          type: string
+        accentColor:
+          type: string
+        showHeader:
+          type: boolean
+        showTimer:
+          type: boolean
+        showClient:
+          type: boolean
+        showChannel:
+          type: boolean
+        showOrderNumber:
+          type: boolean
+        animationEnabled:
+          type: boolean
+        cardColors:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardColor'
+        channelColors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelColor'
+
+    CardColor:
+      type: object
+      properties:
+        id:
+          type: string
+        color:
+          type: string
+          example: "#98c530"
+        minutes:
+          type: string
+          example: "01:00"
+        order:
+          type: integer
+        isFullBackground:
+          type: boolean
+
+    ChannelColor:
+      type: object
+      properties:
+        channel:
+          type: string
+        color:
+          type: string
+
+    Preference:
+      type: object
+      properties:
+        finishOrderActive:
+          type: boolean
+        finishOrderTime:
+          type: string
+          example: "00:20"
+        showClientData:
+          type: boolean
+        showName:
+          type: boolean
+        showIdentifier:
+          type: boolean
+        identifierMessage:
+          type: string
+        showPagination:
+          type: boolean
+        touchEnabled:
+          type: boolean
+        botoneraEnabled:
+          type: boolean
+
+    KeyboardConfig:
+      type: object
+      properties:
+        finishFirstOrder:
+          type: string
+          example: "h"
+        finishSecondOrder:
+          type: string
+          example: "3"
+        finishThirdOrder:
+          type: string
+          example: "1"
+        finishFourthOrder:
+          type: string
+          example: "f"
+        nextPage:
+          type: string
+          example: "i"
+        previousPage:
+          type: string
+          example: "g"
+        undo:
+          type: string
+          example: "c"
+        debounceTime:
+          type: integer
+          example: 200
+        combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeyCombo'
+
+    KeyCombo:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            type: string
+        holdTime:
+          type: integer
+        action:
+          type: string
+        enabled:
+          type: boolean
+
+    PrinterConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        ip:
+          type: string
+        port:
+          type: integer
+          default: 9100
+        enabled:
+          type: boolean
+
+    CreateScreenRequest:
+      type: object
+      required:
+        - name
+        - queueId
+      properties:
+        name:
+          type: string
+        queueId:
+          type: string
+
+    # === QUEUE ===
+    QueueBasic:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        distribution:
+          type: string
+          enum: [DISTRIBUTED, SINGLE]
+
+    Queue:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        distribution:
+          type: string
+          enum: [DISTRIBUTED, SINGLE]
+        active:
+          type: boolean
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueChannel'
+        filters:
+          type: array
+          items:
+            $ref: '#/components/schemas/QueueFilter'
+        screens:
+          type: array
+          items:
+            $ref: '#/components/schemas/Screen'
+
+    QueueChannel:
+      type: object
+      properties:
+        id:
+          type: string
+        channel:
+          type: string
+          example: "Kiosko-Efectivo"
+        color:
+          type: string
+          example: "#0299d0"
+        priority:
+          type: integer
+        active:
+          type: boolean
+
+    QueueFilter:
+      type: object
+      properties:
+        id:
+          type: string
+        pattern:
+          type: string
+          example: "sanduche"
+        suppress:
+          type: boolean
+
+    CreateQueueRequest:
+      type: object
+      required:
+        - name
+        - distribution
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        distribution:
+          type: string
+          enum: [DISTRIBUTED, SINGLE]
+
+    # === ORDER ===
+    OrderStatus:
+      type: string
+      enum: [PENDING, IN_PROGRESS, FINISHED, CANCELLED]
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        externalId:
+          type: string
+        identifier:
+          type: string
+          example: "1064"
+        channel:
+          type: string
+        customerName:
+          type: string
+          nullable: true
+        status:
+          $ref: '#/components/schemas/OrderStatus'
+        screenId:
+          type: string
+          nullable: true
+        screenName:
+          type: string
+        queueName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        finishedAt:
+          type: string
+          format: date-time
+          nullable: true
+        finishTime:
+          type: integer
+          description: Tiempo de finalización en segundos
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+        modifier:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    OrdersResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        total:
+          type: integer
+
+    # === CONFIG ===
+    GeneralConfig:
+      type: object
+      properties:
+        id:
+          type: string
+        testMode:
+          type: boolean
+        ticketMode:
+          type: string
+          enum: [POLLING, API]
+        printMode:
+          type: string
+          enum: [LOCAL, CENTRALIZED]
+        pollingInterval:
+          type: integer
+        orderLifetime:
+          type: integer
+        printRetries:
+          type: integer
+
+    HealthCheck:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, unhealthy]
+        checks:
+          type: object
+          properties:
+            database:
+              type: boolean
+            redis:
+              type: boolean
+            polling:
+              type: boolean
+        timestamp:
+          type: string
+          format: date-time
+
+    SystemStats:
+      type: object
+      properties:
+        screens:
+          type: object
+          properties:
+            total:
+              type: integer
+            online:
+              type: integer
+        queues:
+          type: integer
+        ordersToday:
+          type: integer
+        uptime:
+          type: integer
+        memory:
+          type: object
+
+    # === REPORTS ===
+    DashboardReport:
+      type: object
+      properties:
+        metadata:
+          $ref: '#/components/schemas/ReportMetadata'
+        summary:
+          $ref: '#/components/schemas/ReportSummary'
+        screenStatus:
+          $ref: '#/components/schemas/ScreenStatusSummary'
+        highlights:
+          $ref: '#/components/schemas/ReportHighlights'
+        byScreen:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScreenStats'
+        byChannel:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelStats'
+        hourlyStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/HourlyStats'
+        screens:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScreenInfo'
+
+    ReportMetadata:
+      type: object
+      properties:
+        id_restaurante:
+          type: string
+          example: "K027"
+        generatedAt:
+          type: string
+          format: date-time
+        timeLimit:
+          type: integer
+          example: 5
+        timezone:
+          type: string
+          example: "America/Mexico_City"
+        reportDate:
+          type: string
+          example: "viernes, 19 de diciembre de 2025"
+
+    ReportSummary:
+      type: object
+      properties:
+        pending:
+          type: integer
+        inProgress:
+          type: integer
+        finishedToday:
+          type: integer
+        cancelledToday:
+          type: integer
+        onTime:
+          type: integer
+        outOfTime:
+          type: integer
+        avgFinishTime:
+          type: integer
+          description: Tiempo promedio en segundos
+        minFinishTime:
+          type: integer
+        maxFinishTime:
+          type: integer
+        totalProcessed:
+          type: integer
+        onTimePercentage:
+          type: integer
+        outOfTimePercentage:
+          type: integer
+
+    ScreenStatusSummary:
+      type: object
+      properties:
+        online:
+          type: integer
+        offline:
+          type: integer
+        standby:
+          type: integer
+        total:
+          type: integer
+
+    ReportHighlights:
+      type: object
+      properties:
+        fastestOrder:
+          $ref: '#/components/schemas/OrderHighlight'
+        slowestOrder:
+          $ref: '#/components/schemas/OrderHighlight'
+        peakHour:
+          $ref: '#/components/schemas/PeakHour'
+        topChannel:
+          $ref: '#/components/schemas/ChannelStats'
+        mostEfficientScreen:
+          $ref: '#/components/schemas/ScreenStats'
+
+    OrderHighlight:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+        identifier:
+          type: string
+        channel:
+          type: string
+        finishTime:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+
+    PeakHour:
+      type: object
+      nullable: true
+      properties:
+        hour:
+          type: integer
+        hourLabel:
+          type: string
+        total:
+          type: integer
+        onTime:
+          type: integer
+        outOfTime:
+          type: integer
+
+    ScreenStats:
+      type: object
+      properties:
+        screenId:
+          type: string
+        screenName:
+          type: string
+        queueName:
+          type: string
+        pending:
+          type: integer
+        finishedToday:
+          type: integer
+        onTime:
+          type: integer
+        outOfTime:
+          type: integer
+        avgFinishTime:
+          type: integer
+        efficiencyRate:
+          type: integer
+
+    ChannelStats:
+      type: object
+      properties:
+        channel:
+          type: string
+        total:
+          type: integer
+        onTime:
+          type: integer
+        outOfTime:
+          type: integer
+        avgFinishTime:
+          type: integer
+        efficiencyRate:
+          type: integer
+
+    HourlyStats:
+      type: object
+      properties:
+        hour:
+          type: integer
+        hourLabel:
+          type: string
+        total:
+          type: integer
+        onTime:
+          type: integer
+        outOfTime:
+          type: integer
+        efficiencyRate:
+          type: integer
+
+    ScreenInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        number:
+          type: integer
+        name:
+          type: string
+        url:
+          type: string
+        queueName:
+          type: string
+        status:
+          $ref: '#/components/schemas/ScreenStatus'
+        lastHeartbeat:
+          type: string
+          format: date-time
+          nullable: true
+
+    DailySummary:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        dateFormatted:
+          type: string
+        totals:
+          type: object
+          properties:
+            total:
+              type: integer
+            finished:
+              type: integer
+            pending:
+              type: integer
+            cancelled:
+              type: integer
+        times:
+          type: object
+          properties:
+            avgFinishTime:
+              type: integer
+            minFinishTime:
+              type: integer
+            maxFinishTime:
+              type: integer
+        byChannel:
+          type: array
+          items:
+            type: object
+            properties:
+              channel:
+                type: string
+              count:
+                type: integer
+
+    # === ERRORS ===
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    ValidationError:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+
+  responses:
+    Unauthorized:
+      description: Token no proporcionado o inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "No authorization header"
+    Forbidden:
+      description: Sin permisos para esta operación
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Insufficient permissions"
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Resource not found"
+    BadRequest:
+      description: Datos de entrada inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ==================== AUTH ====================
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión
+      description: Obtiene tokens de acceso mediante credenciales
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Credenciales inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renovar token
+      description: Obtiene un nuevo accessToken usando el refreshToken
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token renovado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Obtener usuario actual
+      description: Retorna información del usuario autenticado
+      responses:
+        '200':
+          description: Usuario actual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserBasic'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Cambiar contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - currentPassword
+                - newPassword
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Contraseña cambiada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ==================== USERS ====================
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar usuarios
+      description: Obtiene todos los usuarios del sistema (solo ADMIN)
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Users]
+      summary: Crear usuario
+      description: Crea un nuevo usuario (solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags: [Users]
+      summary: Obtener usuario
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Users]
+      summary: Actualizar usuario
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                name:
+                  type: string
+                role:
+                  $ref: '#/components/schemas/UserRole'
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Usuario actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+    delete:
+      tags: [Users]
+      summary: Eliminar usuario
+      responses:
+        '200':
+          description: Usuario eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+
+  /users/{id}/toggle-active:
+    post:
+      tags: [Users]
+      summary: Activar/Desactivar usuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estado cambiado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  # ==================== SCREENS ====================
+  /screens:
+    get:
+      tags: [Screens]
+      summary: Listar pantallas
+      description: Obtiene todas las pantallas con su estado actual
+      responses:
+        '200':
+          description: Lista de pantallas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Screen'
+
+    post:
+      tags: [Screens]
+      summary: Crear pantalla
+      description: Crea una nueva pantalla (solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateScreenRequest'
+      responses:
+        '201':
+          description: Pantalla creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenConfig'
+
+  /screens/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags: [Screens]
+      summary: Obtener pantalla
+      responses:
+        '200':
+          description: Pantalla encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Screen'
+
+    put:
+      tags: [Screens]
+      summary: Actualizar pantalla
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                queueId:
+                  type: string
+      responses:
+        '200':
+          description: Pantalla actualizada
+
+    delete:
+      tags: [Screens]
+      summary: Eliminar pantalla
+      responses:
+        '204':
+          description: Pantalla eliminada
+
+  /screens/{id}/config:
+    get:
+      tags: [Screens]
+      summary: Obtener configuración completa
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuración de pantalla
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScreenConfig'
+
+  /screens/{id}/appearance:
+    put:
+      tags: [Screens]
+      summary: Actualizar apariencia
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Appearance'
+      responses:
+        '200':
+          description: Apariencia actualizada
+
+  /screens/{id}/keyboard:
+    put:
+      tags: [Screens]
+      summary: Actualizar configuración de teclado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/KeyboardConfig'
+      responses:
+        '200':
+          description: Teclado actualizado
+
+  /screens/{id}/preference:
+    put:
+      tags: [Screens]
+      summary: Actualizar preferencias
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Preference'
+      responses:
+        '200':
+          description: Preferencias actualizadas
+
+  /screens/{id}/printer:
+    put:
+      tags: [Screens]
+      summary: Configurar impresora
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrinterConfig'
+      responses:
+        '200':
+          description: Impresora configurada
+
+    delete:
+      tags: [Screens]
+      summary: Eliminar configuración de impresora
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuración eliminada
+
+  /screens/{id}/printer/test:
+    post:
+      tags: [Screens]
+      summary: Probar conexión a impresora
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resultado del test
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+
+  /screens/{id}/standby:
+    post:
+      tags: [Screens]
+      summary: Poner pantalla en standby
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pantalla en standby
+
+  /screens/{id}/activate:
+    post:
+      tags: [Screens]
+      summary: Activar pantalla
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pantalla activada
+
+  /screens/{id}/regenerate-key:
+    post:
+      tags: [Screens]
+      summary: Regenerar API Key
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Nueva API Key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  apiKey:
+                    type: string
+
+  /screens/by-number/{number}:
+    get:
+      tags: [Screens]
+      summary: Obtener pantalla por número
+      description: Endpoint público para el frontend KDS
+      security: []
+      parameters:
+        - name: number
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Datos de la pantalla
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  screenId:
+                    type: string
+                  screenNumber:
+                    type: integer
+                  screenName:
+                    type: string
+                  apiKey:
+                    type: string
+                  status:
+                    $ref: '#/components/schemas/ScreenStatus'
+                  queue:
+                    $ref: '#/components/schemas/QueueBasic'
+
+  # ==================== QUEUES ====================
+  /queues:
+    get:
+      tags: [Queues]
+      summary: Listar colas
+      responses:
+        '200':
+          description: Lista de colas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Queue'
+
+    post:
+      tags: [Queues]
+      summary: Crear cola
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQueueRequest'
+      responses:
+        '201':
+          description: Cola creada
+
+  /queues/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
+    get:
+      tags: [Queues]
+      summary: Obtener cola
+      responses:
+        '200':
+          description: Cola encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Queue'
+
+    put:
+      tags: [Queues]
+      summary: Actualizar cola
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                distribution:
+                  type: string
+                  enum: [DISTRIBUTED, SINGLE]
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Cola actualizada
+
+    delete:
+      tags: [Queues]
+      summary: Eliminar cola
+      responses:
+        '204':
+          description: Cola eliminada
+
+  /queues/{id}/channels:
+    post:
+      tags: [Queues]
+      summary: Agregar canal a cola
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channel
+              properties:
+                channel:
+                  type: string
+                color:
+                  type: string
+                priority:
+                  type: integer
+      responses:
+        '201':
+          description: Canal agregado
+
+  /queues/{id}/channels/{channelId}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+
+    put:
+      tags: [Queues]
+      summary: Actualizar canal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                color:
+                  type: string
+                priority:
+                  type: integer
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Canal actualizado
+
+    delete:
+      tags: [Queues]
+      summary: Eliminar canal
+      responses:
+        '204':
+          description: Canal eliminado
+
+  /queues/{id}/filters:
+    post:
+      tags: [Queues]
+      summary: Agregar filtro a cola
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - pattern
+              properties:
+                pattern:
+                  type: string
+                suppress:
+                  type: boolean
+      responses:
+        '201':
+          description: Filtro agregado
+
+  /queues/{id}/filters/{filterId}:
+    delete:
+      tags: [Queues]
+      summary: Eliminar filtro
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: filterId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Filtro eliminado
+
+  /queues/{id}/stats:
+    get:
+      tags: [Queues]
+      summary: Estadísticas de cola
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Estadísticas de balance
+
+  /queues/{id}/reset-balance:
+    post:
+      tags: [Queues]
+      summary: Resetear índice de balance
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Balance reseteado
+
+  # ==================== ORDERS ====================
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Listar órdenes
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/OrderStatus'
+        - name: screenId
+          in: query
+          schema:
+            type: string
+        - name: queueId
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Lista de órdenes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersResponse'
+
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Obtener orden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Orden encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /orders/screen/{screenId}:
+    get:
+      tags: [Orders]
+      summary: Órdenes de una pantalla
+      parameters:
+        - name: screenId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Órdenes de la pantalla
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /orders/recently-finished/{screenId}:
+    get:
+      tags: [Orders]
+      summary: Órdenes recientemente finalizadas
+      parameters:
+        - name: screenId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: minutes
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        '200':
+          description: Órdenes finalizadas recientemente
+
+  /orders/stats:
+    get:
+      tags: [Orders]
+      summary: Estadísticas generales
+      responses:
+        '200':
+          description: Estadísticas de órdenes
+
+  /orders/dashboard-stats:
+    get:
+      tags: [Orders]
+      summary: Estadísticas del dashboard
+      parameters:
+        - name: timeLimit
+          in: query
+          schema:
+            type: integer
+            default: 5
+          description: Tiempo límite en minutos para considerar "a tiempo"
+      responses:
+        '200':
+          description: Estadísticas del dashboard
+
+  /orders/{id}/finish:
+    post:
+      tags: [Orders]
+      summary: Finalizar orden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - screenId
+              properties:
+                screenId:
+                  type: string
+      responses:
+        '200':
+          description: Orden finalizada
+
+  /orders/{id}/undo:
+    post:
+      tags: [Orders]
+      summary: Deshacer finalización
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Orden restaurada
+
+  /orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      summary: Cancelar orden
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Orden cancelada
+
+  /orders/cleanup:
+    delete:
+      tags: [Orders]
+      summary: Limpiar órdenes antiguas
+      description: Solo disponible en desarrollo
+      parameters:
+        - name: hours
+          in: query
+          schema:
+            type: integer
+            default: 24
+      responses:
+        '200':
+          description: Órdenes limpiadas
+
+  /orders/generate-test:
+    post:
+      tags: [Orders]
+      summary: Generar órdenes de prueba
+      description: Solo disponible en desarrollo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  default: 10
+                includeLong:
+                  type: boolean
+                includeExtraLong:
+                  type: boolean
+      responses:
+        '200':
+          description: Órdenes generadas
+
+  /orders/test-orders:
+    delete:
+      tags: [Orders]
+      summary: Eliminar órdenes de prueba
+      description: Solo disponible en desarrollo
+      responses:
+        '200':
+          description: Órdenes eliminadas
+
+  # ==================== CONFIG ====================
+  /config/health:
+    get:
+      tags: [Config]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Estado del sistema
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthCheck'
+
+  /config/stats:
+    get:
+      tags: [Config]
+      summary: Estadísticas del sistema
+      responses:
+        '200':
+          description: Estadísticas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemStats'
+
+  /config/general:
+    get:
+      tags: [Config]
+      summary: Obtener configuración general
+      responses:
+        '200':
+          description: Configuración
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralConfig'
+
+    put:
+      tags: [Config]
+      summary: Actualizar configuración general
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeneralConfig'
+      responses:
+        '200':
+          description: Configuración actualizada
+
+  /config/modes:
+    get:
+      tags: [Config]
+      summary: Obtener modos de configuración
+      responses:
+        '200':
+          description: Modos actuales
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ticketMode:
+                    type: string
+                    enum: [POLLING, API]
+                  printMode:
+                    type: string
+                    enum: [LOCAL, CENTRALIZED]
+                  centralizedPrintUrl:
+                    type: string
+                  centralizedPrintPort:
+                    type: integer
+
+    put:
+      tags: [Config]
+      summary: Actualizar modos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ticketMode:
+                  type: string
+                  enum: [POLLING, API]
+                printMode:
+                  type: string
+                  enum: [LOCAL, CENTRALIZED]
+                centralizedPrintUrl:
+                  type: string
+                centralizedPrintPort:
+                  type: integer
+      responses:
+        '200':
+          description: Modos actualizados
+
+  /config/polling:
+    get:
+      tags: [Config]
+      summary: Estado del polling
+      responses:
+        '200':
+          description: Estado actual
+
+  /config/polling/start:
+    post:
+      tags: [Config]
+      summary: Iniciar polling
+      responses:
+        '200':
+          description: Polling iniciado
+
+  /config/polling/stop:
+    post:
+      tags: [Config]
+      summary: Detener polling
+      responses:
+        '200':
+          description: Polling detenido
+
+  /config/polling/force:
+    post:
+      tags: [Config]
+      summary: Forzar ciclo de polling
+      responses:
+        '200':
+          description: Ciclo ejecutado
+
+  /config/print/test-centralized:
+    post:
+      tags: [Config]
+      summary: Probar impresión centralizada
+      responses:
+        '200':
+          description: Resultado del test
+
+  # ==================== REPORTS ====================
+  /reports/dashboard:
+    get:
+      tags: [Reports]
+      summary: Reporte del dashboard
+      description: Obtiene todos los datos necesarios para reportes
+      parameters:
+        - name: timeLimit
+          in: query
+          schema:
+            type: integer
+            default: 5
+          description: Tiempo límite en minutos
+      responses:
+        '200':
+          description: Reporte completo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardReport'
+
+  /reports/daily-summary:
+    get:
+      tags: [Reports]
+      summary: Resumen diario
+      parameters:
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Fecha del resumen (default hoy)
+      responses:
+        '200':
+          description: Resumen del día
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySummary'
+
+  # ==================== MIRROR ====================
+  /mirror/configure:
+    post:
+      tags: [Mirror]
+      summary: Configurar conexión remota
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - host
+                - user
+                - password
+                - database
+              properties:
+                host:
+                  type: string
+                port:
+                  type: integer
+                user:
+                  type: string
+                password:
+                  type: string
+                database:
+                  type: string
+      responses:
+        '200':
+          description: Configuración guardada
+
+  /mirror/test:
+    get:
+      tags: [Mirror]
+      summary: Probar conexión
+      responses:
+        '200':
+          description: Resultado del test
+
+  /mirror/stats:
+    get:
+      tags: [Mirror]
+      summary: Estadísticas del espejo
+      responses:
+        '200':
+          description: Estadísticas
+
+  /mirror/orders:
+    get:
+      tags: [Mirror]
+      summary: Órdenes del espejo
+      parameters:
+        - name: screen
+          in: query
+          schema:
+            type: string
+        - name: queue
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Órdenes remotas
+
+  /mirror/screens:
+    get:
+      tags: [Mirror]
+      summary: Pantallas del espejo
+      responses:
+        '200':
+          description: Pantallas remotas
+
+  /mirror/queues:
+    get:
+      tags: [Mirror]
+      summary: Colas del espejo
+      responses:
+        '200':
+          description: Colas remotas
+
+  /mirror/disconnect:
+    post:
+      tags: [Mirror]
+      summary: Desconectar espejo
+      responses:
+        '200':
+          description: Desconectado
+
+  # ==================== TICKETS (Legacy) ====================
+  /tickets/receive:
+    post:
+      tags: [Config]
+      summary: Recibir ticket (API Mode)
+      description: Endpoint para recibir tickets desde sistemas externos
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Ticket recibido
+
+  /tickets/receive-batch:
+    post:
+      tags: [Config]
+      summary: Recibir tickets en lote
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comandas:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: Tickets recibidos
