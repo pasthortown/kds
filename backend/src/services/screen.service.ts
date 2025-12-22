@@ -278,6 +278,7 @@ export class ScreenService {
             channelColors: screen.appearance.channelColors.map((c) => ({
               channel: c.channel,
               color: c.color,
+              textColor: c.textColor || '#ffffff',
             })),
           }
         : null,

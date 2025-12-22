@@ -6,6 +6,7 @@ import * as authController from '../controllers/auth.controller';
 import * as userController from '../controllers/user.controller';
 import * as screenController from '../controllers/screen.controller';
 import * as queueController from '../controllers/queue.controller';
+import * as channelController from '../controllers/channel.controller';
 import * as orderController from '../controllers/order.controller';
 import * as configController from '../controllers/config.controller';
 import * as mirrorController from '../controllers/mirror.controller';
@@ -368,5 +369,17 @@ router.post(
 // ============================================
 router.get('/reports/dashboard', authenticate, reportController.getDashboardReport);
 router.get('/reports/daily-summary', authenticate, reportController.getDailySummary);
+
+// ============================================
+// CHANNEL ROUTES
+// ============================================
+router.get('/channels', authenticate, channelController.getAllChannels);
+router.get('/channels/active', channelController.getActiveChannels);
+router.get('/channels/by-name/:name', channelController.getChannelByName);
+router.get('/channels/:id', authenticate, channelController.getChannel);
+router.post('/channels', authenticate, authorize('ADMIN'), channelController.createChannel);
+router.put('/channels/:id', authenticate, authorize('ADMIN'), channelController.updateChannel);
+router.delete('/channels/:id', authenticate, authorize('ADMIN'), channelController.deleteChannel);
+router.post('/channels/seed', authenticate, authorize('ADMIN'), channelController.seedChannels);
 
 export default router;

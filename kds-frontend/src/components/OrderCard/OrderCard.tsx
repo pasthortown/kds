@@ -208,10 +208,11 @@ export function OrderCard({
 
   // Obtener color del canal
   const channelKey = order.channel.toLowerCase();
-  const channelColor =
-    channelColors.find(
-      (c) => c.channel.toLowerCase() === channelKey
-    )?.color || defaultChannelColors[channelKey] || '#4a90e2';
+  const channelColorConfig = channelColors.find(
+    (c) => c.channel.toLowerCase() === channelKey
+  );
+  const channelColor = channelColorConfig?.color || defaultChannelColors[channelKey] || '#4a90e2';
+  const channelTextColor = channelColorConfig?.textColor || config.channelTextColor;
 
   const isSplit = totalParts > 1;
 
@@ -487,7 +488,7 @@ export function OrderCard({
             >
               <span
                 style={{
-                  color: config.channelTextColor,
+                  color: channelTextColor,
                   fontFamily: config.channelFontFamily,
                   fontWeight: getFontWeight(config.channelFontWeight),
                   fontStyle: getFontStyle(config.channelFontStyle),

@@ -191,4 +191,32 @@ export const reportsApi = {
     api.get('/reports/daily-summary', { params: { date } }),
 };
 
+// Channels (Configuración de canales)
+export const channelsApi = {
+  getAll: () => api.get('/channels'),
+  getActive: () => api.get('/channels/active'),
+  get: (id: string) => api.get(`/channels/${id}`),
+  getByName: (name: string) => api.get(`/channels/by-name/${name}`),
+  create: (data: {
+    name: string;
+    displayName?: string;
+    backgroundColor: string;
+    textColor: string;
+    icon?: string;
+    priority?: number;
+    active?: boolean;
+  }) => api.post('/channels', data),
+  update: (id: string, data: {
+    name?: string;
+    displayName?: string;
+    backgroundColor?: string;
+    textColor?: string;
+    icon?: string;
+    priority?: number;
+    active?: boolean;
+  }) => api.put(`/channels/${id}`, data),
+  delete: (id: string) => api.delete(`/channels/${id}`),
+  seed: () => api.post('/channels/seed'),
+};
+
 export default api;

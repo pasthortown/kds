@@ -62,6 +62,7 @@ export interface CardColor {
 export interface ChannelColor {
   channel: string;
   color: string;
+  textColor?: string;
 }
 
 export interface AppearanceConfig {

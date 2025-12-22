@@ -16,9 +16,15 @@ import {
   Collapse,
   Typography,
   Popover,
+  Table,
+  Modal,
+  Input,
+  Popconfirm,
+  Tag,
+  Tooltip,
 } from 'antd';
-import { SaveOutlined, ReloadOutlined, UndoOutlined, FontColorsOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined } from '@ant-design/icons';
-import { screensApi, mirrorApi } from '../services/api';
+import { SaveOutlined, ReloadOutlined, UndoOutlined, FontColorsOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { screensApi, mirrorApi, channelsApi } from '../services/api';
 import { ScreenPreview } from '../components/ScreenPreview';
 import type { Color } from 'antd/es/color-picker';
 
@@ -45,6 +51,17 @@ interface PreviewOrder {
   }>;
   createdAt: Date;
   status: 'PENDING' | 'IN_PROGRESS';
+}
+
+interface Channel {
+  id: string;
+  name: string;
+  displayName?: string;
+  backgroundColor: string;
+  textColor: string;
+  icon?: string;
+  priority: number;
+  active: boolean;
 }
 
 interface AppearanceConfig {
@@ -468,9 +485,17 @@ export function Appearance() {
   const [copyFromScreenId, setCopyFromScreenId] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
 
+  // Channel management state
+  const [channels, setChannels] = useState<Channel[]>([]);
+  const [channelsLoading, setChannelsLoading] = useState(false);
+  const [channelModalOpen, setChannelModalOpen] = useState(false);
+  const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
+  const [channelForm] = Form.useForm();
+
   useEffect(() => {
     loadScreens();
     checkMirrorStatus();
+    loadChannels();
   }, []);
 
   useEffect(() => {
@@ -518,6 +543,93 @@ export function Appearance() {
       setMirrorConnected(data.connected === true);
     } catch {
       setMirrorConnected(false);
+    }
+  };
+
+  // Channel management functions
+  const loadChannels = async () => {
+    setChannelsLoading(true);
+    try {
+      const { data } = await channelsApi.getAll();
+      setChannels(data);
+    } catch (error) {
+      message.error('Error al cargar canales');
+    } finally {
+      setChannelsLoading(false);
+    }
+  };
+
+  const handleCreateChannel = () => {
+    setEditingChannel(null);
+    channelForm.resetFields();
+    channelForm.setFieldsValue({
+      backgroundColor: '#4a90e2',
+      textColor: '#ffffff',
+      priority: 0,
+      active: true,
+    });
+    setChannelModalOpen(true);
+  };
+
+  const handleEditChannel = (channel: Channel) => {
+    setEditingChannel(channel);
+    channelForm.setFieldsValue({
+      name: channel.name,
+      displayName: channel.displayName,
+      backgroundColor: channel.backgroundColor,
+      textColor: channel.textColor,
+      priority: channel.priority,
+      active: channel.active,
+    });
+    setChannelModalOpen(true);
+  };
+
+  const handleDeleteChannel = async (id: string) => {
+    try {
+      await channelsApi.delete(id);
+      message.success('Canal eliminado');
+      loadChannels();
+    } catch (error: any) {
+      message.error(error.response?.data?.error || 'Error al eliminar canal');
+    }
+  };
+
+  const handleSeedChannels = async () => {
+    try {
+      const { data } = await channelsApi.seed();
+      message.success(data.message);
+      loadChannels();
+    } catch (error: any) {
+      message.error(error.response?.data?.error || 'Error al crear canales por defecto');
+    }
+  };
+
+  const handleChannelSubmit = async (values: any) => {
+    try {
+      const backgroundColor = typeof values.backgroundColor === 'string'
+        ? values.backgroundColor
+        : (values.backgroundColor as Color)?.toHexString?.() || values.backgroundColor;
+      const textColor = typeof values.textColor === 'string'
+        ? values.textColor
+        : (values.textColor as Color)?.toHexString?.() || values.textColor;
+
+      const data = {
+        ...values,
+        backgroundColor,
+        textColor,
+      };
+
+      if (editingChannel) {
+        await channelsApi.update(editingChannel.id, data);
+        message.success('Canal actualizado');
+      } else {
+        await channelsApi.create(data);
+        message.success('Canal creado');
+      }
+      setChannelModalOpen(false);
+      loadChannels();
+    } catch (error: any) {
+      message.error(error.response?.data?.error || 'Error al guardar canal');
     }
   };
 
@@ -1233,6 +1345,263 @@ export function Appearance() {
               </Col>
             </Row>
           </Form>
+
+          {/* Configuración de Canales */}
+          <Divider orientation="left">Colores de Canales</Divider>
+          <Alert
+            type="info"
+            message="Configura los colores de fondo y texto para cada canal de venta. Los colores se aplicarán automáticamente en las tarjetas de orden."
+            style={{ marginBottom: 16 }}
+          />
+          <div style={{ marginBottom: 16 }}>
+            <Space>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateChannel}>
+                Nuevo Canal
+              </Button>
+              <Popconfirm
+                title="Crear canales por defecto"
+                description="Esto creara canales predefinidos (Local, PedidosYa, RAPPI, etc.)"
+                onConfirm={handleSeedChannels}
+                okText="Crear"
+                cancelText="Cancelar"
+              >
+                <Button icon={<AppstoreOutlined />}>
+                  Canales por Defecto
+                </Button>
+              </Popconfirm>
+              <Button icon={<ReloadOutlined />} onClick={loadChannels}>
+                Actualizar
+              </Button>
+            </Space>
+          </div>
+          <Table
+            dataSource={channels}
+            rowKey="id"
+            loading={channelsLoading}
+            size="small"
+            pagination={false}
+            columns={[
+              {
+                title: 'Vista Previa',
+                key: 'preview',
+                width: 150,
+                render: (_: any, record: Channel) => (
+                  <Tag
+                    style={{
+                      backgroundColor: record.backgroundColor,
+                      color: record.textColor,
+                      border: 'none',
+                      padding: '4px 12px',
+                      fontSize: 13,
+                    }}
+                  >
+                    {record.displayName || record.name}
+                  </Tag>
+                ),
+              },
+              {
+                title: 'Nombre',
+                dataIndex: 'name',
+                key: 'name',
+                render: (name: string, record: Channel) => (
+                  <div>
+                    <div style={{ fontWeight: 500 }}>{name}</div>
+                    {record.displayName && (
+                      <div style={{ fontSize: 11, color: '#888' }}>
+                        Muestra: {record.displayName}
+                      </div>
+                    )}
+                  </div>
+                ),
+              },
+              {
+                title: 'Colores',
+                key: 'colors',
+                render: (_: any, record: Channel) => (
+                  <Space size="small">
+                    <Tooltip title={`Fondo: ${record.backgroundColor}`}>
+                      <div
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 4,
+                          backgroundColor: record.backgroundColor,
+                          border: '1px solid #d9d9d9',
+                        }}
+                      />
+                    </Tooltip>
+                    <Tooltip title={`Texto: ${record.textColor}`}>
+                      <div
+                        style={{
+                          width: 20,
+                          height: 20,
+                          borderRadius: 4,
+                          backgroundColor: record.textColor,
+                          border: '1px solid #d9d9d9',
+                        }}
+                      />
+                    </Tooltip>
+                  </Space>
+                ),
+              },
+              {
+                title: 'Estado',
+                dataIndex: 'active',
+                key: 'active',
+                width: 80,
+                render: (active: boolean) => (
+                  <Tag color={active ? 'green' : 'default'} style={{ fontSize: 11 }}>
+                    {active ? 'Activo' : 'Inactivo'}
+                  </Tag>
+                ),
+              },
+              {
+                title: 'Acciones',
+                key: 'actions',
+                width: 100,
+                render: (_: any, record: Channel) => (
+                  <Space size="small">
+                    <Tooltip title="Editar">
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditChannel(record)}
+                      />
+                    </Tooltip>
+                    <Popconfirm
+                      title="Eliminar canal"
+                      description="Esta accion no se puede deshacer"
+                      onConfirm={() => handleDeleteChannel(record.id)}
+                      okText="Eliminar"
+                      cancelText="Cancelar"
+                      okButtonProps={{ danger: true }}
+                    >
+                      <Tooltip title="Eliminar">
+                        <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                      </Tooltip>
+                    </Popconfirm>
+                  </Space>
+                ),
+              },
+            ]}
+          />
+
+          {/* Modal para crear/editar canal */}
+          <Modal
+            title={editingChannel ? 'Editar Canal' : 'Nuevo Canal'}
+            open={channelModalOpen}
+            onCancel={() => setChannelModalOpen(false)}
+            footer={null}
+            destroyOnClose
+            width={450}
+          >
+            <Form
+              form={channelForm}
+              layout="vertical"
+              onFinish={handleChannelSubmit}
+              style={{ marginTop: 16 }}
+            >
+              <Form.Item
+                name="name"
+                label="Nombre del Canal"
+                rules={[
+                  { required: true, message: 'El nombre es requerido' },
+                  { max: 50, message: 'Maximo 50 caracteres' },
+                ]}
+                tooltip="Identificador unico del canal (ej: PedidosYa, RAPPI)"
+              >
+                <Input placeholder="PedidosYa" />
+              </Form.Item>
+
+              <Form.Item
+                name="displayName"
+                label="Nombre para Mostrar"
+                tooltip="Opcional. Si se especifica, se mostrara en lugar del nombre"
+              >
+                <Input placeholder="Pedidos Ya" />
+              </Form.Item>
+
+              <Form.Item label="Colores" required>
+                <Space size="large">
+                  <Form.Item
+                    name="backgroundColor"
+                    noStyle
+                    rules={[{ required: true, message: 'Color de fondo requerido' }]}
+                  >
+                    <ColorPicker showText format="hex" />
+                  </Form.Item>
+                  <span style={{ color: '#888' }}>Fondo</span>
+                  <Form.Item
+                    name="textColor"
+                    noStyle
+                    rules={[{ required: true, message: 'Color de texto requerido' }]}
+                  >
+                    <ColorPicker showText format="hex" />
+                  </Form.Item>
+                  <span style={{ color: '#888' }}>Texto</span>
+                </Space>
+              </Form.Item>
+
+              {/* Preview del canal */}
+              <Form.Item label="Vista Previa">
+                <Form.Item noStyle shouldUpdate>
+                  {() => {
+                    const bgColor = channelForm.getFieldValue('backgroundColor');
+                    const txtColor = channelForm.getFieldValue('textColor');
+                    const name = channelForm.getFieldValue('name') || 'Canal';
+                    const displayName = channelForm.getFieldValue('displayName');
+
+                    const backgroundColor = typeof bgColor === 'string'
+                      ? bgColor
+                      : bgColor?.toHexString?.() || '#4a90e2';
+                    const textColor = typeof txtColor === 'string'
+                      ? txtColor
+                      : txtColor?.toHexString?.() || '#ffffff';
+
+                    return (
+                      <Tag
+                        style={{
+                          backgroundColor,
+                          color: textColor,
+                          border: 'none',
+                          padding: '8px 16px',
+                          fontSize: 14,
+                        }}
+                      >
+                        {displayName || name}
+                      </Tag>
+                    );
+                  }}
+                </Form.Item>
+              </Form.Item>
+
+              <Form.Item
+                name="priority"
+                label="Prioridad"
+                tooltip="Canales con mayor prioridad se muestran primero"
+              >
+                <InputNumber min={0} max={100} style={{ width: '100%' }} />
+              </Form.Item>
+
+              <Form.Item
+                name="active"
+                label="Activo"
+                valuePropName="checked"
+              >
+                <Switch checkedChildren="Si" unCheckedChildren="No" />
+              </Form.Item>
+
+              <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
+                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                  <Button onClick={() => setChannelModalOpen(false)}>Cancelar</Button>
+                  <Button type="primary" htmlType="submit">
+                    {editingChannel ? 'Actualizar' : 'Crear'}
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Modal>
         </Card>
       </Col>
 
