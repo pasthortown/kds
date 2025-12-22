@@ -318,6 +318,7 @@ model CardColor {
   id               String  @id @default(cuid())
   appearanceId     String
   color            String  // Hex color
+  quantityColor    String  @default("") // Color de la cantidad (vacío = usa color del SLA)
   minutes          String  // Formato "MM:SS"
   order            Int     // Orden de prioridad (1, 2, 3, 4)
   isFullBackground Boolean @default(false)

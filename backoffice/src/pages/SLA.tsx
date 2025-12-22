@@ -34,21 +34,22 @@ interface Screen {
 interface CardColor {
   id: string;
   color: string;
+  quantityColor: string;
   minutes: string;
   order: number;
   isFullBackground: boolean;
 }
 
 interface SLAConfig {
-  onTime: { minutes: number; seconds: number; color: string };
-  caution: { minutes: number; seconds: number; color: string };
-  late: { minutes: number; seconds: number; color: string };
+  onTime: { minutes: number; seconds: number; color: string; quantityColor: string };
+  caution: { minutes: number; seconds: number; color: string; quantityColor: string };
+  late: { minutes: number; seconds: number; color: string; quantityColor: string };
 }
 
 const DEFAULT_SLA: SLAConfig = {
-  onTime: { minutes: 3, seconds: 0, color: '#98c530' },
-  caution: { minutes: 5, seconds: 0, color: '#fddf58' },
-  late: { minutes: 6, seconds: 0, color: '#e75646' },
+  onTime: { minutes: 3, seconds: 0, color: '#98c530', quantityColor: '' },
+  caution: { minutes: 5, seconds: 0, color: '#fddf58', quantityColor: '' },
+  late: { minutes: 6, seconds: 0, color: '#e75646', quantityColor: '' },
 };
 
 export function SLA() {
@@ -92,27 +93,30 @@ export function SLA() {
 
       if (sorted.length >= 1) {
         const [mins, secs] = sorted[0].minutes.split(':').map(Number);
-        sla.onTime = { minutes: mins, seconds: secs || 0, color: sorted[0].color };
+        sla.onTime = { minutes: mins, seconds: secs || 0, color: sorted[0].color, quantityColor: sorted[0].quantityColor || '' };
       }
       if (sorted.length >= 2) {
         const [mins, secs] = sorted[1].minutes.split(':').map(Number);
-        sla.caution = { minutes: mins, seconds: secs || 0, color: sorted[1].color };
+        sla.caution = { minutes: mins, seconds: secs || 0, color: sorted[1].color, quantityColor: sorted[1].quantityColor || '' };
       }
       if (sorted.length >= 3) {
         const [mins, secs] = sorted[2].minutes.split(':').map(Number);
-        sla.late = { minutes: mins, seconds: secs || 0, color: sorted[2].color };
+        sla.late = { minutes: mins, seconds: secs || 0, color: sorted[2].color, quantityColor: sorted[2].quantityColor || '' };
       }
 
       form.setFieldsValue({
         onTimeMinutes: sla.onTime.minutes,
         onTimeSeconds: sla.onTime.seconds,
         onTimeColor: sla.onTime.color,
+        onTimeQuantityColor: sla.onTime.quantityColor,
         cautionMinutes: sla.caution.minutes,
         cautionSeconds: sla.caution.seconds,
         cautionColor: sla.caution.color,
+        cautionQuantityColor: sla.caution.quantityColor,
         lateMinutes: sla.late.minutes,
         lateSeconds: sla.late.seconds,
         lateColor: sla.late.color,
+        lateQuantityColor: sla.late.quantityColor,
       });
     } catch (error) {
       message.error('Error al cargar configuración de SLA');
@@ -153,24 +157,28 @@ export function SLA() {
         {
           minutes: `${String(values.onTimeMinutes).padStart(2, '0')}:${String(values.onTimeSeconds || 0).padStart(2, '0')}`,
           color: getColorString(values.onTimeColor),
+          quantityColor: values.onTimeQuantityColor ? getColorString(values.onTimeQuantityColor) : '',
           order: 1,
           isFullBackground: false,
         },
         {
           minutes: `${String(values.cautionMinutes).padStart(2, '0')}:${String(values.cautionSeconds || 0).padStart(2, '0')}`,
           color: getColorString(values.cautionColor),
+          quantityColor: values.cautionQuantityColor ? getColorString(values.cautionQuantityColor) : '',
           order: 2,
           isFullBackground: false,
         },
         {
           minutes: `${String(values.lateMinutes).padStart(2, '0')}:${String(values.lateSeconds || 0).padStart(2, '0')}`,
           color: getColorString(values.lateColor),
+          quantityColor: values.lateQuantityColor ? getColorString(values.lateQuantityColor) : '',
           order: 3,
           isFullBackground: true,
         },
       ];
 
       // Actualizar appearance de la pantalla
+      console.log('Guardando cardColors:', JSON.stringify(cardColors, null, 2));
       await screensApi.updateAppearance(screen.id, {
         cardColors,
       });
@@ -337,7 +345,7 @@ export function SLA() {
                 ),
               },
               {
-                title: 'Color',
+                title: 'Color SLA',
                 key: 'color',
                 width: 120,
                 render: (_, record) => (
@@ -347,6 +355,19 @@ export function SLA() {
                     rules={[{ required: true }]}
                   >
                     <ColorPicker format="hex" />
+                  </Form.Item>
+                ),
+              },
+              {
+                title: 'Color Cantidad',
+                key: 'quantityColor',
+                width: 140,
+                render: (_, record) => (
+                  <Form.Item
+                    name={`${record.field}QuantityColor`}
+                    noStyle
+                  >
+                    <ColorPicker format="hex" allowClear />
                   </Form.Item>
                 ),
               },
@@ -360,6 +381,7 @@ export function SLA() {
             <li><strong>A tiempo:</strong> Se aplica cuando el timer es menor al umbral de "Precaucion"</li>
             <li><strong>Precaucion:</strong> Se aplica cuando el timer supera este umbral pero es menor a "Fuera de tiempo"</li>
             <li><strong>Fuera de tiempo:</strong> Se aplica cuando el timer supera este umbral (pinta toda la tarjeta)</li>
+            <li><strong>Color Cantidad:</strong> Color independiente para el numero de cantidad (ej: 5x). Si esta vacio, usa el color del SLA.</li>
           </ul>
         </div>
       </Card>

@@ -54,6 +54,7 @@ export interface ScreenConfig {
 export interface CardColor {
   id: string;
   color: string;
+  quantityColor?: string;
   minutes: string;
   order: number;
   isFullBackground: boolean;

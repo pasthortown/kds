@@ -53,8 +53,8 @@ export function parseMinutes(timeStr: string): number {
  */
 export function getColorForTime(
   createdAt: string | Date,
-  cardColors: Array<{ color: string; minutes: string; order: number; isFullBackground?: boolean }>
-): { color: string; isFullBackground: boolean } {
+  cardColors: Array<{ color: string; quantityColor?: string; minutes: string; order: number; isFullBackground?: boolean }>
+): { color: string; quantityColor: string; isFullBackground: boolean } {
   const { minutes } = getElapsedTime(createdAt);
 
   // Ordenar por minutos (ascendente)
@@ -68,6 +68,7 @@ export function getColorForTime(
     if (minutes >= threshold) {
       return {
         color: cardColor.color,
+        quantityColor: cardColor.quantityColor || '',
         isFullBackground: cardColor.isFullBackground ?? false,
       };
     }
@@ -76,6 +77,7 @@ export function getColorForTime(
   // Por defecto, el primer color (verde)
   return {
     color: sortedColors[0]?.color || '#98c530',
+    quantityColor: sortedColors[0]?.quantityColor || '',
     isFullBackground: sortedColors[0]?.isFullBackground ?? false,
   };
 }

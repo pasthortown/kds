@@ -483,6 +483,7 @@ export const updateAppearanceSchema = z.object({
 
   cardColors: z.array(z.object({
     color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+    quantityColor: z.string().optional().default(''),
     minutes: z.string().regex(/^\d{2}:\d{2}$/),
     order: z.number().int().min(1).max(10),
     isFullBackground: z.boolean().default(false),

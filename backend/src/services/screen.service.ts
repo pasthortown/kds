@@ -271,6 +271,7 @@ export class ScreenService {
             cardColors: screen.appearance.cardColors.map((c) => ({
               id: c.id,
               color: c.color,
+              quantityColor: c.quantityColor || '',
               minutes: c.minutes,
               order: c.order,
               isFullBackground: c.isFullBackground,

@@ -356,7 +356,7 @@ export function OrderCard({
                 {config.showQuantity && (
                   <span
                     style={{
-                      color: config.quantityTextColor || timeColor.color,
+                      color: timeColor.quantityColor || config.quantityTextColor || timeColor.color,
                       fontFamily: config.quantityFontFamily,
                       fontWeight: getFontWeight(config.quantityFontWeight),
                       fontStyle: getFontStyle(config.quantityFontStyle),
