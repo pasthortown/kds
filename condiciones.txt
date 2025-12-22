@@ -1,15 +1,79 @@
-Condiciones Minimas:
-Luis y Alanys - Debe existir un camino para recibir las ordenes a traves de API esto estaria en backend, y debe cada orden recibidad almmacenarse y si ya existe una con ese ID debe actualizarse en la base de datos postgresql, a su vez una vez recibida la orden o la actualizacion debe notificarse por ws que hay cambios en las ordenes a mostrar y el front debe refrescar las ordenes en pantalla.
-Alanys - La configuracion visual y condiciones de colas deben estar tambien en postgresql unicamente no en archivos de texto
-Aclaracion: El backoffice es para configurar colas, visualizaciones y esto debe comunicarse correctamente con el API del backend
-Aclaracion: El backend constituye el unico intermediario entre front y backoffice.
+Descripción general de la funcionalidad
 
-Luis - En modo polling como dependemos de la disponibilidad de maxpoint activado la comunicacion por API, el sistema debe seguir trabajando consultando periodicamente a postgresql para actualizar las ordenes.
-Luis - En modo API sera maxpoint quien remita directo al API este a su vez al ws para notificar cambios y actualiar ordenes
-David - Hay configuraciones que se modifican y no esta guardando correctamente esto hay que corregir.
+Todas las tareas descritas conforman una única funcionalidad integrada de actualización de órdenes en tiempo real.
 
-Nuevas Funcionalidades
-Alanys- Corregir Reportes.- Los datos de los reportes (dashboard) deben ser disponibilizados en un endpoint en el API de backend para que sean consumidos a futuro por el departamento de BI, hay que documentar esa respiuesta que sera en json y el api debe estar documentado con swagger
-Luis y Alanys- Tiempo Real.- Es necesario modificar maxpoint para que durante la toma de pedido se envie al API la orden en curso a tiempo real enviando los cambios que ocurran en estado PROCESANDO,y  cuando pase a facturacion la orden debe indicarse como TOMADA, para controlar en el front con ese estado la apariencia de la orden de tal forma que el cocinero sepa que esa orden esta en curso.
-David - Colores por canal.- Si es Salon Kiosko Llevar Domicilio debe tener un color identificativo.
-David - Color de la cantidad.- El color de la cantidad cambia pero si es un color muy claro no se lo visualiza hay qeu corregir el tono usado, y mucho mejor si se coloca como parametor de configuracion en backoffice y se establece el color para cada situacion en fucion del SLA
+El backend expone un API a través del cual se reciben las órdenes provenientes de MaxPoint (sistema POS). Para lograr un flujo correcto, es necesario modificar MaxPoint de forma que:
+
+Envíe las órdenes en curso cuando se encuentren en estado PROCESANDO.
+
+Remita nuevamente la orden cuando esta pase al modo Facturación, marcándola con el estado TOMADA.
+
+Todas las órdenes deben ser enviadas siempre al backend, el cual será el punto central de orquestación.
+
+El backend será responsable de:
+
+Mantener las órdenes actualizadas en tiempo real.
+
+Persistir los cambios en PostgreSQL.
+
+Notificar los cambios al frontend vía WebSocket, para que la interfaz refleje inmediatamente las actualizaciones.
+
+Etapas de implementación
+1. Modo Polling (estado actual / contingencia)
+
+Mientras la comunicación directa por API dependa de la disponibilidad de MaxPoint, el sistema debe continuar operando en modo polling:
+
+El backend consulta periódicamente la base de datos PostgreSQL.
+
+Se detectan cambios en las órdenes.
+
+El frontend se actualiza en función de los resultados obtenidos.
+
+Este modo garantiza continuidad operativa cuando MaxPoint no envía eventos en tiempo real.
+
+2. Modo API (flujo ideal)
+
+En el modo API, MaxPoint se convierte en el emisor activo de eventos:
+
+MaxPoint envía directamente las órdenes al API del backend.
+
+El backend procesa la información recibida.
+
+Los cambios se notifican inmediatamente al frontend mediante WebSocket (WS).
+
+El frontend actualiza las órdenes en pantalla sin necesidad de polling.
+
+3. Nueva funcionalidad: actualización de órdenes en tiempo real
+3.1 Envío de órdenes desde MaxPoint (Tiempo Real)
+
+Es necesario modificar MaxPoint para que:
+
+Durante la toma del pedido, envíe la orden al API en estado PROCESANDO, incluyendo todos los cambios que ocurran mientras el pedido está en curso.
+
+Al pasar al proceso de Facturación, la orden se envíe nuevamente con estado TOMADA.
+
+El frontend utilizará estos estados para:
+
+Diferenciar visualmente las órdenes.
+
+Indicar al cocinero qué órdenes están en curso y cuáles ya han sido confirmadas.
+
+3.2 Recepción, persistencia y notificación en el backend
+
+En el backend debe existir un flujo único para la recepción de órdenes vía API:
+
+Cada orden recibida debe almacenarse en PostgreSQL.
+
+Si ya existe una orden con el mismo ID, esta debe actualizarse.
+
+Cada inserción o actualización debe:
+
+Disparar una notificación vía WebSocket.
+
+Informar al frontend que existen cambios en las órdenes.
+
+El frontend, al recibir la notificación, debe refrescar las órdenes en pantalla.
+
+
+Alanys - Colores por canal.- Si es Salon Kiosko Llevar Domicilio debe tener un color identificativo.
+Alanys - Color de la cantidad.- El color de la cantidad cambia pero si es un color muy claro no se lo visualiza hay qeu corregir el tono usado, y mucho mejor si se coloca como parametor de configuracion en backoffice y se establece el color para cada situacion en fucion del SLA
