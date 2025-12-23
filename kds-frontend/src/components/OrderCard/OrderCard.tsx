@@ -383,6 +383,23 @@ export function OrderCard({
                 </span>
               </div>
 
+              {/* Notas especiales - justo después del nombre del producto */}
+              {config.showNotes && item.notes && (
+                <div
+                  style={{
+                    paddingLeft: `${config.notesIndent}px`,
+                    marginTop: '2px',
+                    fontFamily: config.notesFontFamily,
+                    fontWeight: getFontWeight(config.notesFontWeight),
+                    fontStyle: getFontStyle(config.notesFontStyle),
+                    fontSize: getFontSize(config.notesFontSize, 'notes'),
+                    color: config.notesTextColor,
+                  }}
+                >
+                  * {toTitleCase(item.notes)}
+                </div>
+              )}
+
               {/* Subitems (1x Pepsi, 1x Crispy) - del campo subitems si existe */}
               {config.showSubitems && 'subitems' in item && Array.isArray((item as unknown as { subitems: Array<{ name: string; quantity: number }> }).subitems) && (
                 <div style={{ paddingLeft: `${config.subitemIndent}px`, marginTop: '2px' }}>
@@ -427,23 +444,6 @@ export function OrderCard({
                       {toTitleCase(mod.trim())}
                     </div>
                   ))}
-                </div>
-              )}
-
-              {/* Notas especiales */}
-              {config.showNotes && item.notes && (
-                <div
-                  style={{
-                    paddingLeft: `${config.notesIndent}px`,
-                    marginTop: '2px',
-                    fontFamily: config.notesFontFamily,
-                    fontWeight: getFontWeight(config.notesFontWeight),
-                    fontStyle: getFontStyle(config.notesFontStyle),
-                    fontSize: getFontSize(config.notesFontSize, 'notes'),
-                    color: config.notesTextColor,
-                  }}
-                >
-                  * {toTitleCase(item.notes)}
                 </div>
               )}
 

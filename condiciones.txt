@@ -75,5 +75,6 @@ Informar al frontend que existen cambios en las órdenes.
 El frontend, al recibir la notificación, debe refrescar las órdenes en pantalla.
 
 
-Alanys - Colores por canal.- Si es Salon Kiosko Llevar Domicilio debe tener un color identificativo.
-Alanys - Color de la cantidad.- El color de la cantidad cambia pero si es un color muy claro no se lo visualiza hay qeu corregir el tono usado, y mucho mejor si se coloca como parametor de configuracion en backoffice y se establece el color para cada situacion en fucion del SLA
+Excluir canales y estaciones de kds
+Luis y Alanys - Impresion Netcore (completar)
+
