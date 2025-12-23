@@ -22,8 +22,11 @@ import {
   Popconfirm,
   Tag,
   Tooltip,
+  Upload,
+  Dropdown,
 } from 'antd';
-import { SaveOutlined, ReloadOutlined, UndoOutlined, FontColorsOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, AppstoreOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
+import { SaveOutlined, ReloadOutlined, UndoOutlined, FontColorsOutlined, EyeOutlined, EyeInvisibleOutlined, CopyOutlined, PlusOutlined, EditOutlined, DeleteOutlined, AppstoreOutlined, ExportOutlined, ImportOutlined, UploadOutlined, DownOutlined } from '@ant-design/icons';
 import { screensApi, mirrorApi, channelsApi } from '../services/api';
 import { ScreenPreview } from '../components/ScreenPreview';
 import type { Color } from 'antd/es/color-picker';
@@ -484,6 +487,9 @@ export function Appearance() {
   const [copyFromOpen, setCopyFromOpen] = useState(false);
   const [copyFromScreenId, setCopyFromScreenId] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importJson, setImportJson] = useState('');
+  const [importing, setImporting] = useState(false);
 
   // Channel management state
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -876,6 +882,224 @@ export function Appearance() {
     }
   };
 
+  // Exportar configuración a JSON
+  const handleExport = async () => {
+    if (!selectedScreenId) {
+      message.warning('Seleccione una pantalla');
+      return;
+    }
+
+    try {
+      const { data } = await screensApi.getConfig(selectedScreenId);
+      const appearance = data.appearance;
+
+      if (!appearance) {
+        message.warning('La pantalla no tiene configuración de apariencia');
+        return;
+      }
+
+      const selectedScreen = screens.find(s => s.id === selectedScreenId);
+
+      // Crear objeto de exportación con toda la configuración
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        screenName: selectedScreen?.name || 'Unknown',
+        appearance: {
+          // Colores generales
+          backgroundColor: appearance.backgroundColor,
+          headerColor: appearance.headerColor,
+          headerTextColor: appearance.headerTextColor,
+          cardColor: appearance.cardColor,
+          textColor: appearance.textColor,
+          accentColor: appearance.accentColor,
+          // Header
+          headerFontFamily: appearance.headerFontFamily,
+          headerFontSize: appearance.headerFontSize,
+          headerFontWeight: appearance.headerFontWeight,
+          headerFontStyle: appearance.headerFontStyle,
+          headerBgColor: appearance.headerBgColor,
+          headerTextColorCustom: appearance.headerTextColorCustom,
+          showHeader: appearance.showHeader,
+          showOrderNumber: appearance.showOrderNumber,
+          headerShowChannel: appearance.headerShowChannel,
+          headerShowTime: appearance.headerShowTime,
+          // Timer
+          timerFontFamily: appearance.timerFontFamily,
+          timerFontSize: appearance.timerFontSize,
+          timerFontWeight: appearance.timerFontWeight,
+          timerFontStyle: appearance.timerFontStyle,
+          timerTextColor: appearance.timerTextColor,
+          showTimer: appearance.showTimer,
+          // Cliente
+          clientFontFamily: appearance.clientFontFamily,
+          clientFontSize: appearance.clientFontSize,
+          clientFontWeight: appearance.clientFontWeight,
+          clientFontStyle: appearance.clientFontStyle,
+          clientTextColor: appearance.clientTextColor,
+          clientBgColor: appearance.clientBgColor,
+          showClient: appearance.showClient,
+          // Cantidad
+          quantityFontFamily: appearance.quantityFontFamily,
+          quantityFontSize: appearance.quantityFontSize,
+          quantityFontWeight: appearance.quantityFontWeight,
+          quantityFontStyle: appearance.quantityFontStyle,
+          quantityTextColor: appearance.quantityTextColor,
+          showQuantity: appearance.showQuantity,
+          // Producto
+          productFontFamily: appearance.productFontFamily,
+          productFontSize: appearance.productFontSize,
+          productFontWeight: appearance.productFontWeight,
+          productFontStyle: appearance.productFontStyle,
+          productTextColor: appearance.productTextColor,
+          productBgColor: appearance.productBgColor,
+          productUppercase: appearance.productUppercase,
+          // Subitem
+          subitemFontFamily: appearance.subitemFontFamily,
+          subitemFontSize: appearance.subitemFontSize,
+          subitemFontWeight: appearance.subitemFontWeight,
+          subitemFontStyle: appearance.subitemFontStyle,
+          subitemTextColor: appearance.subitemTextColor,
+          subitemBgColor: appearance.subitemBgColor,
+          subitemIndent: appearance.subitemIndent,
+          showSubitems: appearance.showSubitems,
+          // Modifier
+          modifierFontFamily: appearance.modifierFontFamily,
+          modifierFontSize: appearance.modifierFontSize,
+          modifierFontWeight: appearance.modifierFontWeight,
+          modifierFontStyle: appearance.modifierFontStyle,
+          modifierFontColor: appearance.modifierFontColor,
+          modifierBgColor: appearance.modifierBgColor,
+          modifierIndent: appearance.modifierIndent,
+          showModifiers: appearance.showModifiers,
+          // Notes
+          notesFontFamily: appearance.notesFontFamily,
+          notesFontSize: appearance.notesFontSize,
+          notesFontWeight: appearance.notesFontWeight,
+          notesFontStyle: appearance.notesFontStyle,
+          notesTextColor: appearance.notesTextColor,
+          notesBgColor: appearance.notesBgColor,
+          notesIndent: appearance.notesIndent,
+          showNotes: appearance.showNotes,
+          // Comments
+          commentsFontFamily: appearance.commentsFontFamily,
+          commentsFontSize: appearance.commentsFontSize,
+          commentsFontWeight: appearance.commentsFontWeight,
+          commentsFontStyle: appearance.commentsFontStyle,
+          commentsTextColor: appearance.commentsTextColor,
+          commentsBgColor: appearance.commentsBgColor,
+          commentsIndent: appearance.commentsIndent,
+          showComments: appearance.showComments,
+          // Channel
+          channelFontFamily: appearance.channelFontFamily,
+          channelFontSize: appearance.channelFontSize,
+          channelFontWeight: appearance.channelFontWeight,
+          channelFontStyle: appearance.channelFontStyle,
+          channelTextColor: appearance.channelTextColor,
+          channelUppercase: appearance.channelUppercase,
+          showChannel: appearance.showChannel,
+          // Layout
+          columnsPerScreen: appearance.columnsPerScreen,
+          rows: appearance.rows,
+          maxItemsPerColumn: appearance.maxItemsPerColumn,
+          animationEnabled: appearance.animationEnabled,
+          screenSplit: appearance.screenSplit,
+        },
+        cardColors: appearance.cardColors?.map((c: any) => ({
+          color: c.color,
+          quantityColor: c.quantityColor || '',
+          minutes: c.minutes,
+          order: c.order,
+          isFullBackground: c.isFullBackground,
+        })) || [],
+        channelColors: appearance.channelColors?.map((c: any) => ({
+          channel: c.channel,
+          color: c.color,
+          textColor: c.textColor || '#ffffff',
+        })) || [],
+      };
+
+      // Descargar JSON
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `kds-appearance-${selectedScreen?.name || 'config'}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      message.success('Configuración exportada correctamente');
+    } catch (error) {
+      message.error('Error exportando configuración');
+    }
+  };
+
+  // Importar configuración desde JSON
+  const handleImport = async () => {
+    if (!selectedScreenId) {
+      message.warning('Seleccione una pantalla destino');
+      return;
+    }
+
+    if (!importJson.trim()) {
+      message.warning('Pegue el contenido JSON a importar');
+      return;
+    }
+
+    try {
+      setImporting(true);
+      const importData = JSON.parse(importJson);
+
+      // Validar estructura básica del JSON
+      if (!importData.appearance) {
+        message.error('El JSON no tiene la estructura correcta (falta "appearance")');
+        return;
+      }
+
+      // Preparar datos para enviar al backend
+      const dataToSend = {
+        ...importData.appearance,
+        cardColors: importData.cardColors,
+        channelColors: importData.channelColors,
+      };
+
+      // Enviar al backend
+      await screensApi.updateAppearance(selectedScreenId, dataToSend);
+
+      // Recargar configuración
+      await loadScreenConfig(selectedScreenId);
+
+      message.success(
+        `Configuración importada correctamente. ` +
+        `Se importaron: apariencia, ${importData.cardColors?.length || 0} colores SLA y ` +
+        `${importData.channelColors?.length || 0} colores de canal.`
+      );
+      setImportModalOpen(false);
+      setImportJson('');
+    } catch (error: any) {
+      if (error instanceof SyntaxError) {
+        message.error('El JSON no es válido. Verifique el formato.');
+      } else {
+        message.error(error.response?.data?.error || 'Error importando configuración');
+      }
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  // Manejar carga de archivo JSON
+  const handleFileUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setImportJson(content);
+    };
+    reader.readAsText(file);
+    return false; // Prevenir upload automático
+  };
+
   const handleFormChange = (_: unknown, allValues: AppearanceConfig) => {
     // Convert Color objects for preview
     const processedValues = { ...allValues };
@@ -907,47 +1131,62 @@ export function Appearance() {
                   </Select.Option>
                 ))}
               </Select>
-              <Popover
-                title="Copiar configuración de otra pantalla"
-                trigger="click"
-                open={copyFromOpen}
-                onOpenChange={setCopyFromOpen}
-                content={
-                  <div style={{ width: 280 }}>
-                    <Select
-                      style={{ width: '100%', marginBottom: 12 }}
-                      placeholder="Seleccionar pantalla origen"
-                      value={copyFromScreenId}
-                      onChange={setCopyFromScreenId}
-                    >
-                      {screens
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: 'copy',
+                      label: 'Copiar de otra pantalla',
+                      icon: <CopyOutlined />,
+                      children: screens
                         .filter((s) => s.id !== selectedScreenId)
-                        .map((s) => (
-                          <Select.Option key={s.id} value={s.id}>
-                            {s.name}
-                          </Select.Option>
-                        ))}
-                    </Select>
-                    <Space>
-                      <Button
-                        type="primary"
-                        loading={copying}
-                        onClick={handleCopyFrom}
-                        disabled={!copyFromScreenId}
-                      >
-                        Aplicar
-                      </Button>
-                      <Button onClick={() => { setCopyFromOpen(false); setCopyFromScreenId(null); }}>
-                        Cancelar
-                      </Button>
-                    </Space>
-                  </div>
-                }
+                        .map((s) => ({
+                          key: `copy-${s.id}`,
+                          label: s.name,
+                          onClick: () => {
+                            setCopyFromScreenId(s.id);
+                            // Ejecutar copia directamente
+                            (async () => {
+                              try {
+                                setCopying(true);
+                                const { data } = await screensApi.copyAppearanceFrom(selectedScreenId!, s.id);
+                                await loadScreenConfig(selectedScreenId!);
+                                message.success(
+                                  `Configuración copiada de "${s.name}". ` +
+                                  `Se copiaron: apariencia, ${data.copiedItems?.cardColors || 0} colores SLA y ` +
+                                  `${data.copiedItems?.channelColors || 0} colores de canal.`
+                                );
+                              } catch (error: any) {
+                                message.error(error.response?.data?.error || 'Error copiando configuración');
+                              } finally {
+                                setCopying(false);
+                                setCopyFromScreenId(null);
+                              }
+                            })();
+                          },
+                        })),
+                    },
+                    { type: 'divider' },
+                    {
+                      key: 'export',
+                      label: 'Exportar a JSON',
+                      icon: <ExportOutlined />,
+                      onClick: handleExport,
+                    },
+                    {
+                      key: 'import',
+                      label: 'Importar desde JSON',
+                      icon: <ImportOutlined />,
+                      onClick: () => setImportModalOpen(true),
+                    },
+                  ] as MenuProps['items'],
+                }}
+                trigger={['click']}
               >
-                <Button icon={<CopyOutlined />}>
-                  Copiar de
+                <Button icon={<CopyOutlined />} loading={copying}>
+                  Copiar / Exportar <DownOutlined />
                 </Button>
-              </Popover>
+              </Dropdown>
               <Button
                 icon={<ReloadOutlined />}
                 onClick={() => selectedScreenId && loadScreenConfig(selectedScreenId)}
@@ -1595,6 +1834,70 @@ export function Appearance() {
           />
         </Card>
       </Col>
+
+      {/* Modal de Importación */}
+      <Modal
+        title="Importar Configuración"
+        open={importModalOpen}
+        onCancel={() => {
+          setImportModalOpen(false);
+          setImportJson('');
+        }}
+        footer={[
+          <Button key="cancel" onClick={() => {
+            setImportModalOpen(false);
+            setImportJson('');
+          }}>
+            Cancelar
+          </Button>,
+          <Button
+            key="import"
+            type="primary"
+            icon={<ImportOutlined />}
+            loading={importing}
+            onClick={handleImport}
+            disabled={!importJson.trim()}
+          >
+            Importar
+          </Button>,
+        ]}
+        width={700}
+      >
+        <Alert
+          message="Importar configuración desde archivo JSON"
+          description="Sube un archivo JSON exportado previamente o pega el contenido JSON directamente. Se importarán: apariencia, colores SLA y colores de canal."
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+
+        <Space direction="vertical" style={{ width: '100%' }} size="middle">
+          <Upload
+            accept=".json"
+            showUploadList={false}
+            beforeUpload={handleFileUpload}
+          >
+            <Button icon={<UploadOutlined />}>Seleccionar archivo JSON</Button>
+          </Upload>
+
+          <Input.TextArea
+            placeholder="O pega el contenido JSON aquí..."
+            value={importJson}
+            onChange={(e) => setImportJson(e.target.value)}
+            rows={12}
+            style={{ fontFamily: 'monospace', fontSize: 12 }}
+          />
+
+          {importJson && (
+            <Alert
+              message="JSON cargado"
+              description={`${importJson.length} caracteres. Click en "Importar" para aplicar la configuración.`}
+              type="success"
+              showIcon
+            />
+          )}
+        </Space>
+      </Modal>
     </Row>
   );
 }
