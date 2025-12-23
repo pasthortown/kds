@@ -1,0 +1,703 @@
+{
+  "info": {
+    "_postman_id": "kds-api-tickets-collection",
+    "name": "KDS - API Tickets",
+    "description": "Coleccion para probar la creacion de ordenes via API en el sistema KDS.\n\n## Instrucciones de uso:\n1. Ejecutar primero \"1. Login\" para obtener el token\n2. El token se guarda automaticamente en las variables de la coleccion\n3. Verificar que el modo API este habilitado con \"2. Verificar Modo API\"\n4. Usar los endpoints de tickets para crear ordenes\n\n## Variables:\n- `baseUrl`: URL base del backend (default: http://localhost:3000/api)\n- `accessToken`: Token JWT (se obtiene automaticamente del login)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticacion",
+      "item": [
+        {
+          "name": "1. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', jsonData.accessToken);",
+                  "    console.log('Token guardado exitosamente');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@kfc.com.ec\",\n  \"password\": \"cx-dsi2025\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Obtiene el token de autenticacion JWT.\n\nCredenciales por defecto:\n- Email: admin@kfc.com.ec\n- Password: cx-dsi2025\n\nEl token se guarda automaticamente en la variable `accessToken`."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Verificar Usuario Actual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "me"]
+            },
+            "description": "Verifica el usuario autenticado actual."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Configuracion",
+      "item": [
+        {
+          "name": "1. Verificar Modo API",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/config/modes",
+              "host": ["{{baseUrl}}"],
+              "path": ["config", "modes"]
+            },
+            "description": "Valida el modo de configuracion actual.\n\nPara que los endpoints de tickets funcionen, `ticketMode` debe ser \"API\".\n\nRespuesta esperada:\n```json\n{\n  \"ticketMode\": \"API\",\n  \"printMode\": \"LOCAL\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Activar Modo API",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketMode\": \"API\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/config/modes",
+              "host": ["{{baseUrl}}"],
+              "path": ["config", "modes"]
+            },
+            "description": "Activa el modo API para recepcion de tickets.\n\nOpciones de ticketMode:\n- \"POLLING\": Importacion desde MAXPOINT\n- \"API\": Recepcion via API REST"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Ver Pantallas Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/screens",
+              "host": ["{{baseUrl}}"],
+              "path": ["screens"]
+            },
+            "description": "Lista todas las pantallas disponibles.\n\nLas ordenes se asignan automaticamente a las pantallas segun la cola configurada."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Ver Colas Disponibles",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/queues",
+              "host": ["{{baseUrl}}"],
+              "path": ["queues"]
+            },
+            "description": "Lista todas las colas disponibles.\n\nLas ordenes se distribuyen entre pantallas segun la cola y sus canales configurados."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Tickets - Orden Individual",
+      "item": [
+        {
+          "name": "1. Crear Orden Simple",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-{{$timestamp}}\",\n  \"orderId\": \"{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 1,\n    \"name\": \"LOCAL\",\n    \"type\": \"LOCAL\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"CAJERO1\",\n    \"name\": \"Caja 1\"\n  },\n  \"customer\": {\n    \"name\": \"Juan Perez\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"PROD001\",\n      \"name\": \"COMBO FAMILIAR\",\n      \"amount\": 1,\n      \"category\": \"COMBOS\"\n    },\n    {\n      \"productId\": \"PROD002\",\n      \"name\": \"PAPAS GRANDES\",\n      \"amount\": 2,\n      \"category\": \"ACOMPAÑAMIENTOS\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden simple con productos basicos.\n\n**Campos requeridos:**\n- `id`: Identificador unico externo\n- `orderId`: Numero de orden\n- `createdAt`: Fecha de creacion (ISO 8601)\n- `channel`: Informacion del canal\n- `cashRegister`: Informacion de la caja\n- `products`: Lista de productos\n\n**Respuesta exitosa:**\n```json\n{\n  \"success\": true,\n  \"orderId\": \"clxxxx...\"\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Crear Orden con Subproductos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-SUB-{{$timestamp}}\",\n  \"orderId\": \"{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 1,\n    \"name\": \"LOCAL\",\n    \"type\": \"LOCAL\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"CAJERO1\",\n    \"name\": \"Caja 1\"\n  },\n  \"customer\": {\n    \"name\": \"Maria Garcia\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"COMBO001\",\n      \"name\": \"MEGA COMBO\",\n      \"amount\": 1,\n      \"category\": \"COMBOS\",\n      \"products\": [\n        {\n          \"productId\": \"SUB001\",\n          \"name\": \"POLLO CRISPY 3 PIEZAS\",\n          \"amount\": 1\n        },\n        {\n          \"productId\": \"SUB002\",\n          \"name\": \"PAPAS MEDIANAS\",\n          \"amount\": 1\n        },\n        {\n          \"productId\": \"SUB003\",\n          \"name\": \"COCA-COLA 500ML\",\n          \"amount\": 1\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden con productos que tienen subproductos (combos desglosados).\n\nLos subproductos se especifican en el array `products` dentro de cada producto principal."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Crear Orden con Modificadores y Notas",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-MOD-{{$timestamp}}\",\n  \"orderId\": \"{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 1,\n    \"name\": \"LOCAL\",\n    \"type\": \"LOCAL\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"CAJERO2\",\n    \"name\": \"Caja 2\"\n  },\n  \"customer\": {\n    \"name\": \"Carlos Rodriguez\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"SAND001\",\n      \"name\": \"SANDWICH CRISPY\",\n      \"amount\": 2,\n      \"category\": \"SANDWICHES\",\n      \"content\": [\n        \"*SIN MAYONESA\",\n        \"*EXTRA QUESO\",\n        \"*BIEN COCIDO\"\n      ],\n      \"comments\": \"Cliente alergico a la mostaza\"\n    },\n    {\n      \"productId\": \"BEB001\",\n      \"name\": \"GASEOSA GRANDE\",\n      \"amount\": 2,\n      \"category\": \"BEBIDAS\",\n      \"content\": [\n        \"*SIN HIELO\"\n      ]\n    }\n  ],\n  \"comments\": \"Orden para llevar - Cliente frecuente\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden con modificadores (content) y comentarios.\n\n**Campos opcionales importantes:**\n- `content`: Array de modificadores/notas del producto (ej: \"*SIN MAYONESA\")\n- `comments` (producto): Comentarios especificos del producto\n- `comments` (orden): Comentarios generales de la orden"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Crear Orden Delivery",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-DEL-{{$timestamp}}\",\n  \"orderId\": \"{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 2,\n    \"name\": \"DELIVERY\",\n    \"type\": \"DELIVERY\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"DELIVERY1\",\n    \"name\": \"Delivery\"\n  },\n  \"customer\": {\n    \"name\": \"Ana Martinez\"\n  },\n  \"otrosDatos\": {\n    \"turno\": 1,\n    \"nroCheque\": \"CHK-12345\",\n    \"llamarPor\": \"Ana\",\n    \"Fecha\": \"2025-12-23\",\n    \"Direccion\": \"Av. Principal 123, Piso 4\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"COMBO002\",\n      \"name\": \"COMBO MEGA\",\n      \"amount\": 1,\n      \"category\": \"COMBOS\"\n    },\n    {\n      \"productId\": \"EXTRA001\",\n      \"name\": \"ALITAS BBQ x6\",\n      \"amount\": 1,\n      \"category\": \"EXTRAS\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden de delivery con datos adicionales.\n\n**Campo otrosDatos:**\n- `turno`: Numero de turno\n- `nroCheque`: Numero de cheque/comprobante\n- `llamarPor`: Nombre para llamar\n- `Fecha`: Fecha de entrega\n- `Direccion`: Direccion de entrega"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Crear Orden PedidosYa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-PEYA-{{$timestamp}}\",\n  \"orderId\": \"PY-{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 3,\n    \"name\": \"PEDIDOSYA\",\n    \"type\": \"DELIVERY\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"PEYA\",\n    \"name\": \"PedidosYa\"\n  },\n  \"customer\": {\n    \"name\": \"Cliente PedidosYa\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"BUCKET001\",\n      \"name\": \"BUCKET 8 PRESAS\",\n      \"amount\": 1,\n      \"category\": \"BUCKETS\"\n    },\n    {\n      \"productId\": \"SIDE001\",\n      \"name\": \"ENSALADA COLESLAW\",\n      \"amount\": 2,\n      \"category\": \"SIDES\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden del canal PedidosYa.\n\nEl color del canal se aplica segun la configuracion de channelColors en la apariencia de la pantalla."
+          },
+          "response": []
+        },
+        {
+          "name": "6. Crear Orden Rappi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-RAPPI-{{$timestamp}}\",\n  \"orderId\": \"RP-{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 4,\n    \"name\": \"RAPPI\",\n    \"type\": \"DELIVERY\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"RAPPI\",\n    \"name\": \"Rappi\"\n  },\n  \"customer\": {\n    \"name\": \"Cliente Rappi\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"TWISTER001\",\n      \"name\": \"TWISTER CLASICO\",\n      \"amount\": 3,\n      \"category\": \"TWISTERS\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden del canal Rappi."
+          },
+          "response": []
+        },
+        {
+          "name": "7. Crear Orden con Template HTML",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-HTML-{{$timestamp}}\",\n  \"orderId\": \"{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 1,\n    \"name\": \"LOCAL\",\n    \"type\": \"LOCAL\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"CAJERO1\",\n    \"name\": \"Caja 1\"\n  },\n  \"customer\": {\n    \"name\": \"Cliente Especial\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"PROD001\",\n      \"name\": \"PRODUCTO ESPECIAL\",\n      \"amount\": 1,\n      \"category\": \"ESPECIALES\"\n    }\n  ],\n  \"templateHTML\": \"<div class='custom-order'><h1>{{orderNumber}}</h1><p>{{customerName}}</p><ul>{{#items}}<li>{{quantity}}x {{name}}</li>{{/items}}</ul></div>\",\n  \"valuesHTML\": \"{\\\"orderNumber\\\": \\\"123\\\", \\\"customerName\\\": \\\"Cliente Especial\\\", \\\"items\\\": [{\\\"quantity\\\": 1, \\\"name\\\": \\\"PRODUCTO ESPECIAL\\\"}]}\",\n  \"comments\": \"Orden con plantilla HTML personalizada\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden con plantilla HTML personalizada.\n\n**Campos HTML:**\n- `templateHTML`: Plantilla HTML con placeholders (formato Mustache)\n- `valuesHTML`: JSON string con los valores para reemplazar en la plantilla\n- `comments`: Comentarios adicionales de la orden"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Orden Completa (Productos, Subproductos, Modificadores, Notas, Comentarios, Template HTML)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"ORD-COMPLETA-{{$timestamp}}\",\n  \"orderId\": \"FULL-{{$randomInt}}\",\n  \"createdAt\": \"{{$isoTimestamp}}\",\n  \"channel\": {\n    \"id\": 1,\n    \"name\": \"Local\",\n    \"type\": \"LOCAL\"\n  },\n  \"cashRegister\": {\n    \"cashier\": \"CAJERO1\",\n    \"name\": \"Caja Principal\"\n  },\n  \"customer\": {\n    \"name\": \"Juan Carlos Mendoza\"\n  },\n  \"otrosDatos\": {\n    \"turno\": 1,\n    \"nroCheque\": \"CHK-98765\",\n    \"llamarPor\": \"Juan Carlos\",\n    \"Fecha\": \"2025-12-23\",\n    \"Direccion\": \"Av. Principal 456, Piso 2, Oficina 201\"\n  },\n  \"products\": [\n    {\n      \"productId\": \"COMBO001\",\n      \"name\": \"MEGA COMBO FAMILIAR 15 PRESAS\",\n      \"amount\": 2,\n      \"category\": \"COMBOS\",\n      \"content\": [\n        \"*SIN SAL EN PAPAS\",\n        \"*PRESAS BIEN COCIDAS\",\n        \"*MITAD ORIGINAL MITAD CRISPY\"\n      ],\n      \"comments\": \"Cliente pide que las presas esten crujientes\",\n      \"products\": [\n        {\n          \"productId\": \"SUB001\",\n          \"name\": \"POLLO 15 PRESAS MIXTO\",\n          \"amount\": 1,\n          \"content\": [\"8 Original\", \"7 Crispy\"]\n        },\n        {\n          \"productId\": \"SUB002\",\n          \"name\": \"PAPAS FAMILIARES\",\n          \"amount\": 3,\n          \"content\": [\"*SIN SAL\"]\n        },\n        {\n          \"productId\": \"SUB003\",\n          \"name\": \"ENSALADA COLESLAW GRANDE\",\n          \"amount\": 2\n        },\n        {\n          \"productId\": \"SUB004\",\n          \"name\": \"GASEOSA 1.5L\",\n          \"amount\": 4,\n          \"content\": [\"2x Coca-Cola\", \"2x Sprite\"]\n        }\n      ]\n    },\n    {\n      \"productId\": \"ALITAS001\",\n      \"name\": \"ALITAS BBQ x24\",\n      \"amount\": 1,\n      \"category\": \"EXTRAS\",\n      \"content\": [\n        \"*EXTRA SALSA BBQ\",\n        \"*EXTRA SALSA RANCH\",\n        \"*MUY PICANTES\"\n      ],\n      \"comments\": \"Agregar servilletas extra\"\n    },\n    {\n      \"productId\": \"TWISTER001\",\n      \"name\": \"TWISTER SUPREME\",\n      \"amount\": 3,\n      \"category\": \"SANDWICHES\",\n      \"content\": [\n        \"*SIN CEBOLLA\",\n        \"*SIN TOMATE\",\n        \"*EXTRA MAYONESA\"\n      ],\n      \"comments\": \"Uno de los twisters sin lechuga\"\n    },\n    {\n      \"productId\": \"POSTRE001\",\n      \"name\": \"SUNDAE CHOCOLATE\",\n      \"amount\": 4,\n      \"category\": \"POSTRES\",\n      \"content\": [\"*EXTRA CHOCOLATE\", \"*CON GALLETA\"]\n    }\n  ],\n  \"comments\": \"ORDEN PARA EVENTO CORPORATIVO - ENTREGAR EN RECEPCION - LLAMAR 10 MIN ANTES - FACTURA A NOMBRE DE EMPRESA XYZ S.A. RUC 1234567890001\",\n  \"templateHTML\": \"<div style='font-family: Arial, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 20px; padding: 24px; border: 5px solid #ffd700; box-shadow: 0 10px 30px rgba(0,0,0,0.3);'><div style='background: {{slaColor}}; padding: 18px; border-radius: 12px; margin-bottom: 20px;'><div style='display: flex; justify-content: space-between; align-items: center;'><div><span style='color: white; font-size: 32px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);'>ORDEN #{{orderNumber}}</span><div style='color: rgba(255,255,255,0.9); font-size: 14px; margin-top: 4px;'>{{channel}} - {{cashRegister}}</div></div><div style='text-align: right;'><span style='color: white; font-size: 28px; font-family: monospace; background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 8px;'>{{timer}}</span></div></div></div><div style='background: rgba(255,255,255,0.1); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;'><span style='color: #ffd700; font-size: 18px; font-weight: bold;'>CLIENTE:</span><span style='color: white; font-size: 18px; margin-left: 10px;'>{{customerName}}</span></div><div style='color: white;'>{{#items}}<div style='display: flex; align-items: flex-start; padding: 14px 0; border-bottom: 2px solid rgba(255,255,255,0.15);'><div style='background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%); color: #1e3c72; min-width: 50px; height: 50px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; margin-right: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);'>{{quantity}}x</div><div style='flex: 1;'><div style='font-size: 20px; font-weight: bold;'>{{name}}</div>{{#modifiers}}<div style='color: #ffd700; font-size: 14px; margin-top: 4px; font-style: italic;'>{{.}}</div>{{/modifiers}}{{#comments}}<div style='color: #4ade80; font-size: 14px; margin-top: 6px; background: rgba(74,222,128,0.2); padding: 6px 10px; border-radius: 6px;'>{{.}}</div>{{/comments}}</div></div>{{/items}}</div>{{#orderComments}}<div style='margin-top: 20px; background: rgba(255,107,107,0.2); border: 2px solid #ff6b6b; padding: 14px; border-radius: 10px;'><span style='color: #ff6b6b; font-size: 14px; font-weight: bold;'>NOTAS IMPORTANTES:</span><div style='color: white; font-size: 14px; margin-top: 8px;'>{{orderComments}}</div></div>{{/orderComments}}<div style='margin-top: 20px; background: {{channelColor}}; padding: 14px; border-radius: 10px; text-align: center;'><span style='color: white; font-weight: bold; font-size: 20px; text-transform: uppercase;'>{{channel}}</span></div></div>\",\n  \"valuesHTML\": \"{\\\"slaColor\\\": \\\"#27ae60\\\", \\\"orderNumber\\\": \\\"FULL-5001\\\", \\\"timer\\\": \\\"00:00\\\", \\\"customerName\\\": \\\"Juan Carlos Mendoza\\\", \\\"channel\\\": \\\"LOCAL\\\", \\\"cashRegister\\\": \\\"Caja Principal\\\", \\\"items\\\": [{\\\"quantity\\\": 2, \\\"name\\\": \\\"MEGA COMBO FAMILIAR 15 PRESAS\\\", \\\"modifiers\\\": [\\\"*SIN SAL EN PAPAS\\\", \\\"*PRESAS BIEN COCIDAS\\\", \\\"*MITAD ORIGINAL MITAD CRISPY\\\"], \\\"comments\\\": [\\\"Cliente pide que las presas esten crujientes\\\"]}, {\\\"quantity\\\": 1, \\\"name\\\": \\\"ALITAS BBQ x24\\\", \\\"modifiers\\\": [\\\"*EXTRA SALSA BBQ\\\", \\\"*EXTRA SALSA RANCH\\\", \\\"*MUY PICANTES\\\"], \\\"comments\\\": [\\\"Agregar servilletas extra\\\"]}, {\\\"quantity\\\": 3, \\\"name\\\": \\\"TWISTER SUPREME\\\", \\\"modifiers\\\": [\\\"*SIN CEBOLLA\\\", \\\"*SIN TOMATE\\\", \\\"*EXTRA MAYONESA\\\"], \\\"comments\\\": [\\\"Uno de los twisters sin lechuga\\\"]}, {\\\"quantity\\\": 4, \\\"name\\\": \\\"SUNDAE CHOCOLATE\\\", \\\"modifiers\\\": [\\\"*EXTRA CHOCOLATE\\\", \\\"*CON GALLETA\\\"], \\\"comments\\\": []}], \\\"orderComments\\\": \\\"ORDEN PARA EVENTO CORPORATIVO - ENTREGAR EN RECEPCION - LLAMAR 10 MIN ANTES\\\", \\\"channelColor\\\": \\\"#27ae60\\\"}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive"]
+            },
+            "description": "Crea una orden COMPLETA con todos los campos disponibles:\n\n## Estructura de la Orden\n\n### Datos Basicos\n- `id`: Identificador unico externo\n- `orderId`: Numero de orden visible\n- `createdAt`: Fecha de creacion ISO 8601\n- `channel`: Canal de origen (Local, Delivery, PedidosYa, etc.)\n- `cashRegister`: Caja/Cajero\n- `customer`: Datos del cliente\n\n### Datos Adicionales (otrosDatos)\n- `turno`: Numero de turno\n- `nroCheque`: Numero de cheque/comprobante\n- `llamarPor`: Nombre para llamar al cliente\n- `Fecha`: Fecha de entrega\n- `Direccion`: Direccion de entrega\n\n### Productos\nCada producto puede tener:\n- `productId`: ID del producto\n- `name`: Nombre del producto\n- `amount`: Cantidad\n- `category`: Categoria\n- `content`: Array de modificadores/notas (ej: *SIN SAL, *EXTRA QUESO)\n- `comments`: Comentarios especificos del producto\n- `products`: Array de subproductos (para combos desglosados)\n\n### Subproductos\nMisma estructura que productos, anidados dentro del producto padre.\n\n### Comentarios de la Orden\n- `comments`: Notas generales de toda la orden\n\n### Template HTML\n- `templateHTML`: Plantilla HTML con placeholders Mustache ({{variable}})\n- `valuesHTML`: JSON string con valores para la plantilla\n\n## Placeholders disponibles en templateHTML\n- `{{slaColor}}`: Color SLA dinamico\n- `{{orderNumber}}`: Numero de orden\n- `{{timer}}`: Tiempo transcurrido\n- `{{customerName}}`: Nombre del cliente\n- `{{channel}}`: Nombre del canal\n- `{{cashRegister}}`: Nombre de la caja\n- `{{#items}}...{{/items}}`: Iterador de items\n- `{{quantity}}`: Cantidad del item\n- `{{name}}`: Nombre del item\n- `{{#modifiers}}...{{/modifiers}}`: Iterador de modificadores\n- `{{#comments}}...{{/comments}}`: Iterador de comentarios\n- `{{orderComments}}`: Comentarios generales\n- `{{channelColor}}`: Color del canal"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Tickets - Ordenes en Batch",
+      "item": [
+        {
+          "name": "1. Crear Multiples Ordenes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comandas\": [\n    {\n      \"id\": \"BATCH-1-{{$timestamp}}\",\n      \"orderId\": \"B001\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": {\n        \"id\": 1,\n        \"name\": \"LOCAL\",\n        \"type\": \"LOCAL\"\n      },\n      \"cashRegister\": {\n        \"cashier\": \"CAJERO1\",\n        \"name\": \"Caja 1\"\n      },\n      \"customer\": {\n        \"name\": \"Cliente Batch 1\"\n      },\n      \"products\": [\n        {\n          \"name\": \"COMBO 1\",\n          \"amount\": 1\n        }\n      ]\n    },\n    {\n      \"id\": \"BATCH-2-{{$timestamp}}\",\n      \"orderId\": \"B002\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": {\n        \"id\": 1,\n        \"name\": \"LOCAL\",\n        \"type\": \"LOCAL\"\n      },\n      \"cashRegister\": {\n        \"cashier\": \"CAJERO2\",\n        \"name\": \"Caja 2\"\n      },\n      \"customer\": {\n        \"name\": \"Cliente Batch 2\"\n      },\n      \"products\": [\n        {\n          \"name\": \"COMBO 2\",\n          \"amount\": 2\n        },\n        {\n          \"name\": \"PAPAS GRANDES\",\n          \"amount\": 1\n        }\n      ]\n    },\n    {\n      \"id\": \"BATCH-3-{{$timestamp}}\",\n      \"orderId\": \"B003\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": {\n        \"id\": 2,\n        \"name\": \"DELIVERY\",\n        \"type\": \"DELIVERY\"\n      },\n      \"cashRegister\": {\n        \"cashier\": \"DELIVERY1\",\n        \"name\": \"Delivery\"\n      },\n      \"customer\": {\n        \"name\": \"Cliente Delivery Batch\"\n      },\n      \"products\": [\n        {\n          \"name\": \"BUCKET 12 PRESAS\",\n          \"amount\": 1\n        }\n      ]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive-batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive-batch"]
+            },
+            "description": "Crea multiples ordenes en una sola peticion.\n\n**Formato del body:**\n```json\n{\n  \"comandas\": [ ... array de ordenes ... ]\n}\n```\n\n**Respuesta:**\n```json\n{\n  \"total\": 3,\n  \"success\": 3,\n  \"failed\": 0,\n  \"results\": [\n    { \"id\": \"BATCH-1-xxx\", \"success\": true, \"orderId\": \"clxxx\" },\n    { \"id\": \"BATCH-2-xxx\", \"success\": true, \"orderId\": \"clxxx\" },\n    { \"id\": \"BATCH-3-xxx\", \"success\": true, \"orderId\": \"clxxx\" }\n  ]\n}\n```"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Crear Ordenes Mixtas (todos los canales)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comandas\": [\n    {\n      \"id\": \"MIX-LOCAL-{{$timestamp}}\",\n      \"orderId\": \"L{{$randomInt}}\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": { \"id\": 1, \"name\": \"LOCAL\", \"type\": \"LOCAL\" },\n      \"cashRegister\": { \"cashier\": \"C1\", \"name\": \"Caja 1\" },\n      \"customer\": { \"name\": \"Cliente Local\" },\n      \"products\": [{ \"name\": \"COMBO LOCAL\", \"amount\": 1 }]\n    },\n    {\n      \"id\": \"MIX-DELIVERY-{{$timestamp}}\",\n      \"orderId\": \"D{{$randomInt}}\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": { \"id\": 2, \"name\": \"DELIVERY\", \"type\": \"DELIVERY\" },\n      \"cashRegister\": { \"cashier\": \"DEL\", \"name\": \"Delivery\" },\n      \"customer\": { \"name\": \"Cliente Delivery\" },\n      \"products\": [{ \"name\": \"COMBO DELIVERY\", \"amount\": 2 }]\n    },\n    {\n      \"id\": \"MIX-PEYA-{{$timestamp}}\",\n      \"orderId\": \"PY{{$randomInt}}\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": { \"id\": 3, \"name\": \"PEDIDOSYA\", \"type\": \"DELIVERY\" },\n      \"cashRegister\": { \"cashier\": \"PEYA\", \"name\": \"PedidosYa\" },\n      \"customer\": { \"name\": \"Cliente PedidosYa\" },\n      \"products\": [{ \"name\": \"BUCKET PEYA\", \"amount\": 1 }]\n    },\n    {\n      \"id\": \"MIX-RAPPI-{{$timestamp}}\",\n      \"orderId\": \"RP{{$randomInt}}\",\n      \"createdAt\": \"{{$isoTimestamp}}\",\n      \"channel\": { \"id\": 4, \"name\": \"RAPPI\", \"type\": \"DELIVERY\" },\n      \"cashRegister\": { \"cashier\": \"RAPPI\", \"name\": \"Rappi\" },\n      \"customer\": { \"name\": \"Cliente Rappi\" },\n      \"products\": [{ \"name\": \"TWISTER RAPPI\", \"amount\": 3 }]\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/tickets/receive-batch",
+              "host": ["{{baseUrl}}"],
+              "path": ["tickets", "receive-batch"]
+            },
+            "description": "Crea ordenes de diferentes canales en una sola peticion.\n\nUtil para probar que los colores de canal se aplican correctamente."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Ordenes - Consulta",
+      "item": [
+        {
+          "name": "1. Listar Todas las Ordenes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Lista todas las ordenes en el sistema."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Listar Ordenes Pendientes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PENDING"
+                }
+              ]
+            },
+            "description": "Lista ordenes con estado PENDING.\n\nEstados disponibles:\n- PENDING: Pendiente\n- IN_PROGRESS: En progreso\n- FINISHED: Finalizada\n- CANCELLED: Cancelada"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Estadisticas de Ordenes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "stats"]
+            },
+            "description": "Obtiene estadisticas generales de ordenes."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Estadisticas del Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/dashboard-stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "dashboard-stats"]
+            },
+            "description": "Obtiene estadisticas para el dashboard."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Ordenes - Acciones",
+      "item": [
+        {
+          "name": "1. Finalizar Orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"screenId\": \"SCREEN_ID_AQUI\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/:orderId/finish",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":orderId", "finish"],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "ORDER_ID_AQUI",
+                  "description": "ID de la orden a finalizar"
+                }
+              ]
+            },
+            "description": "Finaliza una orden.\n\n**Reemplazar:**\n- `:orderId` con el ID de la orden\n- `screenId` en el body con el ID de la pantalla"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Deshacer Finalizacion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/:orderId/undo",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":orderId", "undo"],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "ORDER_ID_AQUI",
+                  "description": "ID de la orden"
+                }
+              ]
+            },
+            "description": "Deshace la finalizacion de una orden, volviendola a estado PENDING."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Cancelar Orden",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Cliente cancelo el pedido\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/:orderId/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", ":orderId", "cancel"],
+              "variable": [
+                {
+                  "key": "orderId",
+                  "value": "ORDER_ID_AQUI",
+                  "description": "ID de la orden"
+                }
+              ]
+            },
+            "description": "Cancela una orden.\n\n**Body opcional:**\n- `reason`: Razon de la cancelacion"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Limpiar Ordenes Antiguas",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/cleanup?hours=24",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "cleanup"],
+              "query": [
+                {
+                  "key": "hours",
+                  "value": "24",
+                  "description": "Eliminar ordenes finalizadas hace mas de X horas"
+                }
+              ]
+            },
+            "description": "Elimina ordenes finalizadas antiguas.\n\n**Parametro:**\n- `hours`: Eliminar ordenes finalizadas hace mas de X horas (default: 24)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Health Check",
+      "item": [
+        {
+          "name": "1. Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/config/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["config", "health"]
+            },
+            "description": "Verifica el estado de salud del sistema.\n\nNo requiere autenticacion."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Estadisticas del Sistema",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/config/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["config", "stats"]
+            },
+            "description": "Obtiene estadisticas del sistema (ordenes, pantallas, colas, etc.)."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

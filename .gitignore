@@ -261,6 +261,5 @@ kds-original/
 # =============================================================================
 # POSTMAN COLLECTIONS (may contain credentials)
 # =============================================================================
-*.postman_collection.json
 *.postman_environment.json
 !*.postman_collection.example.json
