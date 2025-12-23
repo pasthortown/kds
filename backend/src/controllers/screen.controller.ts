@@ -535,6 +535,220 @@ export const testPrinter = asyncHandler(
 );
 
 /**
+ * POST /api/screens/:id/copy-appearance-from/:sourceId
+ * Copiar configuración de apariencia completa de una pantalla a otra
+ * Incluye: Appearance, CardColors, ChannelColors
+ */
+export const copyAppearanceFrom = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { id: targetId, sourceId } = req.params;
+
+    // Verificar que ambas pantallas existen
+    const [targetScreen, sourceScreen] = await Promise.all([
+      prisma.screen.findUnique({
+        where: { id: targetId },
+        include: { appearance: true },
+      }),
+      prisma.screen.findUnique({
+        where: { id: sourceId },
+        include: {
+          appearance: {
+            include: {
+              cardColors: true,
+              channelColors: true,
+            },
+          },
+        },
+      }),
+    ]);
+
+    if (!targetScreen) {
+      throw new AppError(404, 'Target screen not found');
+    }
+
+    if (!sourceScreen) {
+      throw new AppError(404, 'Source screen not found');
+    }
+
+    if (!sourceScreen.appearance) {
+      throw new AppError(400, 'Source screen has no appearance configuration');
+    }
+
+    const sourceAppearance = sourceScreen.appearance;
+
+    // Preparar datos de apariencia (excluir id, screenId y relaciones)
+    const appearanceData = {
+      fontSize: sourceAppearance.fontSize,
+      fontFamily: sourceAppearance.fontFamily,
+      columnsPerScreen: sourceAppearance.columnsPerScreen,
+      columnSize: sourceAppearance.columnSize,
+      footerHeight: sourceAppearance.footerHeight,
+      ordersDisplay: sourceAppearance.ordersDisplay,
+      theme: sourceAppearance.theme,
+      screenName: sourceAppearance.screenName,
+      screenSplit: sourceAppearance.screenSplit,
+      showCounters: sourceAppearance.showCounters,
+      // Colores generales
+      backgroundColor: sourceAppearance.backgroundColor,
+      headerColor: sourceAppearance.headerColor,
+      headerTextColor: sourceAppearance.headerTextColor,
+      cardColor: sourceAppearance.cardColor,
+      textColor: sourceAppearance.textColor,
+      accentColor: sourceAppearance.accentColor,
+      // Header
+      headerFontFamily: sourceAppearance.headerFontFamily,
+      headerFontSize: sourceAppearance.headerFontSize,
+      headerFontWeight: sourceAppearance.headerFontWeight,
+      headerFontStyle: sourceAppearance.headerFontStyle,
+      headerBgColor: sourceAppearance.headerBgColor,
+      headerTextColorCustom: sourceAppearance.headerTextColorCustom,
+      showHeader: sourceAppearance.showHeader,
+      headerShowChannel: sourceAppearance.headerShowChannel,
+      headerShowTime: sourceAppearance.headerShowTime,
+      // Timer
+      timerFontFamily: sourceAppearance.timerFontFamily,
+      timerFontSize: sourceAppearance.timerFontSize,
+      timerFontWeight: sourceAppearance.timerFontWeight,
+      timerFontStyle: sourceAppearance.timerFontStyle,
+      timerTextColor: sourceAppearance.timerTextColor,
+      showTimer: sourceAppearance.showTimer,
+      // Cliente
+      clientFontFamily: sourceAppearance.clientFontFamily,
+      clientFontSize: sourceAppearance.clientFontSize,
+      clientFontWeight: sourceAppearance.clientFontWeight,
+      clientFontStyle: sourceAppearance.clientFontStyle,
+      clientTextColor: sourceAppearance.clientTextColor,
+      clientBgColor: sourceAppearance.clientBgColor,
+      showClient: sourceAppearance.showClient,
+      // Cantidad
+      quantityFontFamily: sourceAppearance.quantityFontFamily,
+      quantityFontSize: sourceAppearance.quantityFontSize,
+      quantityFontWeight: sourceAppearance.quantityFontWeight,
+      quantityFontStyle: sourceAppearance.quantityFontStyle,
+      quantityTextColor: sourceAppearance.quantityTextColor,
+      showQuantity: sourceAppearance.showQuantity,
+      // Producto
+      productFontFamily: sourceAppearance.productFontFamily,
+      productFontSize: sourceAppearance.productFontSize,
+      productFontWeight: sourceAppearance.productFontWeight,
+      productFontStyle: sourceAppearance.productFontStyle,
+      productTextColor: sourceAppearance.productTextColor,
+      productBgColor: sourceAppearance.productBgColor,
+      productUppercase: sourceAppearance.productUppercase,
+      // Subitem
+      subitemFontFamily: sourceAppearance.subitemFontFamily,
+      subitemFontSize: sourceAppearance.subitemFontSize,
+      subitemFontWeight: sourceAppearance.subitemFontWeight,
+      subitemFontStyle: sourceAppearance.subitemFontStyle,
+      subitemTextColor: sourceAppearance.subitemTextColor,
+      subitemBgColor: sourceAppearance.subitemBgColor,
+      subitemIndent: sourceAppearance.subitemIndent,
+      showSubitems: sourceAppearance.showSubitems,
+      // Modificador
+      modifierFontFamily: sourceAppearance.modifierFontFamily,
+      modifierFontSize: sourceAppearance.modifierFontSize,
+      modifierFontWeight: sourceAppearance.modifierFontWeight,
+      modifierFontStyle: sourceAppearance.modifierFontStyle,
+      modifierFontColor: sourceAppearance.modifierFontColor,
+      modifierBgColor: sourceAppearance.modifierBgColor,
+      modifierIndent: sourceAppearance.modifierIndent,
+      showModifiers: sourceAppearance.showModifiers,
+      // Notas
+      notesFontFamily: sourceAppearance.notesFontFamily,
+      notesFontSize: sourceAppearance.notesFontSize,
+      notesFontWeight: sourceAppearance.notesFontWeight,
+      notesFontStyle: sourceAppearance.notesFontStyle,
+      notesTextColor: sourceAppearance.notesTextColor,
+      notesBgColor: sourceAppearance.notesBgColor,
+      notesIndent: sourceAppearance.notesIndent,
+      showNotes: sourceAppearance.showNotes,
+      // Comentarios
+      commentsFontFamily: sourceAppearance.commentsFontFamily,
+      commentsFontSize: sourceAppearance.commentsFontSize,
+      commentsFontWeight: sourceAppearance.commentsFontWeight,
+      commentsFontStyle: sourceAppearance.commentsFontStyle,
+      commentsTextColor: sourceAppearance.commentsTextColor,
+      commentsBgColor: sourceAppearance.commentsBgColor,
+      commentsIndent: sourceAppearance.commentsIndent,
+      showComments: sourceAppearance.showComments,
+      // Canal
+      channelFontFamily: sourceAppearance.channelFontFamily,
+      channelFontSize: sourceAppearance.channelFontSize,
+      channelFontWeight: sourceAppearance.channelFontWeight,
+      channelFontStyle: sourceAppearance.channelFontStyle,
+      channelTextColor: sourceAppearance.channelTextColor,
+      channelUppercase: sourceAppearance.channelUppercase,
+      showChannel: sourceAppearance.showChannel,
+      // Layout
+      rows: sourceAppearance.rows,
+      maxItemsPerColumn: sourceAppearance.maxItemsPerColumn,
+      showOrderNumber: sourceAppearance.showOrderNumber,
+      animationEnabled: sourceAppearance.animationEnabled,
+    };
+
+    // Usar transacción para garantizar consistencia
+    await prisma.$transaction(async (tx) => {
+      // Upsert appearance
+      const targetAppearance = await tx.appearance.upsert({
+        where: { screenId: targetId },
+        create: {
+          screenId: targetId,
+          ...appearanceData,
+        },
+        update: appearanceData,
+      });
+
+      // Eliminar CardColors existentes y crear nuevos
+      await tx.cardColor.deleteMany({
+        where: { appearanceId: targetAppearance.id },
+      });
+
+      if (sourceAppearance.cardColors.length > 0) {
+        await tx.cardColor.createMany({
+          data: sourceAppearance.cardColors.map((c) => ({
+            appearanceId: targetAppearance.id,
+            color: c.color,
+            quantityColor: c.quantityColor,
+            minutes: c.minutes,
+            order: c.order,
+            isFullBackground: c.isFullBackground,
+          })),
+        });
+      }
+
+      // Eliminar ChannelColors existentes y crear nuevos
+      await tx.channelColor.deleteMany({
+        where: { appearanceId: targetAppearance.id },
+      });
+
+      if (sourceAppearance.channelColors.length > 0) {
+        await tx.channelColor.createMany({
+          data: sourceAppearance.channelColors.map((c) => ({
+            appearanceId: targetAppearance.id,
+            channel: c.channel,
+            color: c.color,
+            textColor: c.textColor,
+          })),
+        });
+      }
+    });
+
+    // Invalidar cache y notificar
+    await screenService.invalidateConfigCache(targetId);
+    await websocketService.broadcastConfigUpdate(targetId);
+
+    res.json({
+      message: 'Appearance configuration copied successfully',
+      copiedItems: {
+        appearance: true,
+        cardColors: sourceAppearance.cardColors.length,
+        channelColors: sourceAppearance.channelColors.length,
+      },
+    });
+  }
+);
+
+/**
  * GET /api/screens/by-number/:number
  * Obtener pantalla por número (endpoint público para KDS frontend)
  * Devuelve screenId y apiKey necesarios para conectar

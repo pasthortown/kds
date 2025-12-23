@@ -80,6 +80,8 @@ export const screensApi = {
     api.put(`/screens/${id}/printer`, data),
   deletePrinter: (id: string) => api.delete(`/screens/${id}/printer`),
   testPrinter: (id: string) => api.post(`/screens/${id}/printer/test`),
+  copyAppearanceFrom: (targetId: string, sourceId: string) =>
+    api.post(`/screens/${targetId}/copy-appearance-from/${sourceId}`),
 };
 
 // Queues

@@ -109,6 +109,14 @@ router.post(
 // Screen by number (public endpoint for KDS frontend)
 router.get('/screens/by-number/:number', screenController.getScreenByNumber);
 
+// Copy appearance from another screen
+router.post(
+  '/screens/:id/copy-appearance-from/:sourceId',
+  authenticate,
+  authorize('ADMIN', 'OPERATOR'),
+  screenController.copyAppearanceFrom
+);
+
 // Screen status
 router.post(
   '/screens/:id/standby',

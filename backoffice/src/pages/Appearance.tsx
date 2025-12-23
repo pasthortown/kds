@@ -840,7 +840,7 @@ export function Appearance() {
   };
 
   const handleCopyFrom = async () => {
-    if (!copyFromScreenId) {
+    if (!copyFromScreenId || !selectedScreenId) {
       message.warning('Seleccione una pantalla origen');
       return;
     }
@@ -852,134 +852,25 @@ export function Appearance() {
 
     try {
       setCopying(true);
-      const { data } = await screensApi.getConfig(copyFromScreenId);
-      const appearance = data.appearance;
 
-      if (appearance) {
-        const mappedConfig: AppearanceConfig = {
-          // Colores generales
-          backgroundColor: appearance.backgroundColor || defaultConfig.backgroundColor,
-          headerColor: appearance.headerColor || defaultConfig.headerColor,
-          headerTextColor: appearance.headerTextColor || defaultConfig.headerTextColor,
-          cardColor: appearance.cardColor || defaultConfig.cardColor,
-          textColor: appearance.textColor || defaultConfig.textColor,
-          accentColor: appearance.accentColor || defaultConfig.accentColor,
+      // Usar el endpoint del backend que copia toda la configuración
+      // incluyendo Appearance, CardColors (SLA) y ChannelColors
+      const { data } = await screensApi.copyAppearanceFrom(selectedScreenId, copyFromScreenId);
 
-          // Header
-          headerFontFamily: appearance.headerFontFamily || defaultConfig.headerFontFamily,
-          headerFontSize: appearance.headerFontSize || defaultConfig.headerFontSize,
-          headerFontWeight: appearance.headerFontWeight || defaultConfig.headerFontWeight,
-          headerFontStyle: appearance.headerFontStyle || defaultConfig.headerFontStyle,
-          headerBgColor: appearance.headerBgColor || defaultConfig.headerBgColor,
-          headerTextColorCustom: appearance.headerTextColorCustom || defaultConfig.headerTextColorCustom,
-          showHeader: appearance.showHeader ?? defaultConfig.showHeader,
-          showOrderNumber: appearance.showOrderNumber ?? defaultConfig.showOrderNumber,
-          headerShowChannel: appearance.headerShowChannel ?? defaultConfig.headerShowChannel,
-          headerShowTime: appearance.headerShowTime ?? defaultConfig.headerShowTime,
+      const sourceScreen = screens.find(s => s.id === copyFromScreenId);
 
-          // Timer
-          timerFontFamily: appearance.timerFontFamily || defaultConfig.timerFontFamily,
-          timerFontSize: appearance.timerFontSize || defaultConfig.timerFontSize,
-          timerFontWeight: appearance.timerFontWeight || defaultConfig.timerFontWeight,
-          timerFontStyle: appearance.timerFontStyle || defaultConfig.timerFontStyle,
-          timerTextColor: appearance.timerTextColor || defaultConfig.timerTextColor,
-          showTimer: appearance.showTimer ?? defaultConfig.showTimer,
+      // Recargar la configuración de la pantalla destino para actualizar el formulario
+      await loadScreenConfig(selectedScreenId);
 
-          // Cliente
-          clientFontFamily: appearance.clientFontFamily || defaultConfig.clientFontFamily,
-          clientFontSize: appearance.clientFontSize || defaultConfig.clientFontSize,
-          clientFontWeight: appearance.clientFontWeight || defaultConfig.clientFontWeight,
-          clientFontStyle: appearance.clientFontStyle || defaultConfig.clientFontStyle,
-          clientTextColor: appearance.clientTextColor || defaultConfig.clientTextColor,
-          clientBgColor: appearance.clientBgColor || defaultConfig.clientBgColor,
-          showClient: appearance.showClient ?? defaultConfig.showClient,
-
-          // Cantidad
-          quantityFontFamily: appearance.quantityFontFamily || defaultConfig.quantityFontFamily,
-          quantityFontSize: appearance.quantityFontSize || defaultConfig.quantityFontSize,
-          quantityFontWeight: appearance.quantityFontWeight || defaultConfig.quantityFontWeight,
-          quantityFontStyle: appearance.quantityFontStyle || defaultConfig.quantityFontStyle,
-          quantityTextColor: appearance.quantityTextColor || defaultConfig.quantityTextColor,
-          showQuantity: appearance.showQuantity ?? defaultConfig.showQuantity,
-
-          // Producto
-          productFontFamily: appearance.productFontFamily || defaultConfig.productFontFamily,
-          productFontSize: appearance.productFontSize || defaultConfig.productFontSize,
-          productFontWeight: appearance.productFontWeight || defaultConfig.productFontWeight,
-          productFontStyle: appearance.productFontStyle || defaultConfig.productFontStyle,
-          productTextColor: appearance.productTextColor || defaultConfig.productTextColor,
-          productBgColor: appearance.productBgColor || defaultConfig.productBgColor,
-          productUppercase: appearance.productUppercase ?? defaultConfig.productUppercase,
-
-          // Subitem
-          subitemFontFamily: appearance.subitemFontFamily || defaultConfig.subitemFontFamily,
-          subitemFontSize: appearance.subitemFontSize || defaultConfig.subitemFontSize,
-          subitemFontWeight: appearance.subitemFontWeight || defaultConfig.subitemFontWeight,
-          subitemFontStyle: appearance.subitemFontStyle || defaultConfig.subitemFontStyle,
-          subitemTextColor: appearance.subitemTextColor || defaultConfig.subitemTextColor,
-          subitemBgColor: appearance.subitemBgColor || defaultConfig.subitemBgColor,
-          subitemIndent: appearance.subitemIndent ?? defaultConfig.subitemIndent,
-          showSubitems: appearance.showSubitems ?? defaultConfig.showSubitems,
-
-          // Modifier
-          modifierFontFamily: appearance.modifierFontFamily || defaultConfig.modifierFontFamily,
-          modifierFontSize: appearance.modifierFontSize || defaultConfig.modifierFontSize,
-          modifierFontWeight: appearance.modifierFontWeight || defaultConfig.modifierFontWeight,
-          modifierFontStyle: appearance.modifierFontStyle || defaultConfig.modifierFontStyle,
-          modifierFontColor: appearance.modifierFontColor || defaultConfig.modifierFontColor,
-          modifierBgColor: appearance.modifierBgColor || defaultConfig.modifierBgColor,
-          modifierIndent: appearance.modifierIndent ?? defaultConfig.modifierIndent,
-          showModifiers: appearance.showModifiers ?? defaultConfig.showModifiers,
-
-          // Notes
-          notesFontFamily: appearance.notesFontFamily || defaultConfig.notesFontFamily,
-          notesFontSize: appearance.notesFontSize || defaultConfig.notesFontSize,
-          notesFontWeight: appearance.notesFontWeight || defaultConfig.notesFontWeight,
-          notesFontStyle: appearance.notesFontStyle || defaultConfig.notesFontStyle,
-          notesTextColor: appearance.notesTextColor || defaultConfig.notesTextColor,
-          notesBgColor: appearance.notesBgColor || defaultConfig.notesBgColor,
-          notesIndent: appearance.notesIndent ?? defaultConfig.notesIndent,
-          showNotes: appearance.showNotes ?? defaultConfig.showNotes,
-
-          // Comments
-          commentsFontFamily: appearance.commentsFontFamily || defaultConfig.commentsFontFamily,
-          commentsFontSize: appearance.commentsFontSize || defaultConfig.commentsFontSize,
-          commentsFontWeight: appearance.commentsFontWeight || defaultConfig.commentsFontWeight,
-          commentsFontStyle: appearance.commentsFontStyle || defaultConfig.commentsFontStyle,
-          commentsTextColor: appearance.commentsTextColor || defaultConfig.commentsTextColor,
-          commentsBgColor: appearance.commentsBgColor || defaultConfig.commentsBgColor,
-          commentsIndent: appearance.commentsIndent ?? defaultConfig.commentsIndent,
-          showComments: appearance.showComments ?? defaultConfig.showComments,
-
-          // Channel
-          channelFontFamily: appearance.channelFontFamily || defaultConfig.channelFontFamily,
-          channelFontSize: appearance.channelFontSize || defaultConfig.channelFontSize,
-          channelFontWeight: appearance.channelFontWeight || defaultConfig.channelFontWeight,
-          channelFontStyle: appearance.channelFontStyle || defaultConfig.channelFontStyle,
-          channelTextColor: appearance.channelTextColor || defaultConfig.channelTextColor,
-          channelUppercase: appearance.channelUppercase ?? defaultConfig.channelUppercase,
-          showChannel: appearance.showChannel ?? defaultConfig.showChannel,
-
-          // Disposicion
-          columns: appearance.columnsPerScreen || defaultConfig.columns,
-
-          // Opciones
-          animationEnabled: appearance.animationEnabled ?? defaultConfig.animationEnabled,
-          screenSplit: appearance.screenSplit ?? defaultConfig.screenSplit,
-        };
-
-        setConfig(mappedConfig);
-        form.setFieldsValue(mappedConfig);
-
-        const sourceScreen = screens.find(s => s.id === copyFromScreenId);
-        message.success(`Configuración copiada de "${sourceScreen?.name}". Presione Guardar para aplicar.`);
-        setCopyFromOpen(false);
-        setCopyFromScreenId(null);
-      } else {
-        message.warning('La pantalla origen no tiene configuración de apariencia');
-      }
-    } catch (error) {
-      message.error('Error copiando configuración');
+      message.success(
+        `Configuración copiada de "${sourceScreen?.name}". ` +
+        `Se copiaron: apariencia, ${data.copiedItems?.cardColors || 0} colores SLA y ` +
+        `${data.copiedItems?.channelColors || 0} colores de canal.`
+      );
+      setCopyFromOpen(false);
+      setCopyFromScreenId(null);
+    } catch (error: any) {
+      message.error(error.response?.data?.error || 'Error copiando configuración');
     } finally {
       setCopying(false);
     }
