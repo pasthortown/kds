@@ -3,16 +3,212 @@ import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+// Canales globales del sistema
+const defaultChannels = [
+  { name: 'Local', backgroundColor: '#7ed321', textColor: '#ffffff', priority: 10 },
+  { name: 'Kiosko-Efectivo', backgroundColor: '#0299d0', textColor: '#ffffff', priority: 9 },
+  { name: 'Kiosko-Tarjeta', backgroundColor: '#d0021b', textColor: '#ffffff', priority: 8 },
+  { name: 'PedidosYa', backgroundColor: '#d0021b', textColor: '#ffffff', priority: 7 },
+  { name: 'RAPPI', backgroundColor: '#ff5a00', textColor: '#ffffff', priority: 6 },
+  { name: 'UberEats', backgroundColor: '#06c167', textColor: '#ffffff', priority: 5 },
+  { name: 'Glovo', backgroundColor: '#ffc244', textColor: '#000000', priority: 4 },
+  { name: 'Drive', backgroundColor: '#9b59b6', textColor: '#ffffff', priority: 3 },
+  { name: 'Delivery', backgroundColor: '#e74c3c', textColor: '#ffffff', priority: 1 },
+];
+
+// Canales de cola (para cada cola)
+const queueChannelsData = [
+  { channel: 'Local', color: '#7ed321', priority: 10 },
+  { channel: 'Kiosko-Efectivo', color: '#0299d0', priority: 9 },
+  { channel: 'Kiosko-Tarjeta', color: '#d0021b', priority: 8 },
+  { channel: 'PedidosYa', color: '#d0021b', priority: 7 },
+  { channel: 'RAPPI', color: '#ff5a00', priority: 6 },
+  { channel: 'UberEats', color: '#06c167', priority: 5 },
+  { channel: 'Glovo', color: '#ffc244', priority: 4 },
+  { channel: 'Drive', color: '#9b59b6', priority: 3 },
+  { channel: 'Delivery', color: '#e74c3c', priority: 1 },
+  { channel: 'APP', color: '#dc21d6', priority: 0 },
+];
+
+// Colores de canal por apariencia (para cada pantalla)
+const channelColorsData = [
+  { channel: 'Local', color: '#7ed321', textColor: '#ffffff' },
+  { channel: 'Kiosko-Efectivo', color: '#0299d0', textColor: '#ffffff' },
+  { channel: 'Kiosko-Tarjeta', color: '#d0021b', textColor: '#ffffff' },
+  { channel: 'PedidosYa', color: '#d0021b', textColor: '#ffffff' },
+  { channel: 'RAPPI', color: '#ff5a00', textColor: '#ffffff' },
+  { channel: 'UberEats', color: '#06c167', textColor: '#ffffff' },
+  { channel: 'Glovo', color: '#ffc244', textColor: '#000000' },
+  { channel: 'Drive', color: '#9b59b6', textColor: '#ffffff' },
+  { channel: 'Delivery', color: '#e74c3c', textColor: '#ffffff' },
+];
+
+// Colores SLA por tiempo (minutos)
+const cardColorsData = [
+  { color: '#3e961f', quantityColor: '#0c8c14', minutes: '01:00', order: 1, isFullBackground: false },
+  { color: '#9b9728', quantityColor: '#7e7622', minutes: '02:00', order: 2, isFullBackground: false },
+  { color: '#cf1d09', quantityColor: '#a70a0a', minutes: '03:00', order: 3, isFullBackground: true },
+];
+
+// Configuracion de apariencia base
+const baseAppearance = {
+  fontSize: '20px',
+  fontFamily: 'Arimo-Medium',
+  columnsPerScreen: 4,
+  columnSize: '260px',
+  footerHeight: '72px',
+  ordersDisplay: 'COLUMNS',
+  theme: 'DARK',
+  screenName: '',
+  screenSplit: true,
+  showCounters: false,
+  backgroundColor: '#000000',
+  headerColor: '#1a1a2e',
+  headerTextColor: '#ffffff',
+  cardColor: '#ffffff',
+  textColor: '#1a1a2e',
+  accentColor: '#e94560',
+  // Header
+  headerFontFamily: 'monospace',
+  headerFontSize: 'large',
+  headerFontWeight: 'bold',
+  headerFontStyle: 'normal',
+  headerBgColor: '',
+  headerTextColorCustom: '#ffffff',
+  showHeader: true,
+  // Timer
+  timerFontFamily: 'monospace',
+  timerFontSize: 'large',
+  timerFontWeight: 'bold',
+  timerFontStyle: 'normal',
+  timerTextColor: '#ffffff',
+  showTimer: true,
+  // Cliente
+  clientFontFamily: 'monospace',
+  clientFontSize: 'medium',
+  clientFontWeight: 'normal',
+  clientFontStyle: 'italic',
+  clientTextColor: '#ffffff',
+  clientBgColor: '',
+  showClient: true,
+  // Cantidad
+  quantityFontFamily: 'monospace',
+  quantityFontSize: 'xlarge',
+  quantityFontWeight: 'bold',
+  quantityFontStyle: 'normal',
+  quantityTextColor: '',
+  showQuantity: true,
+  // Producto
+  productFontFamily: 'monospace',
+  productFontSize: 'xlarge',
+  productFontWeight: 'bold',
+  productFontStyle: 'normal',
+  productTextColor: '',
+  productBgColor: '',
+  productUppercase: true,
+  // Subitem
+  subitemFontFamily: 'monospace',
+  subitemFontSize: 'large',
+  subitemFontWeight: 'normal',
+  subitemFontStyle: 'normal',
+  subitemTextColor: '#333333',
+  subitemBgColor: '',
+  subitemIndent: 24,
+  showSubitems: true,
+  // Modificador
+  modifierFontFamily: 'monospace',
+  modifierFontSize: 'large',
+  modifierFontWeight: 'normal',
+  modifierFontStyle: 'italic',
+  modifierFontColor: '#666666',
+  modifierBgColor: '',
+  modifierIndent: 24,
+  showModifiers: true,
+  // Notas
+  notesFontFamily: 'monospace',
+  notesFontSize: 'large',
+  notesFontWeight: 'normal',
+  notesFontStyle: 'italic',
+  notesTextColor: '#004cff',
+  notesBgColor: '',
+  notesIndent: 24,
+  showNotes: true,
+  // Comentarios
+  commentsFontFamily: 'monospace',
+  commentsFontSize: 'large',
+  commentsFontWeight: 'normal',
+  commentsFontStyle: 'italic',
+  commentsTextColor: '#4b824d',
+  commentsBgColor: '',
+  commentsIndent: 24,
+  showComments: true,
+  // Canal
+  channelFontFamily: 'monospace',
+  channelFontSize: 'xlarge',
+  channelFontWeight: 'bold',
+  channelFontStyle: 'normal',
+  channelTextColor: '#ffffff',
+  channelUppercase: true,
+  showChannel: true,
+  // Legacy
+  headerShowChannel: true,
+  headerShowTime: true,
+  rows: 3,
+  maxItemsPerColumn: 6,
+  showOrderNumber: true,
+  animationEnabled: true,
+};
+
+// Configuracion de preferencias base
+const basePreference = {
+  finishOrderActive: false,
+  finishOrderTime: '00:20',
+  showClientData: true,
+  showName: true,
+  showIdentifier: true,
+  identifierMessage: 'Orden',
+  showNumerator: false,
+  showPagination: true,
+  sourceBoxActive: true,
+  sourceBoxMessage: 'KDS',
+  touchEnabled: false,
+  botoneraEnabled: true,
+};
+
+// Configuracion de teclado base
+const baseKeyboard = {
+  finishFirstOrder: 'h',
+  finishSecondOrder: '3',
+  finishThirdOrder: '1',
+  finishFourthOrder: 'f',
+  finishFifthOrder: 'j',
+  nextPage: 'i',
+  previousPage: 'g',
+  undo: 'c',
+  resetTime: 'r',
+  firstPage: 'q',
+  secondPage: 'w',
+  middlePage: 'e',
+  penultimatePage: 'x',
+  lastPage: 't',
+  confirmModal: '0',
+  cancelModal: 'v',
+  power: 'a',
+  exit: 'm',
+  combos: '[]',
+  debounceTime: 200,
+};
+
 async function main() {
   console.log('Seeding database...');
 
-  // Crear usuario admin KFC (principal)
+  // =====================================================
+  // USUARIOS
+  // =====================================================
   const kfcAdminPassword = await bcrypt.hash('cx-dsi2025', 10);
-  const kfcAdmin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: 'admin@kfc.com.ec' },
-    update: {
-      password: kfcAdminPassword,
-    },
+    update: { password: kfcAdminPassword },
     create: {
       email: 'admin@kfc.com.ec',
       password: kfcAdminPassword,
@@ -20,17 +216,14 @@ async function main() {
       role: 'ADMIN',
     },
   });
-  console.log('KFC Admin user created:', kfcAdmin.email);
+  console.log('User admin@kfc.com.ec created');
 
-  // Crear usuario admin adicional (por variables de entorno)
   const defaultAdminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
   const adminPassword = await bcrypt.hash(defaultAdminPassword, 10);
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@kds.local';
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: adminEmail },
-    update: {
-      password: adminPassword,
-    },
+    update: { password: adminPassword },
     create: {
       email: adminEmail,
       password: adminPassword,
@@ -38,270 +231,215 @@ async function main() {
       role: 'ADMIN',
     },
   });
-  console.log('Admin user created:', admin.email);
+  console.log(`User ${adminEmail} created`);
 
-  // Crear configuración general
-  const config = await prisma.generalConfig.upsert({
+  // =====================================================
+  // CONFIGURACION GENERAL
+  // =====================================================
+  await prisma.generalConfig.upsert({
     where: { id: 'general' },
     update: {},
     create: {
       id: 'general',
+      testMode: false,
+      ticketMode: 'POLLING',
+      printMode: 'LOCAL',
       pollingInterval: 2000,
       orderLifetime: 4,
       logRetentionDays: 5,
+      printTcp: true,
+      orderAliveTime: 300,
+      printRetries: 3,
+      printColumns: 24,
+      printFontSize: 'small',
+      showOrdersAndCounters: true,
+      countProducts: false,
     },
   });
-  console.log('General config created');
+  console.log('GeneralConfig created');
 
-  // Crear cola LINEAS
+  // =====================================================
+  // CANALES GLOBALES
+  // =====================================================
+  for (const ch of defaultChannels) {
+    await prisma.channel.upsert({
+      where: { name: ch.name },
+      update: {
+        backgroundColor: ch.backgroundColor,
+        textColor: ch.textColor,
+        priority: ch.priority,
+      },
+      create: {
+        name: ch.name,
+        backgroundColor: ch.backgroundColor,
+        textColor: ch.textColor,
+        priority: ch.priority,
+        active: true,
+      },
+    });
+  }
+  console.log(`${defaultChannels.length} global channels created`);
+
+  // =====================================================
+  // COLA LINEAS
+  // =====================================================
   const queueLineas = await prisma.queue.upsert({
     where: { name: 'LINEAS' },
     update: {},
     create: {
       name: 'LINEAS',
-      description: 'Cola principal para productos de línea (pollo)',
+      description: 'Cola principal de produccion',
       distribution: 'DISTRIBUTED',
-      channels: {
-        create: [
-          { channel: 'Kiosko-Efectivo', color: '#0299d0', priority: 1 },
-          { channel: 'Kiosko-Tarjeta', color: '#d0021b', priority: 1 },
-          { channel: 'Local', color: '#7ed321', priority: 2 },
-          { channel: 'Pick-up-Tarjeta', color: '#d0021b', priority: 1 },
-          { channel: 'Llevar', color: '#000000', priority: 2 },
-          { channel: 'Pickup-Efectivo', color: '#4a9882', priority: 1 },
-          { channel: 'PedidosYa', color: '#d0021b', priority: 3 },
-          { channel: 'RAPPI', color: '#d0021b', priority: 3 },
-          { channel: 'RAPPI-TURBO', color: '#ff8000', priority: 4 },
-          { channel: 'APP', color: '#bd10e0', priority: 2 },
-          { channel: 'CALLCENTER', color: '#ec728a', priority: 2 },
-          { channel: 'Drive', color: '#d0021b', priority: 2 },
-        ],
-      },
+      active: true,
     },
   });
-  console.log('Queue LINEAS created:', queueLineas.id);
 
-  // Crear cola SANDUCHE
+  // Filtros para LINEAS (ocultar SANDUCHE)
+  await prisma.queueFilter.upsert({
+    where: { queueId_pattern: { queueId: queueLineas.id, pattern: 'SANDUCHE' } },
+    update: {},
+    create: {
+      queueId: queueLineas.id,
+      pattern: 'SANDUCHE',
+      suppress: true,
+      active: true,
+    },
+  });
+
+  // Canales para LINEAS
+  for (const ch of queueChannelsData) {
+    await prisma.queueChannel.upsert({
+      where: { queueId_channel: { queueId: queueLineas.id, channel: ch.channel } },
+      update: { color: ch.color, priority: ch.priority },
+      create: {
+        queueId: queueLineas.id,
+        channel: ch.channel,
+        color: ch.color,
+        priority: ch.priority,
+        active: true,
+      },
+    });
+  }
+  console.log('Queue LINEAS created with channels and filters');
+
+  // =====================================================
+  // COLA SANDUCHE
+  // =====================================================
   const queueSanduche = await prisma.queue.upsert({
     where: { name: 'SANDUCHE' },
     update: {},
     create: {
       name: 'SANDUCHE',
-      description: 'Cola para sánduches, twisters y rusters',
-      distribution: 'DISTRIBUTED',
-      channels: {
-        create: [
-          { channel: 'Kiosko-Efectivo', color: '#0299d0', priority: 1 },
-          { channel: 'Kiosko-Tarjeta', color: '#d0021b', priority: 1 },
-          { channel: 'Local', color: '#7ed321', priority: 2 },
-          { channel: 'Llevar', color: '#000000', priority: 2 },
-        ],
-      },
-      filters: {
-        create: [
-          { pattern: 'S.', suppress: false },
-          { pattern: 'sanduche', suppress: false },
-          { pattern: 'sandwich', suppress: false },
-          { pattern: 'twister', suppress: false },
-          { pattern: 'ruster', suppress: false },
-        ],
-      },
+      description: 'Cola de sanduches',
+      distribution: 'SINGLE',
+      active: true,
     },
   });
-  console.log('Queue SANDUCHE created:', queueSanduche.id);
 
-  // Crear Pantalla 1 (Pollo)
-  const screen1 = await prisma.screen.upsert({
-    where: { name: 'Pantalla1' },
+  // Filtros para SANDUCHE (mostrar SANDUCHE)
+  await prisma.queueFilter.upsert({
+    where: { queueId_pattern: { queueId: queueSanduche.id, pattern: 'SANDUCHE' } },
     update: {},
     create: {
-      name: 'Pantalla1',
-      
-      queueId: queueLineas.id,
-      status: 'OFFLINE',
-      appearance: {
-        create: {
-          fontSize: '20px',
-          fontFamily: 'Arimo-Medium',
-          columnsPerScreen: 4,
-          columnSize: '260px',
-          footerHeight: '72px',
-          ordersDisplay: 'COLUMNS',
-          theme: 'DARK',
-          screenName: 'POLLO-01',
-          screenSplit: false,
-          showCounters: false,
-          cardColors: {
-            create: [
-              { color: '#98c530', minutes: '01:00', order: 1, isFullBackground: false },
-              { color: '#fddf58', minutes: '02:00', order: 2, isFullBackground: false },
-              { color: '#e75646', minutes: '03:00', order: 3, isFullBackground: false },
-              { color: '#e75646', minutes: '04:00', order: 4, isFullBackground: false },
-            ],
-          },
-        },
-      },
-      preference: {
-        create: {
-          showClientData: true,
-          showName: true,
-          showIdentifier: true,
-          identifierMessage: 'Orden',
-          showPagination: true,
-          sourceBoxActive: true,
-          sourceBoxMessage: 'KDS',
-        },
-      },
-      keyboard: {
-        create: {
-          finishFirstOrder: 'h',
-          finishSecondOrder: '3',
-          finishThirdOrder: '1',
-          finishFourthOrder: 'f',
-          nextPage: 'i',
-          previousPage: 'g',
-          combos: JSON.stringify([
-            { keys: ['i', 'g'], holdTime: 3000, action: 'togglePower', enabled: true },
-          ]),
-        },
-      },
-      printer: {
-        create: {
-          name: 'lineadomi',
-          ip: '10.101.27.66',
-          port: 9100,
-          enabled: true,
-        },
-      },
-    },
-  });
-  console.log('Screen 1 created:', screen1.name);
-
-  // Crear Pantalla 2 (Pollo)
-  const screen2 = await prisma.screen.upsert({
-    where: { name: 'Pantalla2' },
-    update: {},
-    create: {
-      name: 'Pantalla2',
-      
-      queueId: queueLineas.id,
-      status: 'OFFLINE',
-      appearance: {
-        create: {
-          fontSize: '20px',
-          fontFamily: 'Arimo-Medium',
-          columnsPerScreen: 4,
-          columnSize: '260px',
-          footerHeight: '72px',
-          ordersDisplay: 'COLUMNS',
-          theme: 'DARK',
-          screenName: 'POLLO-02',
-          screenSplit: false,
-          showCounters: false,
-          cardColors: {
-            create: [
-              { color: '#98c530', minutes: '01:00', order: 1, isFullBackground: false },
-              { color: '#fddf58', minutes: '02:00', order: 2, isFullBackground: false },
-              { color: '#e75646', minutes: '03:00', order: 3, isFullBackground: false },
-              { color: '#e75646', minutes: '04:00', order: 4, isFullBackground: false },
-            ],
-          },
-        },
-      },
-      preference: {
-        create: {
-          showClientData: true,
-          showName: true,
-          showIdentifier: true,
-          identifierMessage: 'Orden',
-          showPagination: true,
-          sourceBoxActive: true,
-          sourceBoxMessage: 'KDS',
-        },
-      },
-      keyboard: {
-        create: {
-          finishFirstOrder: 'h',
-          finishSecondOrder: '3',
-          finishThirdOrder: '1',
-          finishFourthOrder: 'f',
-          nextPage: 'i',
-          previousPage: 'g',
-          combos: JSON.stringify([
-            { keys: ['i', 'g'], holdTime: 3000, action: 'togglePower', enabled: true },
-          ]),
-        },
-      },
-      printer: {
-        create: {
-          name: 'linea',
-          ip: '10.101.27.67',
-          port: 9100,
-          enabled: true,
-        },
-      },
-    },
-  });
-  console.log('Screen 2 created:', screen2.name);
-
-  // Crear Pantalla 3 (Sánduches)
-  const screen3 = await prisma.screen.upsert({
-    where: { name: 'Pantalla3' },
-    update: {},
-    create: {
-      name: 'Pantalla3',
-      
       queueId: queueSanduche.id,
-      status: 'OFFLINE',
-      appearance: {
-        create: {
-          fontSize: '20px',
-          fontFamily: 'Arimo-Medium',
-          columnsPerScreen: 4,
-          columnSize: '260px',
-          footerHeight: '72px',
-          ordersDisplay: 'COLUMNS',
-          theme: 'DARK',
-          screenName: 'SANDUCHE',
-          screenSplit: false,
-          showCounters: false,
-          cardColors: {
-            create: [
-              { color: '#98c530', minutes: '01:00', order: 1, isFullBackground: false },
-              { color: '#fddf58', minutes: '02:00', order: 2, isFullBackground: false },
-              { color: '#e75646', minutes: '03:00', order: 3, isFullBackground: false },
-              { color: '#e75646', minutes: '04:00', order: 4, isFullBackground: false },
-            ],
-          },
-        },
-      },
-      preference: {
-        create: {
-          showClientData: true,
-          showName: true,
-          showIdentifier: true,
-          identifierMessage: 'Orden',
-          showPagination: true,
-          sourceBoxActive: true,
-          sourceBoxMessage: 'KDS',
-        },
-      },
-      keyboard: {
-        create: {
-          finishFirstOrder: 'h',
-          finishSecondOrder: '3',
-          finishThirdOrder: '1',
-          finishFourthOrder: 'f',
-          nextPage: 'i',
-          previousPage: 'g',
-          combos: JSON.stringify([
-            { keys: ['i', 'g'], holdTime: 3000, action: 'togglePower', enabled: true },
-          ]),
-        },
-      },
+      pattern: 'SANDUCHE',
+      suppress: false,
+      active: true,
     },
   });
-  console.log('Screen 3 created:', screen3.name);
+
+  // Canales para SANDUCHE
+  for (const ch of queueChannelsData) {
+    await prisma.queueChannel.upsert({
+      where: { queueId_channel: { queueId: queueSanduche.id, channel: ch.channel } },
+      update: { color: ch.color, priority: ch.priority },
+      create: {
+        queueId: queueSanduche.id,
+        channel: ch.channel,
+        color: ch.color,
+        priority: ch.priority,
+        active: true,
+      },
+    });
+  }
+  console.log('Queue SANDUCHE created with channels and filters');
+
+  // =====================================================
+  // PANTALLAS
+  // =====================================================
+  const screensConfig = [
+    { name: 'Pantalla1', queueId: queueLineas.id },
+    { name: 'Pantalla2', queueId: queueLineas.id },
+    { name: 'Pantalla3', queueId: queueLineas.id },
+  ];
+
+  for (const screenConf of screensConfig) {
+    const screen = await prisma.screen.upsert({
+      where: { name: screenConf.name },
+      update: {},
+      create: {
+        name: screenConf.name,
+        queueId: screenConf.queueId,
+        status: 'OFFLINE',
+      },
+    });
+
+    // Crear Appearance
+    const appearance = await prisma.appearance.upsert({
+      where: { screenId: screen.id },
+      update: {},
+      create: {
+        screenId: screen.id,
+        ...baseAppearance,
+      },
+    });
+
+    // Crear CardColors (SLA)
+    for (const cc of cardColorsData) {
+      await prisma.cardColor.upsert({
+        where: { appearanceId_order: { appearanceId: appearance.id, order: cc.order } },
+        update: { color: cc.color, quantityColor: cc.quantityColor, minutes: cc.minutes, isFullBackground: cc.isFullBackground },
+        create: {
+          appearanceId: appearance.id,
+          ...cc,
+        },
+      });
+    }
+
+    // Crear ChannelColors
+    for (const chc of channelColorsData) {
+      await prisma.channelColor.upsert({
+        where: { appearanceId_channel: { appearanceId: appearance.id, channel: chc.channel } },
+        update: { color: chc.color, textColor: chc.textColor },
+        create: {
+          appearanceId: appearance.id,
+          ...chc,
+        },
+      });
+    }
+
+    // Crear Preference
+    await prisma.preference.upsert({
+      where: { screenId: screen.id },
+      update: {},
+      create: {
+        screenId: screen.id,
+        ...basePreference,
+      },
+    });
+
+    // Crear KeyboardConfig
+    await prisma.keyboardConfig.upsert({
+      where: { screenId: screen.id },
+      update: {},
+      create: {
+        screenId: screen.id,
+        ...baseKeyboard,
+      },
+    });
+
+    console.log(`Screen ${screenConf.name} created with appearance, preferences, and keyboard config`);
+  }
 
   console.log('Seeding completed!');
 }
