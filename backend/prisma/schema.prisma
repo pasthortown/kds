@@ -430,9 +430,9 @@ model Order {
   customerName  String?
   identifier    String      // Número de orden
   status        OrderStatus @default(PENDING)
-  createdAt     DateTime    @default(now())
-  finishedAt    DateTime?
-  printedAt     DateTime?
+  createdAt     DateTime    @default(now()) @db.Timestamptz
+  finishedAt    DateTime?   @db.Timestamptz
+  printedAt     DateTime?   @db.Timestamptz
 
   // Campos adicionales para impresión/visualización (nullable, TEXT para soportar contenido largo)
   comments      String?     @db.Text // Comentarios adicionales de la orden

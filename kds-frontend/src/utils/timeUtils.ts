@@ -87,7 +87,7 @@ export function getColorForTime(
  */
 export function formatTime(date: Date | string): string {
   const d = new Date(date);
-  return d.toLocaleTimeString('es-EC', {
+  return d.toLocaleTimeString('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -98,7 +98,7 @@ export function formatTime(date: Date | string): string {
  */
 export function formatDateTime(date: Date | string): string {
   const d = new Date(date);
-  return d.toLocaleString('es-EC', {
+  return d.toLocaleString('es-CO', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

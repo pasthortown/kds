@@ -23,7 +23,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-kds}
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Error: POSTGRES_PASSWORD es requerido}"
       POSTGRES_DB: ${POSTGRES_DB:-kds}
-      TZ: ${TZ:-America/Mexico_City}
+      TZ: ${TZ:-America/Bogota}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
@@ -102,7 +102,7 @@ services:
       # Configuracion
       HEARTBEAT_INTERVAL: ${HEARTBEAT_INTERVAL:-10000}
       HEARTBEAT_TIMEOUT: ${HEARTBEAT_TIMEOUT:-30000}
-      TZ: ${TZ:-America/Mexico_City}
+      TZ: ${TZ:-America/Bogota}
       # Restaurant
       RESTAURANT_ID: ${RESTAURANT_ID:-}
       # NOTA: La conexion a MaxPoint la maneja el servicio sync (.NET)
@@ -181,7 +181,7 @@ services:
     container_name: kds-sync
     restart: unless-stopped
     environment:
-      TZ: ${TZ:-America/Mexico_City}
+      TZ: ${TZ:-America/Bogota}
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8100
     volumes:

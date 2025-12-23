@@ -15,7 +15,6 @@ import {
   Alert,
   Collapse,
   Typography,
-  Popover,
   Table,
   Modal,
   Input,
@@ -484,8 +483,6 @@ export function Appearance() {
   const [form] = Form.useForm();
   const [mirrorOrders, setMirrorOrders] = useState<PreviewOrder[]>([]);
   const [mirrorConnected, setMirrorConnected] = useState(false);
-  const [copyFromOpen, setCopyFromOpen] = useState(false);
-  const [copyFromScreenId, setCopyFromScreenId] = useState<string | null>(null);
   const [copying, setCopying] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importJson, setImportJson] = useState('');
@@ -845,43 +842,6 @@ export function Appearance() {
     message.info('Valores restaurados a configuración por defecto');
   };
 
-  const handleCopyFrom = async () => {
-    if (!copyFromScreenId || !selectedScreenId) {
-      message.warning('Seleccione una pantalla origen');
-      return;
-    }
-
-    if (copyFromScreenId === selectedScreenId) {
-      message.warning('No puede copiar de la misma pantalla');
-      return;
-    }
-
-    try {
-      setCopying(true);
-
-      // Usar el endpoint del backend que copia toda la configuración
-      // incluyendo Appearance, CardColors (SLA) y ChannelColors
-      const { data } = await screensApi.copyAppearanceFrom(selectedScreenId, copyFromScreenId);
-
-      const sourceScreen = screens.find(s => s.id === copyFromScreenId);
-
-      // Recargar la configuración de la pantalla destino para actualizar el formulario
-      await loadScreenConfig(selectedScreenId);
-
-      message.success(
-        `Configuración copiada de "${sourceScreen?.name}". ` +
-        `Se copiaron: apariencia, ${data.copiedItems?.cardColors || 0} colores SLA y ` +
-        `${data.copiedItems?.channelColors || 0} colores de canal.`
-      );
-      setCopyFromOpen(false);
-      setCopyFromScreenId(null);
-    } catch (error: any) {
-      message.error(error.response?.data?.error || 'Error copiando configuración');
-    } finally {
-      setCopying(false);
-    }
-  };
-
   // Exportar configuración a JSON
   const handleExport = async () => {
     if (!selectedScreenId) {
@@ -1144,7 +1104,6 @@ export function Appearance() {
                           key: `copy-${s.id}`,
                           label: s.name,
                           onClick: () => {
-                            setCopyFromScreenId(s.id);
                             // Ejecutar copia directamente
                             (async () => {
                               try {
@@ -1160,7 +1119,6 @@ export function Appearance() {
                                 message.error(error.response?.data?.error || 'Error copiando configuración');
                               } finally {
                                 setCopying(false);
-                                setCopyFromScreenId(null);
                               }
                             })();
                           },

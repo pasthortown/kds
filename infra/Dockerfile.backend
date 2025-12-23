@@ -41,8 +41,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Instalar OpenSSL para Prisma
-RUN apk add --no-cache openssl
+# Instalar OpenSSL para Prisma y tzdata para zona horaria
+RUN apk add --no-cache openssl tzdata && \
+    cp /usr/share/zoneinfo/America/Bogota /etc/localtime && \
+    echo "America/Bogota" > /etc/timezone
 
 # Crear usuario no-root para seguridad
 RUN addgroup -g 1001 -S nodejs && \
