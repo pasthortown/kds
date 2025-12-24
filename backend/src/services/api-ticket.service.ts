@@ -37,6 +37,7 @@ export interface ApiComanda {
   comments?: string;      // Comentarios adicionales de la orden
   templateHTML?: string;  // Plantilla HTML para renderizado
   valuesHTML?: string;    // Valores HTML para la plantilla
+  statusPos?: string;     // Estado de la orden en el POS (ej: "TOMANDO PEDIDO", "PEDIDO TOMADO")
 }
 
 export interface ApiProduct {
@@ -44,18 +45,9 @@ export interface ApiProduct {
   name: string;
   amount?: number;
   category?: string;
-  content?: string[];
-  comments?: string;  // Comentarios adicionales del producto
-  products?: ApiSubProduct[];
-}
-
-export interface ApiSubProduct {
-  productId?: string;
-  name: string;
-  amount?: number;
-  category?: string;
-  content?: string[];
-  comments?: string;  // Comentarios adicionales del subproducto
+  content?: string[];           // Notas del producto (ej: "*SIN SAL", "*EXTRA QUESO")
+  modifier?: string;            // Modificador del producto (ej: "8 Original, 7 Crispy")
+  comments?: string;            // Comentarios adicionales del producto
 }
 
 /**
@@ -275,41 +267,24 @@ export class ApiTicketService {
     if (comanda.valuesHTML) {
       orderData.valuesHTML = comanda.valuesHTML;
     }
+    if (comanda.statusPos) {
+      orderData.statusPos = comanda.statusPos;
+    }
 
     return orderData;
   }
 
   /**
-   * Aplana la estructura de productos para el formato interno
+   * Convierte la estructura de productos al formato interno
    */
   private flattenProducts(products: ApiProduct[]): any[] {
-    const items: any[] = [];
-
-    for (const product of products) {
-      // Agregar producto principal
-      items.push({
-        name: product.name,
-        quantity: product.amount || 1,
-        notes: product.content?.join(', ') || null,
-        modifier: null,
-        comments: product.comments || null,
-      });
-
-      // Agregar subproductos si existen
-      if (product.products) {
-        for (const subProduct of product.products) {
-          items.push({
-            name: `  ${subProduct.name}`,
-            quantity: subProduct.amount || 1,
-            notes: subProduct.content?.join(', ') || null,
-            modifier: null,
-            comments: subProduct.comments || null,
-          });
-        }
-      }
-    }
-
-    return items;
+    return products.map((product) => ({
+      name: product.name,
+      quantity: product.amount || 1,
+      notes: product.content?.join(', ') || null,
+      modifier: product.modifier || null,
+      comments: product.comments || null,
+    }));
   }
 
   /**
@@ -360,6 +335,9 @@ export class ApiTicketService {
     }
     if (order.valuesHTML) {
       apiComanda.valuesHTML = order.valuesHTML;
+    }
+    if (order.statusPos) {
+      apiComanda.statusPos = order.statusPos;
     }
 
     return apiComanda;

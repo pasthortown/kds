@@ -430,6 +430,7 @@ model Order {
   customerName  String?
   identifier    String      // Número de orden
   status        OrderStatus @default(PENDING)
+  statusPos     String?     // Estado de la orden en el POS (ej: "TOMANDO PEDIDO", "PEDIDO TOMADO")
   createdAt     DateTime    @default(now()) @db.Timestamptz
   finishedAt    DateTime?   @db.Timestamptz
   printedAt     DateTime?   @db.Timestamptz

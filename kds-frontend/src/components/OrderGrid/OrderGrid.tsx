@@ -83,21 +83,19 @@ export function OrderGrid() {
   // Calcular altura REAL de un item producto base
   // padding: 4px arriba + 4px abajo = 8px
   // lineHeight: 1.3
-  // Agregamos un 15% extra para gaps y spacing adicional
   const productLineHeight = 1.3;
   const productPadding = 8; // 4px arriba + 4px abajo
   const itemProductHeight = Math.ceil(
-    (productFontSizes[productFontSize] || 14) * productLineHeight + productPadding * 1.15
+    (productFontSizes[productFontSize] || 14) * productLineHeight + productPadding
   );
 
   // Calcular altura REAL de una línea de modificador
   // marginTop: 2px
   // lineHeight: 1.4
-  // Agregamos un 10% extra para gaps
   const modifierLineHeight = 1.4;
   const modifierMarginTop = 2;
   const itemModifierLineHeight = Math.ceil(
-    ((modifierFontSizes[modifierFontSize] || 11) * modifierLineHeight + modifierMarginTop) * 1.10
+    (modifierFontSizes[modifierFontSize] || 11) * modifierLineHeight + modifierMarginTop
   );
 
   console.log('[OrderGrid] Calculated item heights:', {
@@ -107,39 +105,47 @@ export function OrderGrid() {
     itemModifierLineHeight,
   });
 
-  // Constantes de diseño
-  const orderHeaderHeight = 120; // Header completo con orden, cliente, canal
-  const gridPadding = 32; // Padding del grid container (16px * 2)
-  const itemsContainerPadding = 20; // padding: '10px 12px' = 20px vertical
-  const splitFooterHeight = 50; // Footer "Final" en splits
-  const safetyMargin = 60; // Margen de seguridad optimizado para mejor uso del espacio
-  const otherPartsSafetyMargin = 80; // Margen ligeramente mayor para partes no-first (para footer)
+  // Constantes de diseño - valores reales basados en CSS de OrderCard
+  // Header: padding 8px*2 + ~20px contenido + cliente padding 6px + ~14px = ~48px total
+  const orderHeaderHeight = 50;
+  // Footer: padding 8px*2 + ~16px contenido = ~32px
+  const channelFooterHeight = 32;
+  // Items container: padding 8px arriba, 0 abajo = 8px
+  const itemsContainerPadding = 8;
+  // Clip-path margin para splits (reducido a 12px)
+  const clipPathMargin = 12;
+  // Border de la tarjeta (3px * 2)
+  const cardBorder = 6;
 
-  // Altura efectiva para items en primera parte (tiene header)
-  const firstPartItemsHeight =
-    availableHeight - gridPadding - orderHeaderHeight - itemsContainerPadding - safetyMargin;
+  // Altura disponible para items en orden completa (sin split)
+  const singleOrderItemsHeight =
+    availableHeight - orderHeaderHeight - channelFooterHeight - itemsContainerPadding - cardBorder;
 
-  // Altura efectiva para items en otras partes (sin header, con footer opcional)
-  // Usamos margen de seguridad mayor para asegurar que el footer no se corte
+  // Altura para PRIMERA parte de split (header + items, sin footer)
+  const firstPartOfSplitItemsHeight =
+    availableHeight - orderHeaderHeight - clipPathMargin - itemsContainerPadding - cardBorder;
+
+  // Altura para OTRAS partes de split (sin header, con footer en última)
   const otherPartsItemsHeight =
-    availableHeight - gridPadding - splitFooterHeight - itemsContainerPadding - otherPartsSafetyMargin;
+    availableHeight - clipPathMargin - channelFooterHeight - itemsContainerPadding - cardBorder;
 
   // Calcular cuántos items caben basado en altura REAL en píxeles
-  // Usamos altura promedio conservadora (item base + algunas líneas de modificador)
-  const avgItemWithModifiers = itemProductHeight + (itemModifierLineHeight * 2); // Item + 2 líneas mod promedio
-
-  const dynamicFirstPartMaxHeight = Math.max(itemProductHeight * 2, firstPartItemsHeight);
-  const dynamicOtherPartsMaxHeight = Math.max(itemProductHeight * 3, otherPartsItemsHeight);
+  // Para decidir si dividir, usamos la altura de orden completa (sin split)
+  // Si excede, usamos la altura de primera parte de split
+  const dynamicSingleOrderMaxHeight = Math.max(itemProductHeight * 2, singleOrderItemsHeight);
+  const dynamicFirstPartOfSplitMaxHeight = Math.max(itemProductHeight * 2, firstPartOfSplitItemsHeight);
+  const dynamicOtherPartsMaxHeight = Math.max(itemProductHeight * 2, otherPartsItemsHeight);
 
   console.log('[OrderGrid] Dynamic heights:', {
     availableHeight,
-    firstPartItemsHeight,
+    singleOrderItemsHeight,
+    firstPartOfSplitItemsHeight,
     otherPartsItemsHeight,
-    dynamicFirstPartMaxHeight,
+    dynamicSingleOrderMaxHeight,
+    dynamicFirstPartOfSplitMaxHeight,
     dynamicOtherPartsMaxHeight,
     itemProductHeight,
     itemModifierLineHeight,
-    avgItemWithModifiers,
   });
 
   // Obtener TODAS las órdenes pendientes (no paginar aquí)
@@ -159,20 +165,32 @@ export function OrderGrid() {
     setLastFinished(orderId);
   }, [setLastFinished]);
 
-  // Calcular la altura REAL en píxeles de un item (considerando modificadores y notas)
+  // Calcular la altura REAL en píxeles de un item (considerando modificadores, notas y comentarios)
   const calculateItemHeight = (item: OrderItem): number => {
-    // Altura base del producto
+    // Altura base del producto (nombre + cantidad)
     let height = itemProductHeight;
 
-    // Altura de modificadores (cada línea)
+    // Altura de modificadores (cada línea separada por coma)
     if (item.modifier) {
       const modifierLines = item.modifier.split(',').length;
       height += modifierLines * itemModifierLineHeight;
     }
 
-    // Altura de notas (una línea adicional)
+    // Altura de notas - estimar líneas basado en longitud y comas
+    // Las notas son texto que hace wrap, estimamos ~30 caracteres por línea
     if (item.notes) {
-      height += itemModifierLineHeight;
+      const notesLength = item.notes.length;
+      const commaCount = (item.notes.match(/,/g) || []).length;
+      // Estimar líneas: al menos 1, más líneas por cada ~35 caracteres o por comas (lo que sea mayor)
+      const estimatedLines = Math.max(1, Math.ceil(notesLength / 35), commaCount + 1);
+      height += estimatedLines * itemModifierLineHeight;
+    }
+
+    // Altura de comentarios - similar estimación
+    if (item.comments) {
+      const commentsLength = item.comments.length;
+      const estimatedLines = Math.max(1, Math.ceil(commentsLength / 35));
+      height += estimatedLines * itemModifierLineHeight;
     }
 
     return height;
@@ -211,14 +229,11 @@ export function OrderGrid() {
       // Calcular altura total de la orden en píxeles
       const totalHeight = order.items.reduce((sum, item) => sum + calculateItemHeight(item), 0);
 
-      // Usar alturas dinámicas calculadas basándose en la altura disponible real
-      const firstPartMaxHeight = dynamicFirstPartMaxHeight;
-      const otherPartsMaxHeight = dynamicOtherPartsMaxHeight;
-
-      const needsSplit = screenSplit && totalHeight > firstPartMaxHeight;
+      // Decidir si necesita split comparando con altura de orden completa (con footer)
+      const needsSplit = screenSplit && totalHeight > dynamicSingleOrderMaxHeight;
 
       if (!needsSplit) {
-        // La orden completa cabe en una sola tarjeta
+        // La orden completa cabe en una sola tarjeta (tiene header + items + footer)
         columns.push({
           order,
           items: order.items,
@@ -234,7 +249,9 @@ export function OrderGrid() {
         let isFirst = true;
 
         while (remainingItems.length > 0) {
-          const maxHeight = isFirst ? firstPartMaxHeight : otherPartsMaxHeight;
+          // Primera parte: header + items + clip-path (SIN footer)
+          // Otras partes: clip-path + items + footer (última) o clip-path
+          const maxHeight = isFirst ? dynamicFirstPartOfSplitMaxHeight : dynamicOtherPartsMaxHeight;
           const partItems = getItemsForHeight(remainingItems, maxHeight);
 
           // Evitar partes vacías
@@ -267,7 +284,8 @@ export function OrderGrid() {
   }, [
     allOrders,
     screenSplit,
-    dynamicFirstPartMaxHeight,
+    dynamicSingleOrderMaxHeight,
+    dynamicFirstPartOfSplitMaxHeight,
     dynamicOtherPartsMaxHeight,
     productFontSize,
     modifierFontSize,
@@ -356,7 +374,7 @@ export function OrderGrid() {
   return (
     <div
       ref={gridContainerRef}
-      className="flex-1 p-4 overflow-hidden"
+      className="flex-1 p-4"
       style={{
         display: 'grid',
         gridTemplateColumns: `repeat(${columnsPerScreen}, 1fr)`,
@@ -364,8 +382,9 @@ export function OrderGrid() {
         gap: '1rem',
         maxWidth: '100%',
         minHeight: 0, // Importante para que flex-1 funcione correctamente con grid
-        height: '100%', // Forzar altura completa
-        alignItems: 'stretch', // Estirar items para llenar toda la altura
+        maxHeight: '100%', // Limitar altura máxima al contenedor
+        overflow: 'hidden', // Ocultar overflow del grid, pero las tarjetas tienen scroll interno
+        alignItems: 'stretch', // Estirar tarjetas al 100% del alto
       }}
     >
       {displayColumns.map((column, index) => (

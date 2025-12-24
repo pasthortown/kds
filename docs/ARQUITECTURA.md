@@ -262,7 +262,8 @@ backoffice/
 │ customerName    │     │ notes           │
 │ identifier      │     │ modifier        │
 │ status          │     │ comments        │
-│ createdAt       │     └─────────────────┘
+│ statusPos       │     └─────────────────┘
+│ createdAt       │
 │ finishedAt      │
 │ comments        │
 └─────────────────┘
@@ -283,7 +284,7 @@ backoffice/
 | **ChannelColor** | Colores por canal en cada pantalla |
 | **Preference** | Preferencias de comportamiento |
 | **KeyboardConfig** | Mapeo de teclas/botonera |
-| **Order** | Ordenes de cocina |
+| **Order** | Ordenes de cocina (incluye statusPos para estado del POS) |
 | **OrderItem** | Items de cada orden |
 | **GeneralConfig** | Configuracion global del sistema |
 

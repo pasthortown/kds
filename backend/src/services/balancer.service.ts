@@ -212,6 +212,7 @@ export class BalancerService {
       comments: order.comments || undefined,
       templateHTML: order.templateHTML || undefined,
       valuesHTML: order.valuesHTML || undefined,
+      statusPos: order.statusPos || undefined,
     }));
   }
 

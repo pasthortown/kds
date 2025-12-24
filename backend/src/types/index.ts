@@ -259,6 +259,7 @@ export interface Order {
   comments?: string;      // Comentarios adicionales de la orden
   templateHTML?: string;  // Plantilla HTML para renderizado
   valuesHTML?: string;    // Valores HTML para la plantilla
+  statusPos?: string;     // Estado de la orden en el POS (ej: "TOMANDO PEDIDO", "PEDIDO TOMADO")
 }
 
 // ============================================

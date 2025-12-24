@@ -19,39 +19,80 @@ export class OrderService {
         // Verificar si ya existe
         const existing = await prisma.order.findUnique({
           where: { externalId: order.externalId },
+          include: { items: true },
         });
+
+        let resultOrder;
 
         if (existing) {
-          // Ya existe, no hacer nada
-          continue;
+          // Ya existe, actualizar la orden y sus items
+          // Primero eliminar items existentes
+          await prisma.orderItem.deleteMany({
+            where: { orderId: existing.id },
+          });
+
+          // Actualizar orden y crear nuevos items
+          resultOrder = await prisma.order.update({
+            where: { externalId: order.externalId },
+            data: {
+              channel: order.channel,
+              customerName: order.customerName,
+              identifier: order.identifier,
+              // No cambiar status si ya está en proceso
+              // Campos opcionales para impresión/visualización
+              comments: order.comments || null,
+              templateHTML: order.templateHTML || null,
+              valuesHTML: order.valuesHTML || null,
+              statusPos: order.statusPos || null,
+              items: {
+                create: order.items.map((item) => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  notes: item.notes,
+                  modifier: item.modifier,
+                  comments: item.comments,
+                })),
+              },
+            },
+            include: {
+              items: true,
+            },
+          });
+
+          orderLogger.debug(`Order updated: ${resultOrder.identifier}`);
+        } else {
+          // Crear nueva orden
+          resultOrder = await prisma.order.create({
+            data: {
+              externalId: order.externalId,
+              channel: order.channel,
+              customerName: order.customerName,
+              identifier: order.identifier,
+              status: 'PENDING',
+              // Campos opcionales para impresión/visualización
+              comments: order.comments || null,
+              templateHTML: order.templateHTML || null,
+              valuesHTML: order.valuesHTML || null,
+              statusPos: order.statusPos || null,
+              items: {
+                create: order.items.map((item) => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  notes: item.notes,
+                  modifier: item.modifier,
+                  comments: item.comments,
+                })),
+              },
+            },
+            include: {
+              items: true,
+            },
+          });
+
+          orderLogger.debug(`Order created: ${resultOrder.identifier}`);
         }
 
-        // Crear nueva orden
-        const created = await prisma.order.create({
-          data: {
-            externalId: order.externalId,
-            channel: order.channel,
-            customerName: order.customerName,
-            identifier: order.identifier,
-            status: 'PENDING',
-            // Campos opcionales para impresión/visualización
-            comments: order.comments || null,
-            templateHTML: order.templateHTML || null,
-            valuesHTML: order.valuesHTML || null,
-            items: {
-              create: order.items.map((item) => ({
-                name: item.name,
-                quantity: item.quantity,
-                notes: item.notes,
-                modifier: item.modifier,
-                comments: item.comments,
-              })),
-            },
-          },
-          include: {
-            items: true,
-          },
-        });
+        const created = resultOrder;
 
         results.push({
           id: created.id,
@@ -73,6 +114,7 @@ export class OrderService {
           comments: created.comments || undefined,
           templateHTML: created.templateHTML || undefined,
           valuesHTML: created.valuesHTML || undefined,
+          statusPos: created.statusPos || undefined,
         });
 
         orderLogger.debug(`Order created: ${created.identifier}`);
@@ -134,6 +176,7 @@ export class OrderService {
         comments: order.comments || undefined,
         templateHTML: order.templateHTML || undefined,
         valuesHTML: order.valuesHTML || undefined,
+        statusPos: order.statusPos || undefined,
       };
     } catch (error) {
       orderLogger.error(`Error finishing order ${orderId}`, { error });
@@ -195,6 +238,7 @@ export class OrderService {
         comments: order.comments || undefined,
         templateHTML: order.templateHTML || undefined,
         valuesHTML: order.valuesHTML || undefined,
+        statusPos: order.statusPos || undefined,
       };
     } catch (error) {
       orderLogger.error(`Error restoring order ${orderId}`, { error });
@@ -256,6 +300,7 @@ export class OrderService {
       comments: order.comments || undefined,
       templateHTML: order.templateHTML || undefined,
       valuesHTML: order.valuesHTML || undefined,
+      statusPos: order.statusPos || undefined,
     }));
   }
 

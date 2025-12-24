@@ -20,6 +20,7 @@ export interface Order {
   customerName?: string;
   identifier: string;
   status: 'PENDING' | 'IN_PROGRESS' | 'FINISHED' | 'CANCELLED';
+  statusPos?: string; // Estado del POS (ej: "TOMANDO PEDIDO", "PEDIDO TOMADO")
   createdAt: string;
   finishedAt?: string;
   items: OrderItem[];

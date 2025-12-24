@@ -1,7 +1,18 @@
 Luis y Alanys
 
 imprersion a tiempo real
-impresion por API
 Excluir canales y estaciones de kds
-Impresion Netcore (completar)
+KDS por API
 
+Lista de tareas de trabajo:
+
+1 hora
+- Maxpoint hay que crear una politica a nivel de restaurante indicando los canales que son excluidos del kds
+- Maxpoint hay que crear una politica a nivel de estacion indicando si usa o no kds
+- Maxpoint hay que crear una politica a nivel de estacion indicando si usa o no impresion a tiempo real
+
+2 horas
+- Maxpoint en la pantalla TOMA PEDIDO se debe incluir el envio de la orden, mientras esta aceptango agregar productos a la orden mostrada en la izquierda de la pantalla (TOMANDO PEDIDO)
+- Maxpoint en la pantalla TOMA PEDIDO se debe incluir el envio de la orden, al momento de de finalizar la toma de pedido se envia como (PEDIDO TOMADO)
+
+Impresion Netcore (completar) - EN EL LOCAL

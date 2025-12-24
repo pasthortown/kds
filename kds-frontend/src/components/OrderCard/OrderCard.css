@@ -1,0 +1,40 @@
+/* Animación de pulso para órdenes en estado "TOMANDO PEDIDO" */
+@keyframes orderPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.order-taking {
+  animation: orderPulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(255, 193, 7, 0.6) !important;
+}
+
+/* Efecto adicional de borde brillante */
+.order-taking::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #ffc107, #ff9800, #ffc107);
+  border-radius: 10px;
+  z-index: -1;
+  animation: borderGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
