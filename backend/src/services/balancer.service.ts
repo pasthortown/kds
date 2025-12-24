@@ -264,22 +264,98 @@ export class BalancerService {
 
   /**
    * Redistribuye órdenes cuando una pantalla se reactiva
-   * NOTA: Por defecto no redistribuye órdenes existentes
+   * Balancea equitativamente las órdenes entre todas las pantallas activas
    */
-  async handleScreenReactivation(screenId: string): Promise<void> {
+  async handleScreenReactivation(screenId: string): Promise<string[]> {
     const screen = await prisma.screen.findUnique({
       where: { id: screenId },
       select: { queueId: true, name: true },
     });
 
-    if (!screen) return;
+    if (!screen) return [];
 
     balancerLogger.info(
-      `Screen ${screen.name} reactivated in queue ${screen.queueId}`
+      `Screen ${screen.name} reactivated - redistributing orders in queue`
     );
 
-    // Las nuevas órdenes se distribuirán automáticamente incluyendo esta pantalla
-    // Las órdenes existentes permanecen en sus pantallas asignadas
+    // Obtener todas las pantallas activas de la cola
+    let activeScreenIds = await screenService.getActiveScreensForQueue(screen.queueId);
+
+    // Asegurarse de que la pantalla que se está encendiendo esté incluida
+    // (puede que aún no tenga heartbeat activo)
+    if (!activeScreenIds.includes(screenId)) {
+      activeScreenIds.push(screenId);
+      balancerLogger.info(`Added reactivating screen ${screen.name} to active list`);
+    }
+
+    // Si solo hay una pantalla (la que se está encendiendo), igual redistribuir
+    // para que las órdenes que estaban en pantallas apagadas vuelvan a aparecer
+    if (activeScreenIds.length === 0) {
+      activeScreenIds = [screenId];
+    }
+
+    // Obtener TODAS las órdenes pendientes de la cola (de todas las pantallas activas)
+    const allPendingOrders = await prisma.order.findMany({
+      where: {
+        screen: { queueId: screen.queueId },
+        status: { in: ['PENDING', 'IN_PROGRESS'] },
+      },
+      select: { id: true, screenId: true },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (allPendingOrders.length === 0) {
+      balancerLogger.info(`No pending orders to redistribute`);
+      return [];
+    }
+
+    balancerLogger.info(
+      `Redistributing ${allPendingOrders.length} orders among ${activeScreenIds.length} active screens`
+    );
+
+    // Redistribuir equitativamente usando round-robin
+    const affectedScreenIds: Set<string> = new Set();
+    let index = 0;
+
+    for (const order of allPendingOrders) {
+      const targetScreenId = activeScreenIds[index % activeScreenIds.length];
+
+      // Solo actualizar si cambia de pantalla
+      if (order.screenId !== targetScreenId) {
+        await prisma.order.update({
+          where: { id: order.id },
+          data: { screenId: targetScreenId },
+        });
+
+        // Actualizar Redis
+        if (order.screenId) {
+          await redis.srem(REDIS_KEYS.screenOrders(order.screenId), order.id);
+        }
+        await redis.sadd(REDIS_KEYS.screenOrders(targetScreenId), order.id);
+
+        affectedScreenIds.add(targetScreenId);
+        if (order.screenId) {
+          affectedScreenIds.add(order.screenId);
+        }
+      }
+
+      index++;
+    }
+
+    // Calcular distribución final para log
+    const distribution: Record<string, number> = {};
+    for (const screenId of activeScreenIds) {
+      const count = await prisma.order.count({
+        where: { screenId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
+      });
+      distribution[screenId.slice(-4)] = count;
+    }
+
+    balancerLogger.info(
+      `Redistribution complete. Distribution: ${JSON.stringify(distribution)}`
+    );
+
+    return Array.from(affectedScreenIds);
   }
 
   /**

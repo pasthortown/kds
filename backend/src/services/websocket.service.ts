@@ -193,7 +193,18 @@ export class WebSocketService {
 
         wsLogger.info(`Orders redistributed to ${affectedScreenIds.length} screens after ${data.screenId} went to standby`);
       } else if (data.status === 'ONLINE') {
-        await balancerService.handleScreenReactivation(data.screenId);
+        // Redistribuir órdenes equitativamente incluyendo la pantalla reactivada
+        const affectedScreenIds = await balancerService.handleScreenReactivation(data.screenId);
+
+        // Notificar a TODAS las pantallas afectadas (incluyendo la que se encendió)
+        for (const screenId of affectedScreenIds) {
+          await this.broadcastOrdersUpdate(screenId);
+        }
+
+        // También enviar las órdenes a la pantalla que se acaba de encender
+        await this.broadcastOrdersUpdate(data.screenId);
+
+        wsLogger.info(`Orders redistributed to ${affectedScreenIds.length} screens after ${data.screenId} came online`);
       }
 
       socket.emit('screen:statusConfirmed', { status: data.status });
