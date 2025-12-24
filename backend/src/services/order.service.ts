@@ -10,9 +10,11 @@ import { balancerService } from './balancer.service';
 export class OrderService {
   /**
    * Crea o actualiza órdenes desde MAXPOINT
+   * IMPORTANTE: Solo retorna órdenes NUEVAS para que el balanceo solo aplique a inserciones,
+   * no a actualizaciones. Las actualizaciones no deben mover órdenes entre pantallas.
    */
   async upsertOrders(orders: Order[]): Promise<Order[]> {
-    const results: Order[] = [];
+    const newOrders: Order[] = [];
 
     for (const order of orders) {
       try {
@@ -22,8 +24,6 @@ export class OrderService {
           include: { items: true },
         });
 
-        let resultOrder;
-
         if (existing) {
           // Ya existe, actualizar la orden y sus items
           // Primero eliminar items existentes
@@ -32,13 +32,14 @@ export class OrderService {
           });
 
           // Actualizar orden y crear nuevos items
-          resultOrder = await prisma.order.update({
+          // NO cambiar screenId para mantener la asignación original
+          await prisma.order.update({
             where: { externalId: order.externalId },
             data: {
               channel: order.channel,
               customerName: order.customerName,
               identifier: order.identifier,
-              // No cambiar status si ya está en proceso
+              // No cambiar status ni screenId
               // Campos opcionales para impresión/visualización
               comments: order.comments || null,
               templateHTML: order.templateHTML || null,
@@ -59,10 +60,11 @@ export class OrderService {
             },
           });
 
-          orderLogger.debug(`Order updated: ${resultOrder.identifier}`);
+          orderLogger.debug(`Order updated (no rebalancing): ${existing.identifier}`);
+          // NO agregar a newOrders - las actualizaciones no se redistribuyen
         } else {
           // Crear nueva orden
-          resultOrder = await prisma.order.create({
+          const created = await prisma.order.create({
             data: {
               externalId: order.externalId,
               channel: order.channel,
@@ -89,41 +91,38 @@ export class OrderService {
             },
           });
 
-          orderLogger.debug(`Order created: ${resultOrder.identifier}`);
+          orderLogger.debug(`Order created: ${created.identifier}`);
+
+          // Solo agregar órdenes NUEVAS para distribución
+          newOrders.push({
+            id: created.id,
+            externalId: created.externalId,
+            channel: created.channel,
+            customerName: created.customerName || undefined,
+            identifier: created.identifier,
+            status: created.status as Order['status'],
+            createdAt: created.createdAt,
+            items: created.items.map((item) => ({
+              id: item.id,
+              name: item.name,
+              quantity: item.quantity,
+              notes: item.notes || undefined,
+              modifier: item.modifier || undefined,
+              comments: item.comments || undefined,
+            })),
+            // Campos opcionales para impresión/visualización
+            comments: created.comments || undefined,
+            templateHTML: created.templateHTML || undefined,
+            valuesHTML: created.valuesHTML || undefined,
+            statusPos: created.statusPos || undefined,
+          });
         }
-
-        const created = resultOrder;
-
-        results.push({
-          id: created.id,
-          externalId: created.externalId,
-          channel: created.channel,
-          customerName: created.customerName || undefined,
-          identifier: created.identifier,
-          status: created.status as Order['status'],
-          createdAt: created.createdAt,
-          items: created.items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            quantity: item.quantity,
-            notes: item.notes || undefined,
-            modifier: item.modifier || undefined,
-            comments: item.comments || undefined,
-          })),
-          // Campos opcionales para impresión/visualización
-          comments: created.comments || undefined,
-          templateHTML: created.templateHTML || undefined,
-          valuesHTML: created.valuesHTML || undefined,
-          statusPos: created.statusPos || undefined,
-        });
-
-        orderLogger.debug(`Order created: ${created.identifier}`);
       } catch (error) {
-        orderLogger.error(`Error creating order ${order.externalId}`, { error });
+        orderLogger.error(`Error processing order ${order.externalId}`, { error });
       }
     }
 
-    return results;
+    return newOrders;
   }
 
   /**
