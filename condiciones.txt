@@ -6,18 +6,11 @@ KDS por API
 
 Lista de tareas de trabajo:
 
-1 hora
-- Maxpoint hay que crear una politica a nivel de restaurante indicando los canales que son excluidos del kds
-- Maxpoint hay que crear una politica con la URL del KDS
-- Maxpoint hay que crear una politica a nivel de estacion indicando si usa o no kds
-- Maxpoint hay que crear una politica a nivel de estacion indicando si usa o no impresion a tiempo real
-
-
 2 horas
 - Maxpoint en la pantalla TOMA PEDIDO se debe incluir el envio de la orden, mientras esta aceptango agregar productos a la orden mostrada en la izquierda de la pantalla (TOMANDO PEDIDO)
 - Maxpoint en la pantalla TOMA PEDIDO se debe incluir el envio de la orden, al momento de de finalizar la toma de pedido se envia como (PEDIDO TOMADO)
 
-un SP que trae los valores de las politicas valida si debe o no enviar al api los valores del KDS si debe enviar remite el objeto a enviar n filas y columnas
+validar si debe o no enviar al api los valores del KDS si debe enviar remite el objeto a enviar n filas y columnas
 un config
 una clase
 una funcion en el ajax correspondiente que devuelve las politicas configuradas toma el objeto lo pasa a json y envia al KDS si el objeto resultante dice no enviar entonces no remite.
