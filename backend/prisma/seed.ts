@@ -242,7 +242,7 @@ async function main() {
     create: {
       id: 'general',
       testMode: false,
-      ticketMode: 'POLLING',
+      ticketMode: 'API',
       printMode: 'LOCAL',
       pollingInterval: 2000,
       orderLifetime: 4,
