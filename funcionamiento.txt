@@ -1,2 +1,3 @@
 vamos a corregir el funcionamiento de algunas cosas que estan fallando:
 
+ahora vamos a corregir el funcionamiento del filtrado de ordenes, si una orden tiene un producto que es para una cola por ejemplo sanduches y esta cola se activa si algun producto en su nombre tiene por ejemplo confiugrada que el texto de filtrado se activa con S. entonces debe ir esa orden a la cola de sanduches. Esto no esta ocurriendo. Corrigelo y ejecuta la prueba remitiendo una orden de prueba con un producto que en el nombre tenga S. Valida la configuracion primero antes de proceder

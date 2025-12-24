@@ -294,13 +294,13 @@ async function main() {
     },
   });
 
-  // Filtros para LINEAS (ocultar SANDUCHE)
+  // Filtros para LINEAS (ocultar S.)
   await prisma.queueFilter.upsert({
-    where: { queueId_pattern: { queueId: queueLineas.id, pattern: 'SANDUCHE' } },
+    where: { queueId_pattern: { queueId: queueLineas.id, pattern: 'S.' } },
     update: {},
     create: {
       queueId: queueLineas.id,
-      pattern: 'SANDUCHE',
+      pattern: 'S.',
       suppress: true,
       active: true,
     },
@@ -336,13 +336,13 @@ async function main() {
     },
   });
 
-  // Filtros para SANDUCHE (mostrar SANDUCHE)
+  // Filtros para SANDUCHE (mostrar S.)
   await prisma.queueFilter.upsert({
-    where: { queueId_pattern: { queueId: queueSanduche.id, pattern: 'SANDUCHE' } },
+    where: { queueId_pattern: { queueId: queueSanduche.id, pattern: 'S.' } },
     update: {},
     create: {
       queueId: queueSanduche.id,
-      pattern: 'SANDUCHE',
+      pattern: 'S.',
       suppress: false,
       active: true,
     },
