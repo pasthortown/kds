@@ -1,0 +1,64 @@
+@charset "utf-8";
+/* CSS Document */
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, font, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    font-size: 100%;
+    vertical-align: baseline;
+    background: transparent;
+}
+.cntndr_usr_sstm{
+	width: 400px;
+	height: 400px;
+}
+	.cntndr_cjr_stcn{
+		margin: 1px 0 0 15px;
+		text-align:center;
+		padding: 0;
+		float: left;
+		height:100px;
+		width: 66px;
+		border-radius: 10px;
+		-moz-box-shadow:  0px 0px 10px 2px rgb(154, 152, 152);
+		-webkit-box-shadow:  0px 0px 10px 2px rgb(154, 152, 152);
+		box-shadow:  0px 0px 10px 2px rgb(154, 152, 152);
+		cursor: pointer;
+
+	}
+	.cntndr_cjr_stcn:hover{
+		background: rgb(222, 222, 222);
+		-moz-box-shadow:  0px 0px 0px 0px rgb(0, 0, 0);
+		-webkit-box-shadow:  0px 0px 0px 0px rgb(0, 0, 0);
+		box-shadow:  0px 0px 0px 0px rgb(0, 0, 0);
+	}
+	.cntndr_cjr_stcn_img{
+		margin: 0;
+		padding: 0;
+		text-align:center;
+		height: 40px;
+		width: 66px;
+	}
+	.cntndr_cjr_stcn_std_dscrpcn{
+		margin: 0;
+		padding: 0;
+		height: 20px;
+		width: 66px;
+		text-align: center;
+	}
+	.cntndr_cjr_stcn_std_dscrpcn p{
+		margin: 0;
+		font: 12px Verdana, Geneva, Arial, Helvetica, sans-serif; 
+		text-align: center;
+		font-weight: 500;
+	}

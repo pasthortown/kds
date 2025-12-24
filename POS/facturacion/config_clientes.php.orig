@@ -1,0 +1,110 @@
+<?php
+
+session_start();
+//////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: Worman Andrade//////////////////////
+////////DESCRIPCION: Archivo de Configuración para////////////
+/////////////////////Clientes/////////////////////////////////
+///////TABLAS INVOLUCRADAS://///////////////////////////////// 
+///////FECHA CREACION: 19-02-2014/////////////////////////////
+//////////////////////////////////////////////////////////////
+///////FECHA ULTIMA MODIFICACION:21/04/2014///////////////////
+///////USUARIO QUE MODIFICO: Jose Fernandez//////////////////
+///////DECRIPCION ULTIMO CAMBIO: cargar ciudad segun la tienda/
+//////////////////////////////////////////////////////////////
+
+include("../system/conexion/clase_sql.php");
+include("../clases/clase_clientes.php");
+
+$lc_cliente = new cliente();
+
+$restaurante = $_SESSION['rstId'];
+$usuario = $_SESSION['usuarioId'];
+$cadena = $_SESSION['cadenaId'];
+
+if (htmlspecialchars(isset($_GET["clienteRepetido"]))) {
+    $lc_datos[0] = htmlspecialchars($_GET["CedulaRepetido"]);
+    print $lc_cliente->fn_clienteRepetido($lc_datos);
+} else if (htmlspecialchars(isset($_POST["nuevoCliente"]))) {
+    $lc_datos[0] = htmlspecialchars($_POST["accion"]);
+    $lc_datos[1] = htmlspecialchars($_POST["clienteTipoDoc"]);
+    $lc_datos[2] = htmlspecialchars($_POST["clienteDocumento"]);
+    $lc_datos[3] = strtoupper(utf8_decode(($_POST["clienteDescripcion"])));
+    $lc_datos[4] = strtoupper(utf8_decode(($_POST["clienteDireccion"])));
+    $lc_datos[5] = htmlspecialchars($_POST["clienteFono"]);
+    $lc_datos[6] = (strtolower(utf8_decode($_POST["clienteCorreo"])));
+    $lc_datos[7] = htmlspecialchars($_POST["usuario"]);
+    $lc_datos[8] = htmlspecialchars($_POST["estadoWS"]);
+    $lc_datos[9] = htmlspecialchars($_POST["tipoCliente"]);
+    print $lc_cliente->fn_registroClienteLocal($lc_datos);
+} else if (htmlspecialchars(isset($_POST["guardarCliente"]))) {
+
+    $lc_datos[0] = htmlspecialchars($_POST["accion"]);
+    $lc_datos[1] = htmlspecialchars($_POST["tipoConsulta"]);
+    $lc_datos[2] = htmlspecialchars($_POST["clienteTipoDoc"]);
+    $lc_datos[3] = strtoupper(utf8_decode(($_POST["clienteDocumento"])));
+    $lc_datos[4] = strtoupper(utf8_decode(($_POST["clienteDescripcion"])));
+    $lc_datos[5] = htmlspecialchars($_POST["clienteDireccion"]);
+    $lc_datos[6] = (strtolower(utf8_decode($_POST["clienteFono"])));
+    $lc_datos[7] = htmlspecialchars($_POST["clienteCorreo"]);
+    $lc_datos[8] = htmlspecialchars($_POST["usuario"]);
+    $lc_datos[9] = htmlspecialchars($_POST["estadoWS"]);
+    $lc_datos[10] = htmlspecialchars($_POST["tipoCliente"]);
+   
+    $json = json_encode  ($_POST["jsonDatosAdicionales"]);
+ 
+  print $lc_cliente->fn_registroClienteLocalPayphone($lc_datos, $json);
+    
+    
+} else if (htmlspecialchars(isset($_GET["consultabasefactura"]))) {
+    $lc_datos = $cadena;
+<<<<<<< HEAD
+    $respuesta = $lc_cliente->fn_consultabasefactura($lc_datos);
+    $_SESSION['fb_name'] = $respuesta["Cliente"];
+    $_SESSION['fb_document'] = $respuesta['Documento'];
+    print json_encode($respuesta);
+
+} else if (htmlspecialchars(isset($_POST["actualizarDatosCliente"]))){
+=======
+    print $lc_cliente->fn_consultabasefactura($lc_datos);
+} else if (htmlspecialchars(isset($_POST["actualizarDatosCliente"]))) {
+>>>>>>> origin/MXP_Version_1.9.10.6
+    $lc_datos[0] = htmlspecialchars($_POST["accion"]);
+    $lc_datos[1] = htmlspecialchars($_POST["clienteTipoDoc"]);
+    $lc_datos[2] = htmlspecialchars($_POST["clienteDocumento"]);
+    $lc_datos[3] = strtoupper(utf8_decode(($_POST["clienteDescripcion"])));
+    $lc_datos[4] = strtoupper(utf8_decode(($_POST["clienteDireccion"])));
+    $lc_datos[5] = htmlspecialchars($_POST["clienteFono"]);
+    $lc_datos[6] = (strtolower(utf8_decode($_POST["clienteCorreo"])));
+    $lc_datos[7] = htmlspecialchars($_POST["usuario"]);
+    $lc_datos[8] = htmlspecialchars($_POST["estadoWS"]);
+    $lc_datos[9] = htmlspecialchars($_POST["tipoCliente"]);
+    print $lc_cliente->fn_registroClienteLocal($lc_datos);
+} else if (htmlspecialchars(isset($_POST["solicitaCredencialesAdministrador"]))) {
+    $lc_datos[0] = "C";
+    $lc_datos[1] = $cadena;
+    $lc_datos[2] = $restaurante;
+    print $lc_cliente->fn_solicitaCredencialesAdministrador($lc_datos);    
+}
+
+if (htmlspecialchars(isset($_POST["ConsumidorFinalDatos"]))) {
+    $documento = htmlspecialchars($_POST["docConsumidor"]);
+    $lc_cliente->fn_buscarCliente($documento);
+    print json_encode($lc_cliente);
+
+} else if (htmlspecialchars(isset($_POST["ConsumidorFinalDatos"]))) {
+    $documento = htmlspecialchars($_POST["docConsumidor"]);
+    $lc_cliente->fn_buscarCliente($documento);
+    print json_encode($lc_cliente);
+} else if (htmlspecialchars(isset($_POST["cargaDatosClienteKiosko"]))) {
+    $cfac_id = htmlspecialchars($_POST["cfac_id"]);
+    print $lc_cliente->fn_cargaDatosClienteKiosko($cfac_id);
+} else if (htmlspecialchars(isset($_POST["guardaActualizaCliente"]))) {
+    $clienteTipoDoc = htmlspecialchars($_POST["clienteTipoDoc"]);
+    $clienteDocumento = htmlspecialchars($_POST["clienteDocumento"]);
+    $clienteDescripcion = strtoupper(utf8_decode(($_POST["clienteDescripcion"])));
+    $clienteDireccion = strtoupper(utf8_decode(($_POST["clienteDireccion"])));
+    $clienteTelefono = htmlspecialchars($_POST["clienteTelefono"]);
+    $clienteCorreo = (strtolower(utf8_decode($_POST["clienteCorreo"])));
+    print $lc_cliente->fn_guardaActualizaCliente($clienteTipoDoc, $clienteDocumento, $clienteDescripcion, $clienteDireccion, $clienteTelefono, $clienteCorreo, $usuario);
+}

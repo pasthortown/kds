@@ -1,0 +1,151 @@
+/* Fondo oscuro */
+.campana_modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Contenedor del modal */
+.campana_modal_dialog {
+  background: #fff;
+  border-radius: 10px;
+  width: 800px;
+  height: 400px;
+  display: flex;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Contenedor contenido flex */
+.campana_modal_content {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* Columna izquierda */
+.campana_columna_izquierda {
+  width: 30%;
+  padding: 0;
+  background: #f5f5f5;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  border-radius: 10px 0 0 10px;
+  overflow: hidden;
+}
+
+/* Imagen que cubre toda la columna izquierda */
+.campana_imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 10px 0 0 10px;
+}
+
+/* Columna derecha */
+.campana_columna_derecha {
+  width: 70%;
+  padding: 20px 30px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+/* Contenedor texto con icono - este ocupa todo el espacio disponible y centra verticalmente */
+.campana_contenido_texto {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* CENTRA verticalmente */
+  text-align: left;
+}
+
+/* Contenido flex para icono y texto */
+.texto_con_icono {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+/* Icono exclamación */
+.icono_exclamacion {
+  width: 50px;
+  height: 50px;
+}
+
+/* Texto principal */
+.texto_principal {
+  line-height: 1.3;
+}
+
+/* Monto destacado */
+.monto_destacado {
+  font-size: 26px;
+  font-weight: bold;
+  color: #000;
+  display: inline-block;
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* Párrafo debajo */
+.campana_contenido_texto p {
+  font-size: 15px;
+  text-align: left;
+  margin-top: 20px;
+  margin-left: 50px;
+  margin-bottom: 20px;
+}
+
+/* Botones alineados a la derecha y pegados abajo */
+.campana_botones_derecha {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  margin-top: auto; /* Esto empuja los botones al fondo */
+}
+
+/* Botones con tamaño reducido */
+.btn-rojo,
+.btn-azul {
+  min-width: 140px;
+  padding: 4px 10px;
+  height: 30px !important;
+  min-height: 0 !important;
+  line-height: 1 !important;
+  font-size: 11px;
+  white-space: nowrap;
+  font-weight: 600;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  transition: background-color 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+/* Botón azul */
+.btn-azul {
+  background-color: #007bff;
+}
+
+.btn-azul:hover {
+  background-color: #0056b3;
+}
+
+/* Botón rojo */
+.btn-rojo {
+  background-color: #dc3545;
+}
+
+.btn-rojo:hover {
+  background-color: #b02a37;
+}

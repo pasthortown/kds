@@ -1,0 +1,230 @@
+*{margin: 0;padding: 0;}
+
+body{background:#7DAAEC url(../imagenes/ordenpedido/bg_tomaPedido.png) repeat}
+
+.contenedor {
+	width:  800px;
+	height: 360px;
+	margin: 50px auto;
+}
+
+.cbcr_cntndr{
+	height: 50px;
+	color: #eee;
+	font-size: 25px;
+	height: 50px;
+	padding: 15px 10px 0 10px;
+	-webkit-border-radius: 10px 10px 0  0;
+	-moz-border-radius: 10px 10px 0  0;
+	border-radius:  10px 10px 0  0;
+	background: rgb(255, 162, 56);
+	background: -moz-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: -webkit-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: -o-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: -ms-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: linear-gradient(0deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	-webkit-box-shadow: 0px 0px 0px rgba(50, 50, 50, 0.75);
+	-moz-box-shadow: 0px 0px 0px rgba(50, 50, 50, 0.75);
+	box-shadow: 0px 0px 0px rgba(50, 50, 50, 0.75);
+}
+
+.cnt_rsmn_ttls {
+	position: relative;
+	float: left;
+	width: 320px;
+	height: 310px;
+	background: #FFF;
+}
+
+.cnt_frmlr_payphone {
+	position: relative;
+	float: right;
+	width: 480px;
+	height: 310px;
+	background: #FFF;
+	font-size: 13px;
+}
+
+.cnt_frmlr_payphone select{
+	font-size: 17px;
+	height: 40px;
+	width: 90%;
+	letter-spacing: 2px;
+}
+
+.cnt_frmlr_payphone option{
+	height: 40px;
+}
+
+.cnt_dtll_rsmn_ttls{
+	margin: 0 0 0 20px;
+	font-size: 13px;
+}
+
+.cnt_dtll_rsmn_ttls p{
+	font-size: 14px;
+}
+
+.modal_preguntas_sugeridas {
+	position:fixed;
+	top:0;
+	left:0;
+	width:100%;
+	height:766px;
+	background:rgba(0,0,0,0.3);
+	z-index:999999;
+	margin:0;
+	padding:0
+}
+
+.modal_preguntas_opciones {
+	margin:0;
+	width:500px;
+	height:390px;
+	color:#333;
+	z-index:9999999;
+	margin: 180px auto;
+	background: #FFF;
+	-webkit-border-radius: 10px;
+	-moz-border-radius: 10px;
+	border-radius: 10px;
+	-webkit-box-shadow: 0px 1px 17px 0px rgba(50, 50, 50, 0.83);
+	-moz-box-shadow: 0px 1px 17px 0px rgba(50, 50, 50, 0.83);
+	box-shadow: 0px 1px 17px 0px rgba(50, 50, 50, 0.83);
+}
+
+.dts_trnsccn_tqts {
+	color: #eee;
+	font-size: 25px;
+	height: 50px;
+	padding: 15px 10px 0 10px;
+	-webkit-border-radius: 10px 10px 0  0;
+	-moz-border-radius: 10px 10px 0  0;
+	border-radius:  10px 10px 0  0;
+	background: rgb(255, 162, 56);
+	background: -moz-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: -webkit-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: -o-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: -ms-linear-gradient(90deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	background: linear-gradient(0deg, rgb(255, 162, 56) 30%, rgb(255, 132, 10) 70%);
+	-webkit-box-shadow: 0px 0px 1px rgba(50, 50, 50, 0.75);
+	-moz-box-shadow: 0px 0px 1px rgba(50, 50, 50, 0.75);
+	box-shadow: 0px 0px 1px rgba(50, 50, 50, 0.75);
+}
+
+.tqts_trnsccn_payphone {
+	font-size: 14px;
+	padding: 0 20px;
+}
+
+.separador {
+	padding: 0;
+	margin: 0;
+	width: 100%;
+}
+
+.btns_payphone {
+	width: 290px;
+	margin: 20px auto;
+}
+
+.btns_payphone {
+	align: center;
+}
+
+.btn{
+	color: rgb(230, 230, 230);
+	font-size: 18px;
+	padding: 24px;
+	border: 0;
+	-webkit-border-radius: 13px;
+	-moz-border-radius: 13px;
+	border-radius: 13px;
+	width: 140px;
+	-webkit-box-shadow: 0px 0px 1px rgba(50, 50, 50, 0.75);
+	-moz-box-shadow: 0px 0px 1px rgba(50, 50, 50, 0.75);
+	box-shadow: 0px 0px 1px rgba(50, 50, 50, 0.75);
+}
+
+.btn_cancelar{
+	background: rgb(210, 20, 20);
+    background: -moz-linear-gradient(90deg, rgb(210, 20, 20) 30%, rgb(250, 20, 20) 70%);
+    background: -webkit-linear-gradient(90deg, rgb(210, 20, 20) 30%, rgb(250, 20, 20) 70%);
+    background: -o-linear-gradient(90deg, rgb(210, 20, 20) 30%, rgb(250, 20, 20) 70%);
+    background: -ms-linear-gradient(90deg, rgb(210, 20, 20) 30%, rgb(250, 20, 20) 70%);
+    background: linear-gradient(0deg, rgb(210, 20, 20) 30%, rgb(250, 20, 20) 70%);
+}
+
+.btn_confirmar{
+    background: rgb(108, 158, 64);
+    background: -moz-linear-gradient(90deg, rgb(108, 158, 64) 43%, rgb(111, 196, 90) 81%);
+    background: -webkit-linear-gradient(90deg, rgb(108, 158, 64) 43%, rgb(111, 196, 90) 81%);
+    background: -o-linear-gradient(90deg, rgb(108, 158, 64) 43%, rgb(111, 196, 90) 81%);
+    background: -ms-linear-gradient(90deg, rgb(108, 158, 64) 43%, rgb(111, 196, 90) 81%);
+    background: linear-gradient(0deg, rgb(108, 158, 64) 43%, rgb(111, 196, 90) 81%);
+}
+
+.modal_cargando{position:fixed;top:0;left:0;width:100%;height:766px;background:rgba(0,0,0,0.2);z-index:999999;margin:0;padding:0}
+
+.modal_cargando_contenedor{margin:300px auto;width:140px;height:140px;color:#333;z-index:9999999;overflow-x:hidden;overflow-y:hidden;background:#fff;-webkit-box-shadow:0 0 37px 4px rgba(0,0,0,0.75);-moz-box-shadow:0 0 37px 4px rgba(0,0,0,0.75);box-shadow:0 0 37px 4px rgba(0,0,0,0.75)}
+
+.modal_cargando_contenedor img{margin:5px}
+
+nav button{
+	margin-top: 20px;
+	width: 120px;
+	height: 70px;
+}
+
+.parametro {
+	width: 90%;
+	height: 40px;
+	font-size: 20px;
+	letter-spacing: 2px;
+	padding-left: 8px;
+	margin-top: 20px;
+}
+
+
+/*RADIO BUTTON*/
+
+input[type=radio].css-checkbox {
+	position:absolute;
+	z-index:-1000;
+	left:-1000px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	height:1px;
+	width:1px;
+	margin:-1px;
+	padding:0;
+	border:0;
+}
+
+input[type=radio].css-checkbox + label.css-label {
+	padding-left:55px;
+	height:50px; 
+	display:inline-block;
+	line-height:50px;
+	background-repeat:no-repeat;
+	background-position: 0 0;
+	font-size:20px;
+	vertical-align:middle;
+	cursor:pointer;
+}
+
+input[type=radio].css-checkbox:checked + label.css-label {
+	background-position: 0 -50px;
+}
+
+label.css-label {
+	background-image:url(../imagenes/checbox.png);
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	-khtml-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
+

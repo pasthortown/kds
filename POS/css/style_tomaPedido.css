@@ -1,0 +1,468 @@
+@charset "utf-8";
+/* CSS Documents  ss*/
+
+body {
+	width:100%;
+	margin:auto;
+	min-width:800px;
+	max-width:2000px;
+	background:#7DAAEC url('../imagenes/ordenpedido/bg_tomaPedido.png') repeat;
+	font-family:Arial, Helvetica, sans-serif;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    
+    user-select: none;
+}
+  
+button {
+	height:60px;
+	width: 120px;
+	cursor:pointer;
+}
+
+#piso button {
+	height:60px;
+	width: 60px;
+}
+
+.area_button {
+	height:60px;
+	width: 100%;
+	cursor:pointer;
+}
+.mesas_info{
+    margin-top: 15%;
+ 
+}
+#area{
+    margin-top: 40px;
+}
+.btn_piso {
+ 
+  background-image: -webkit-linear-gradient(top, #3498db, #2980b9);
+  background-image: -moz-linear-gradient(top, #3498db, #2980b9);
+  background-image: -ms-linear-gradient(top, #3498db, #2980b9);
+  background-image: -o-linear-gradient(top, #3498db, #2980b9);
+  background-image: linear-gradient(to bottom, #3498db, #2980b9);
+  -webkit-border-radius: 5;
+  -moz-border-radius: 5;
+  border-radius: 10px;
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 15px;
+  padding: 10px 20px 10px 20px;
+  text-decoration: none;
+}
+
+.btn_piso:hover {
+  background: #3cb0fd;
+  background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+  text-decoration: none;
+}
+
+
+.mesas_info div{
+     margin:  15px;;
+}
+#separarCuentas {
+	width: 150px;
+}
+
+#funcionesGerente {
+	width: 170px;
+}
+
+#contenedorTotal {
+	float: left;
+	width: 1024px;
+	height: 768px;
+}
+
+#contenedorIzquierda {
+	float: left;
+	width: 260px;
+	padding: 3px;
+}
+
+#contenedorDerecha {
+	float: left;
+	width:70%;
+}
+
+#listado {
+	width: 100%;
+}
+
+.listaproductosCant {
+	float: left;
+	width: 30px;
+	text-align: right;
+}
+
+.listaproductosDesc {
+	float: left;
+	margin-left: 10px;
+	width: 200px;
+	text-align: left;
+	letter-spacing:-1px;
+}
+
+.listaproductosVal {
+	float: left;
+	width: 60px;
+	margin-left: 10px;
+	text-align: right;
+}
+
+/*frame de la lista de toma de pedidos*/ 
+#listaPedidoTomaPedido {
+	float: left;
+	background:  #fff;
+	width: 100%;
+	font-size: 1.1em;
+	height: 420px;
+	margin: 0;
+	padding: 0;
+}
+
+.listaproductosDescTomaPedido {
+	float: left;
+	width: 232px;
+	font-size: 14px;
+	text-align: left;
+	font-weight: 600;
+	letter-spacing: 0;
+}
+
+.listaproductosCantTomaPedido {
+	float: left; 
+	width: 116px; 
+	margin: 2px 0 0 0; 
+	text-align: right; 
+	font-size: 14px;
+}
+
+.listaproductosValTomaPedido {
+	float: left;
+	width: 116px;
+	margin: 2px 0 0 0;
+	text-align: left;
+	font-size: 14px;
+}
+
+/*Seleccionar elemnto de la lista*/
+#listadoPedido .ui-selecting {
+    background: #ccc;
+}
+
+#listadoPedido .ui-selected {
+    background: #999;
+}
+
+ul#listadoPedido {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+ul#listadoPedido li {
+	padding: 2px 6px 2px 5px;
+	margin:0 0 3px 0;
+	border: 1px transparent solid;
+	border-top:1px solid #d2d2d2;
+	float:left;
+	width:100%;
+	background: black url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x;
+}
+
+ul#listadoPedido .focus {
+  background: #1FA0E4;
+  color:#fff;
+  cursor:pointer;
+}
+
+#botonesLista {
+	background:none;
+    height: 125px;
+    padding: 6px 0;
+    width: 100%;
+	border-radius: 0px;
+	float:left;
+}
+
+#despacho {
+	background:none;
+    height: 69px;
+    padding: 15px 10px;
+    width: 100%;
+	border-radius: 0px;
+	float:left;
+}
+
+#btn_salonLlevar {
+	width: 130px;
+	height: 65px;
+}
+
+#comentar {
+	width: 130px;
+	height: 65px;
+}
+
+#btn_eliminarElemnto {
+	height: 65px;
+    width: 130px;
+}
+
+#btn_eliminarOrden {
+	height: 65px;
+    width: 120px;
+}
+
+#btn_bajarElemnto {
+	height: 66px;
+    width: 74px;
+}
+
+#btn_subirElemnto {
+	height: 66px;
+    width: 74px;
+}
+
+/*div del calculos*/
+#calculosLista {
+    height: 100px;
+    padding: 10px 0 10px 0;
+    float: left;
+    width: 100%;
+	background: #fff;
+	font-size: 0.9em;
+	line-height: 95%;
+	margin-top: 6px;
+}
+
+/*Espacio*/
+#barraEspacio {
+	
+	float:left;
+	width:105%;
+	font-size:1.1em;
+	height:20px;
+	overflow:auto;
+	position:relative;
+}
+
+/*frame de los productos del establecimiento*/
+#barraCategoria {
+	float:left;
+	width:105%;
+	font-size:1.1em;
+	height:220px;
+	overflow:auto;
+	position:relative;
+}
+
+/*frame de las categorías del establecimiento*/
+#barraProducto {
+	float:left;
+	width:105%;
+	font-size:1.1em;
+	height:410px;
+	overflow:auto;
+	position:relative;
+}
+
+/*frame de la barra con información del cajero*/
+#barraCajero {
+	background: #0E98B6;
+    padding: 0;
+	margin: 0;
+    position: relative;
+}
+
+/*frame de la barra principal del sistema*/
+#barraPrincipal {
+	background: #003871 url('../imagenes/ordenpedido/background_tomaPedido.png') repeat;
+    padding: 8px 8px;
+	margin: 0;
+    position: relative;
+}
+
+#barraPrincipalFacturacion {
+	width:835px;
+	background: #003871;
+	padding: 20px 10px;
+	left:74px;
+	top:660px;
+    position: relative;
+}
+
+#preguntasContenedor {
+	padding:5px 10px 10px 10px;
+}
+
+.preguntasTitulo { 
+	background:#003871;
+	padding:8px 5px;
+	color:#fff;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.preguntasCantidad {
+	background: #0E98B6;
+	padding: 5px 5px;
+	color: #fff;
+	margin: 0 0 20px 0;
+	font-size: 15px;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.preguntasBotones {
+	float: left;
+	width: 100px;
+	margin: 0 20px 10px 0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.preguntasAcciones {
+	width: 100px;
+	float: right;
+	margin-right: 30px;
+}
+
+.preguntasOculto {
+	display: none;
+}
+
+.preguntasVisible {
+	display: block;
+}
+
+/* BOTONES PLUS PREGUNTAS SUGERIDAS */
+div label input {
+   margin-right: 100px;
+}
+
+.preguntasBotonPlu {
+    margin:4px;
+    /*overflow:auto;*/
+    float:left;
+}
+
+.preguntasBotonPlu label {
+    float:left;
+}
+
+.preguntasBotonPlu label div.preguntasSeleccionar {
+    text-align:center;
+    padding:3px 0px;
+    display:block;
+	background-color:#DDDDDD;
+    border-radius:4px;
+	width:130px;
+	height:50px;
+	padding:5px;
+	display: table-cell;
+    vertical-align: middle;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.preguntasBotonPlu label input {
+    position:absolute;
+    top:-20px;
+}
+
+.preguntasBotonPlu input:checked + div.preguntasSeleccionar {
+    background-color: #003871;
+    color:#fff;
+}
+
+/* ANULACIONES */
+
+.anulacionesSeparador { 
+	padding:25px 5px;
+	color:#000;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+	float:left;
+	width:48%;
+}
+.anulacionesSeparadorFin { 
+	padding:30px 5px;
+	color:#000;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+	float:left;
+	width:48%;
+	text-align:right;
+}
+.anulacionesSeparadorFin #btn_anulaok { 
+	margin-right:20px;
+}
+.anulacionesMensaje { 
+	padding:15px 5px;
+	color:#db1016;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.anulacionesInput input[type="text"], .anulacionesInput input[type="password"] {
+	height:35px;
+	width:300px;
+}
+.anulacionesSubmit input[type="submit"] {
+	width:100px;
+	height:70px;
+}/*
+#alertify-cancel {
+	display:none !important;
+	
+}
+
+#alertify-ok {
+
+ background-color:#3b7808;
+ border: 1px solid #3b7808;
+}*/
+
+/* LECTOR DE BARRAS */
+#lectorBarras { margin-top:-5000px; position:absolute;}
+
+#barraCajero h4{
+	text-align: right;
+	font-family: Arial, Helvetica, sans-serif;
+	font-weight: normal;
+	font-size: 12px;
+	margin: 0;
+	padding: 0;
+}
+
+

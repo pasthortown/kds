@@ -1,0 +1,76 @@
+/* CSS Document */
+/***********************************************
+jquery.keypad.alt & jquery.keypad
+************************************************/
+/* Main style sheet for jQuery Keypad v1.5.1. */
+button.keypad-trigger {
+	width: 5px;
+	padding: 0px;
+}
+img.keypad-trigger {
+	margin: 2px;
+	vertical-align: middle;
+}
+.keypad-popup, .keypad-key, .keypad-special, .keypad-clear{
+	font-family: Arial;
+	font-size: 20px;
+	color: #FFF;
+	font-weight: bold;	
+}
+.keypad-popup {
+	display: none;
+	z-index: 99999;	
+}
+.keypad-disabled {
+	position: absolute;
+	z-index: 100;
+	background-color: white;
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+}
+.keypad-key, .keypad-special, .keypad-clear {
+	margin: 2px;
+	padding: 2px;
+	width: 60px;
+	height: 60px;
+	background-color: #036;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;	
+	text-align: center;
+	cursor: pointer;
+	border: 1px solid #4b8f29;
+	background-color: #77b55a;	
+}
+.keypad-key:hover{	
+	color: #000;
+}
+.keypad-key[disabled] {
+	border: 4px outset;
+}
+.keypad-special {
+	width: 105px;
+}
+.keypad-special:hover{	
+	color: #000;
+}
+.keypad-enter {
+	width: 100px;
+}
+.keypad-clear {
+	/*width: 123px;*/
+	width:188px;
+}
+.keypad-enter2 {
+	/*width:188px;*/
+	width: 123px;
+}
+.keypad-clear {
+	background-color: #d9534f;
+	border: 1px solid #d9534f;
+}
+.keypad-enter, .keypad-enter2 {
+		
+	background-color: #337ab7;
+	border: 1px solid #337ab7;
+}

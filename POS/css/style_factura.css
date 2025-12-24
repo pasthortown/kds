@@ -1,0 +1,351 @@
+*{
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+@charset "utf-8";
+/* CSS Document */
+
+/*ESTILOS PARA MODAL DE DESCUENTOS*/
+#listadescuento .ui-selecting{background:#ccc}
+#listadescuento .ui-selected{background:#999}
+ul#listadescuento{margin:0;}
+ul#listadescuento li{padding:2px 6px 2px 0;margin:0 0 2px;border:1px transparent solid;border-top:1px solid #d2d2d2;float:left;width:98%;height:40px;background:#fff url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x;line-height:40px}
+ul#listadescuento li:hover{cursor:pointer}
+ul#listadescuento .focus{background:#7DAAEC;color:#fff;cursor:pointer}     
+
+.credencialesTitulo{background:#0E98B6;padding:8px 5px;color:#fff;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;font-size:16px;font-weight:700}
+.credencialesSeparador{padding:25px 5px;color:#000;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;float:left;width:48%}
+.credencialesInput input[type="text"],.credencialesInput input[type="password"]{height:35px;width:300px}
+#numPadCredenciales{
+    z-index: 99999; 
+    overflow: visible;
+    width: 326px;
+    height: auto;
+    bottom: 5px;
+    left: 35%;
+}
+
+
+#contenedor{
+    top: 5px;
+    left: 73px;
+    height: 920px;
+    width: 890px; /*855px;*/
+    border-radius: 10px;
+    border:1px solid #FFFFFF;
+    position: absolute;
+    visibility: visible;
+    display: inline;	
+}
+
+#datosFactura{
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    background-color: #DFF4FF;
+    border: 2px solid #06C;	
+    width: 1100px;
+}
+
+#listaFactura
+{
+    position: absolute;
+    top:  2px; 
+    left: 5px;
+    background:  #ffffff;
+    width:350px;/*335px;*/ 
+    height: 437px;
+    border-radius: 0px;
+    font-size: 14px;	
+}
+.boton_Accion{-moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#1d5987;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin-top:5px;margin-left:4px;margin-right:4px;text-decoration:none;text-shadow:-1px 1px 0 #fff;width:70px;float:right}.boton_Accion:hover{background-color:#dfeffc;color:#2e6e9e}
+.boton_Accion_Bloqueado{ -moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#1d5987;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin-top:5px;margin-left:4px;margin-right:4px;text-decoration:none;text-shadow:-1px 1px 0 #fff;width:70px;float:right; opacity: 0.5}
+.regresar_activo{background-image:url(../imagenes/regresar2.png);background-repeat:no-repeat;background-position:center}
+/*.ok_bloqueado{background-image:url(../imagenes/ordenpedido/ok_bloqueado.png);background-repeat:no-repeat;background-position:center}*/
+
+#totalesFactura
+{
+    position: absolute;
+    top:  444px;
+    left: 5px;
+    background:  #ffffff;
+    width:350px;
+    height: 273px;
+    border-radius: 0px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+#barraP
+{	
+    position: absolute;
+    top:  685px;
+    left:360px;
+    /*background: #003871 url('../imagenes/ordenpedido/background_tomaPedido.png') repeat;*/
+    padding: 7px 7px;
+    width:430px;
+}
+
+#ticketPromedio
+{	
+    color:#099;
+    position: absolute;
+    /*top:  550px;*/
+    top:  700px;
+    /*left:440px;*/
+    left:540px;
+    padding: 7px 7px;
+    width:230px;
+    font-size:16px;
+    background-color:#dfeffc;
+}
+
+#izquierdo{
+    width: 125px;
+    position: absolute;
+    visibility: visible;
+    display: inline;
+    top:auto;
+    left: 390px;
+}
+
+#centro{
+    width:265px;
+    height: 450px;
+    border: aqua;
+    border-radius: 10px;
+    position: absolute;
+    visibility: visible;
+    display: inline;
+    left: 517px;
+    top:auto;
+    background-color: rgb(246, 240, 231);/*#D5D9FF;*/
+}
+
+.tbl_total_factura {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.tbl_total_factura table {
+    padding: 0;
+    margin: 0;
+}
+
+#derecho{
+    heihgt: 500px;
+    width: 210px;
+    position: absolute;
+    top:-17px;
+    visibility: visible;
+    display: inline;
+    left: 785px; /*725px;*/	
+}
+
+.listaproductosCant {
+    float:left;
+    width:15px;
+    text-align:right;
+    margin-right: 5px;	
+}
+
+.listaproductosDesc { 
+    float:left; 
+    width:auto; 
+    text-align:left; 
+    letter-spacing:-1px;
+}
+
+.listaproductosVal { 
+    float:left; 
+    width:60px; 
+    text-align:right;
+    font-size: 11px;
+}
+
+#item1{
+    float:left;
+    width: 100%;
+    text-align:right;
+    height: auto;
+    font-size:16px;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+#tblValoresTotales
+{
+    font-size:16px;
+}
+
+.valores {
+    font-size: 30px;
+    font-weight: bold;
+    border-top-style: none;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    background-color: transparent;
+    text-align: right;
+}
+
+.valorListado {
+    font-size: 14px;
+    font-weight: bold;
+    border-top-style: none;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+    background-color: transparent;
+    text-align: right;
+}
+
+.numFactura{
+    background: transparent;
+    font-family: "Arial Black",Gadget,sans-serif;
+    font-size: 24px;
+    font-weight: bold;
+    border-top-width: 0px;
+    border-right-width: 0px;
+    border-bottom-width: 0px;
+    border-left-width: 0px;
+    border-top-style: none;
+    border-right-style: none;
+    border-bottom-style: none;
+    border-left-style: none;
+}
+
+
+
+#lectorTrama { margin-top:-5000px; position:absolute;}
+
+
+
+
+/*input[type="radio"] {
+    display:none;
+        margin:10px;
+}
+input[type="radio"] + label {
+    color: #000;
+    font-family:Arial, sans-serif;
+    font-size:14px;
+        padding:4px 12px;
+}
+input[type="radio"] + label span {
+    display:inline-block;
+    width:19px;
+    height:19px;
+    margin:-1px 4px 0 0;
+    vertical-align:middle;
+    cursor:pointer;
+    -moz-border-radius:  50%;
+    border-radius:  50%;
+        padding:4px 12px;
+}
+
+input[type="radio"] + label span {
+     background-color:#FFF;
+}
+
+input[type="radio"]:checked + label span{
+     background-color:#004800;
+}
+
+input[type="radio"] + label span,
+input[type="radio"]:checked + label span {
+  -webkit-transition:background-color 0.4s linear;
+  -o-transition:background-color 0.4s linear;
+  -moz-transition:background-color 0.4s linear;
+  transition:background-color 0.4s linear;
+}
+
+*/
+
+input[type=radio] {
+    display:none; 
+    margin:10px;	
+}
+
+/*
+  Change the look'n'feel of labels (which are adjacent to radiobuttons).
+  Add some margin, padding to label
+*/
+input[type=radio] + label {
+    display:inline-block;
+    margin:-2px;
+    padding: 4px 12px;
+    background-color: #e7e7e7;
+    border-color: #ddd;
+}
+/*
+ Change background color for label next to checked radio button
+ to make it look like highlighted button
+*/
+input[type=radio]:checked + label { 
+    background-image: none;
+    background-color:#09F;
+}
+
+#btn_imprimir{
+    padding: 2px;
+}
+.cnt_rdn_pdd_btns{width:737px;height:76px;float:right;margin:0;padding:0}
+.menu_desplegable{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999999}
+
+.modal_opciones_drc{position:fixed;right:0;width:240px;height:100%;background:#fff;color:#333;z-index:1002;overflow:auto;box-shadow:inset 0 0 0 0 #000,0 0 10px #000;z-index:9999999}
+
+.nfrmcn_srs_sstm{position:absolute; left: 5px; top:718px; background-color:#7d94fa;background-image:-moz-linear-gradient(top,#7d94fa 0%,#4b5796 100%);background-image:-webkit-linear-gradient(top,#7d94fa 0%,#4b5796 100%);background-image:-o-linear-gradient(top,#7d94fa 0%,#4b5796 100%);background-image:-ms-linear-gradient(top,#7d94fa 0%,#4b5796 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#4b5796',endColorstr='#4b5796',GradientType=0);background-image:linear-gradient(top,#7d94fa 0%,#4b5796 100%);-webkit-box-shadow:0 0 2px #bababa,inset 0 0 1px #fff;-moz-box-shadow:0 0 2px #bababa,inset 0 0 1px #fff;height:40px;width:351px;font-size:16px;font-weight:400;color:#fff;letter-spacing:1pt;word-spacing:2pt;font-size:16px;text-align:left;font-family:arial/* linotype,palatino,serif*/;line-height:2}
+
+.nfrmcn_srs_sstm img{float:left;width:30px;display:inline-block;padding:0;margin:5px 0 0 5px}
+
+.nmbr_srs_sstm{display:inline-block;float:left;width:220px;margin-top:5px}
+
+.boton_Opcion_Bloqueado{-moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#88989C;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin:10px 20px 0 0;text-decoration:none;text-shadow:-1px 1px 0 #fff;width:200px;float:right}.boton_Opcion{-moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#1d5987;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin:10px 20px 0 0;text-decoration:none;text-shadow:-1px 1px 0 #fff;width:200px;float:right}.boton_Opcion:hover{background-color:#dfeffc;color:#2e6e9e}
+/*
+.nmbr_srs_sstm{ width:220px;margin-top:12px;}
+
+.nfrmcn_srs_sstm{position:absolute; left: 803px; top:700px; background-color:#7d94fa;background-image:-moz-linear-gradient(top,#7d94fa 0%,#4b5796 100%);background-image:-webkit-linear-gradient(top,#7d94fa 0%,#4b5796 100%);background-image:-o-linear-gradient(top,#7d94fa 0%,#4b5796 100%);background-image:-ms-linear-gradient(top,#7d94fa 0%,#4b5796 100%);filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#4b5796',endColorstr='#4b5796',GradientType=0);background-image:linear-gradient(top,#7d94fa 0%,#4b5796 100%);-webkit-box-shadow:0 0 2px #bababa,inset 0 0 1px #fff;-moz-box-shadow:0 0 2px #bababa,inset 0 0 1px #fff;height:60px;width:165px;font-size:16px;font-weight:400;color:#fff;letter-spacing:1pt;word-spacing:2pt;font-size:16px;text-align:left;font-family:palatino linotype,palatino,serif;line-height:2;}
+.nfrmcn_srs_sstm img{float:left;width:30px;display:inline-block;padding:0;margin:2px 0 0 2px; margin-top:10px}*/
+
+
+.imgVoucher {
+    width: 100%;
+}
+
+.imgVA {
+    float: left;
+    width: 40% ;
+    height: 32%;
+    background-color: #FFFF ;
+    margin: 3% 5% 3% 3% ;
+    border: #d3dad9 3px dotted;
+}
+
+
+/*
+    ESTILOS PARA FORMA DE PAGO PAYVALIDA
+*/
+
+.boton-payvalida{
+    border-color: #4cb949;
+    background-color: white !important;
+    background: white !important;
+    color: #1676d8 !important;
+    padding: 0 0 0 0 !important;
+    height: 75 !important;
+    width: 160 !important;
+}
+
+
+.cargando-payvalida{
+    width: 100%;
+    text-align: center;
+}
+
+.texto-exitoso-payvalida{
+    color: #009926 !important;
+    font-size: xx-large !important;
+}

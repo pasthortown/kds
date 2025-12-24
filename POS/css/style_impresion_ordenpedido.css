@@ -1,0 +1,39 @@
+@charset "utf-8";
+
+.contenedor {
+	width:240px;
+	margin: 0 auto;
+}
+
+.contenedor table {
+	font-family: Verdana;
+	font-size: 14px;
+}
+
+.cabecera table {
+	width:240px;
+}
+
+.detalle th {
+	font-size: 13px;
+}
+
+.detalle td {
+	font-family: Verdana;
+	font-size: 13px;
+}
+
+.normal {
+	font-family: Verdana;
+	font-size: 13px;
+}
+
+.fecha {
+	font-size: 12px;
+	font-family:Arial, Helvetica, sans-serif;
+}
+
+.usuario {
+	font-size: 13px;
+	font-weight: 900;
+}

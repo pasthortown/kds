@@ -1,0 +1,1213 @@
+/* global alertify, parseFloat, numPadCliente, txtClienteCI, txtClienteNombre, txtCorreo, txtClienteFono, txtClienteDireccion */
+
+//////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: Worman Andrade//////////////////////
+////////DESCRIPCION: Clase para Formas de Pago////////////////
+///////FECHA CREACION: 28-Enero-2014//////////////////////////
+//////////////////////////////////////////////////////////////
+///////FECHA ULTIMA MODIFICACION:21/04/2014///////////////////
+///////USUARIO QUE MODIFICO: Jose Fernandez///////////////////
+///////DECRIPCION ULTIMO CAMBIO: validadion de Consumidor///// 
+//////////////////////////////////Final///////////////////////
+//////////////////////////////////////////////////////////////
+///////FECHA ULTIMA MODIFICACION:04/01/2016///////////////////
+///////USUARIO QUE MODIFICO: Christian Pinto//////////////////
+///////DECRIPCION ULTIMO CAMBIO: validador del correo para /// 
+///////que acepte guiones, ingreso del tel�fono opcional, ////
+///////validaci�n que no borre la cedula,mensaje que sale ////
+///////atr�s de teclado///////////////////////////////////////
+//////////////////////////////////////////////////////////////
+
+var CLIENTE_REPETIDO = 0;
+$(document).ready(function() {
+    fn_cargando(0);
+    fn_bloquearIngreso();
+    $("#btnClienteGuardar").hide();
+    $("#btnClienteGuardarActualiza").hide();
+    $("#btnConsumidorFinal").show();
+    $("#nombres_obligatorios").hide();
+    $("#direccion_obligatorios").hide();
+    $("#btnClienteConfirmarDatos").hide();
+    $("#btnClienteConfirmarDatosFacturar").hide();
+});
+
+/* Valida documento de cliente */
+function fn_clienteBuscar() {
+    var documento = $("#txtClienteCI").val();
+    fn_bloquearIngreso();
+    if ($("#rdo_ruc").hasClass("btnRucCiActivo")) {
+        fn_documentoCedulaRuc(documento);
+    } else {
+        fn_documentoPasaporte(documento);
+        $("#hid_pasaporte").val(1);
+    }
+}
+
+/* Consumo Web Service por documento CI/RUC :  */
+function fn_documentoCedulaRuc(documento) {
+    aplicaPlugThem();
+    $("#hid_conDatos").val(1);
+    fn_limpiarCamposCliente();
+    var send;
+    var tipoDocumento;
+    if (fn_validarDocumento($("#txtClienteCI").val())) {
+        fn_cargando(1);
+        if ($("#txtClienteCI").val().length == 10) {
+            tipoDocumento = "CEDULA";
+        } else if ($("#txtClienteCI").val().length == 13) {
+            tipoDocumento = "RUC";
+        }
+        send = {};
+        send.metodo = "buscarCliente";
+        send.documento = documento;
+        send.tipoDocumento = tipoDocumento;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: "json",
+            "Accept": "application/json, text/javascript2",
+            contentType: "application/x-www-form-urlencoded; charset=utf-8; application/json",
+            url: "../facturacion/clienteWSClientes.php",
+            data: send,
+            success: function(datos) {
+                if (datos.hasOwnProperty("cliente")) {
+                    var cliente = datos.cliente;
+                    $("#clienteEstado").val(datos.estado);
+                    if (datos.estado === 1) { // El cliente no existe en el local pero si existe en Azur                     
+                        fn_cargando(0);
+                        $("#estadoWS").val(1);
+                        fn_cargaDatosCliente(1, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                    } else if (datos.estado === 2) { // El cliente no existe Azur ni en el local                      
+                        fn_cargando(0);
+                        var cliente = datos.cliente;
+                        $("#clienteAutorizacion").val(cliente.autorizacion);
+                        $("#estadoWS").val(1);
+                        fn_crearCliente(documento);
+                    } else if (datos.estado === 3) { // El cliente existe en el local                       
+                        fn_cargando(0);
+                        $("#estadoWS").val(1);
+                        fn_cargaDatosCliente(1, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                    } else if (datos.estado == 0) {
+                        console.error("Servicio Master Data no Disponible...");
+                        fn_cargando(0);
+                        fn_crearCliente(documento);
+                        $("#estadoWS").val(0);
+                    }
+                } else {
+                    // Cuando el WS no esta en linea o error en la consulta
+                    fn_cargando(0);
+                    fn_crearCliente(documento);
+                    $("#estadoWS").val(0);
+                }
+            },
+            error: function() { // Cuando el WS no esta en linea 
+                fn_cargando(0);
+                fn_crearCliente(documento);
+                $("#estadoWS").val(0);
+            }
+        });
+    } else {
+        fn_cargando(0);
+        fn_documentoInvalido();
+    }
+}
+
+/* Consumo Web Service */
+function fn_documentoPasaporte(documento) {
+    if ($("#txtClienteCI").val() != '') {
+        var consumidor_final = '9999999999';        
+
+        if ($("#txtClienteCI").val() == consumidor_final
+            || $("#txtClienteCI").val() == consumidor_final + '9'
+            || $("#txtClienteCI").val() == consumidor_final + '99'
+            || $("#txtClienteCI").val() == consumidor_final + '999' ) {
+            alertify.alert("Debe ingresar factura con datos. No puede ser consumidor final. <br><br>");
+        
+            fn_alfaNumericoo(txtClienteCI);
+            
+            $("#btnClienteConfirmarDatos").hide();
+            $("#btnClienteGuardar").hide();
+            $("#btnClienteGuardarActualiza").hide();
+            $("#btnClienteConfirmarDatosFacturar").hide();            
+            $("#btnConsumidorFinal").show();
+<<<<<<< HEAD
+        } else { 
+=======
+        } else {       
+>>>>>>> origin/MXP_Version_1.9.10.6
+            aplicaPlugThem();
+            $("#hid_conDatos").val(1);
+            fn_cargando(1);
+            fn_limpiarCamposCliente();
+            var send;
+<<<<<<< HEAD
+            var tipoDocumento = "PASAPORTE";
+=======
+            var tipoDocumento = "PASAPORTE";    
+>>>>>>> origin/MXP_Version_1.9.10.6
+            send = {};
+            send.metodo = "buscarCliente";
+            send.documento = documento;
+            send.tipoDocumento = tipoDocumento;
+            $.ajax({
+                async: false,
+                type: "POST",
+                dataType: "json",
+                "Accept": "application/json, text/javascript2",
+                contentType: "application/x-www-form-urlencoded; charset=utf-8; application/json",
+                url: "../facturacion/clienteWSClientes.php",
+                data: send,
+                success: function(datos) {
+                    if (datos.hasOwnProperty("cliente")) {
+                        var cliente = datos.cliente;
+                        $("#clienteEstado").val(datos.estado);
+                        if (datos.estado === 1) { // El cliente no existe en el local pero si existe en Azur                      
+                            fn_cargando(0);
+                            $("#estadoWS").val(1);
+                            fn_cargaDatosCliente(2, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                        } else if (datos.estado === 2) { //El cliente no existe Azur ni en el local
+                            fn_cargando(0);
+                            var cliente = datos.cliente;
+                            $("#clienteAutorizacion").val(cliente.autorizacion);
+                            $("#estadoWS").val(1);
+                            fn_crearCliente(documento);
+                        } else if (datos.estado === 3) { // El cliente existe en el local                       
+                            fn_cargando(0);
+                            $("#estadoWS").val(1);
+                            fn_cargaDatosCliente(2, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                        }
+                    } else {
+                        fn_cargando(0);
+                        fn_crearCliente(documento);
+                        $("#estadoWS").val(0);
+                    }
+                },
+                error: function() { // Cuando el WS no esta en linea 
+                    fn_cargando(0);
+                    fn_crearCliente(documento);
+                    $("#estadoWS").val(0);
+                }
+            });
+        }
+    } else {
+        alertify.alert("Documento de identificaci&oacute;n obligatorio. <br><br>");
+        
+        fn_alfaNumericoo(txtClienteCI);
+<<<<<<< HEAD
+    }
+=======
+    }    
+>>>>>>> origin/MXP_Version_1.9.10.6
+}
+
+/* Carga los datos de cliente */
+function fn_cargaDatosCliente(tipoDocumento, IDCliente, identificacion, descripcion, direccionDomicilio, telefonoDomiclio, correo, tipoCliente, estado) {
+    $("#txtClienteId").val(IDCliente);
+    $("#txtClienteCI").val(identificacion);
+    $("#txtClienteNombre").val(descripcion);
+    $("#txtClienteDireccion").val(direccionDomicilio);
+    $("#txtClienteFono").val(telefonoDomiclio);
+    $("#txtCorreo").val(correo);
+    $("#btnClienteGuardar").hide();
+
+    var clienteTipo;
+
+    // clienteTipo = 1 son RELACIONADOS O EXTERNOS; clienteTipo = 0 son NORMALES 
+    if (estado == 1) {
+        // Consulta en master data clientes
+        if (tipoCliente == "NORMAL" || tipoCliente == "" || tipoCliente == "NULL" || tipoCliente == null) {
+            clienteTipo = 0;
+        } else {
+            clienteTipo = 1;
+        }
+    } else {
+        // consulta en su base local
+        if (tipoCliente == 1 || tipoCliente == 2) {
+            clienteTipo = 1;
+        } else {
+            clienteTipo = 0;
+        }
+    }
+
+    // Clientes tipo RELACIONADOS O EXTERNOS, sus datos no pueden ser modificados 
+    if (clienteTipo == 1) {
+        $("#btnClienteConfirmarDatosFacturar").show();
+        $("#btnClienteConfirmarDatos").hide();
+    } else {
+        $("#btnClienteConfirmarDatos").show();
+        $("#btnClienteConfirmarDatosFacturar").hide();
+    }
+
+    // 1 = Cédula O RUC, 2 = Pasaporte
+    if (tipoDocumento === 1) {
+        fn_btnOk(numPadCliente); //ocultar teclado al presionar buscar cliente txtPad   
+    }
+
+    $("#txtClienteNombre").focus();
+    $("#nombres_obligatorios").show();
+    $("#direccion_obligatorios").show();
+
+    // CORRECCION TEMPORAL FIDELIZACION CON FOOD CLUB /////////////////////////////////////
+    if ($("#btnFormaPagoId").val() === "E00A9503-85CF-E511-80C6-000D3A3261F3") { //TARJETAS
+        $("#btnConsumidorFinal").show();
+    } else {
+        $("#btnConsumidorFinal").hide();
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////
+
+    if ($("#hide_ordenKiosko").val() === '1' && identificacion === '9999999999999') {
+        $("#btnConsumidorFinal").show();
+        $("#btnClienteConfirmarDatos").hide();
+    }
+}
+
+/* Oculta los teclados cuando el documento es incorrecto */
+function fn_documentoInvalido() {
+    alertify.alert("N\u00famero de documento no v\u00e1lido.");
+    fn_limpiarCamposCliente();
+    fn_bloquearIngreso();
+    fn_numerico(txtClienteCI);
+    $("#txtClienteCI").focus();
+    $("#btnClienteGuardar").hide();
+    $("#btnClienteGuardarActualiza").hide();
+    $("#keyboardCliente").hide();
+    $("#nombres_obligatorios").hide();
+    $("#direccion_obligatorios").hide();
+    $("#btnClienteConfirmarDatos").hide();
+    $("#btnConsumidorFinal").show();
+}
+
+/* Muestra los campos obligatorios */
+function fn_crearCliente(documento) {
+    fn_clienteNuevo(documento);
+    $("#txtClienteNombre").focus();
+    $("#nombres_obligatorios").show();
+    $("#direccion_obligatorios").show();
+}
+
+/* Limpia los campos */
+function fn_limpiarCamposCliente() {
+    $("#txtClienteNombre").val("");
+    $("#txtClienteDireccion").val("");
+    $("#txtClienteFono").val("");
+    $("#txtCorreo").val("");
+}
+
+function fn_limpiarInfo() {
+    $("#txtClienteNombre").val("");
+    $("#txtClienteApellido").val("");
+    $("#txtClienteDireccion").val("");
+    $("#txtClienteCiudad").val("");
+    $("#txtClienteFono").val("");
+    $("#txtCorreo").val("");
+}
+
+/* Valida cliente repetido */
+function fn_clienteRepetido() {
+    if ($("#rdo_ruc").hasClass("btnRucCiActivo")) {
+        if (fn_validarDocumento($("#txtClienteCI").val())) {
+            fn_consultaClienteRepetido();
+        } else {
+            alertify.alert("N\u00famero de documento no v\u00e1lido.");
+            $("#txtClienteCI").focus();
+            $("#keyboardCliente").hide();
+        }
+    } else {
+        fn_consultaClienteRepetido();
+    }
+}
+
+function fn_consultaClienteRepetido() {
+    var send;
+    var valor = "Inicial";
+    send = {
+        "clienteRepetido": 1
+    };
+    send.CedulaRepetido = $("#txtClienteCI").val();
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_clientes.php",
+        data: send,
+        success: function(datos) {
+            if (datos.existe == 1) {
+                CLIENTE_REPETIDO = 1;
+            } else {
+                CLIENTE_REPETIDO = 0;
+            }
+        }
+    });
+}
+
+//////////////////////////////////CERRAR VENTANA////////////////////////////////////////////////
+function fn_cerrar() {
+    $("#ventanaVisuliza").hide({
+        autoOpen: false,
+        hide: {
+            effect: "explode",
+            duration: 500
+        }
+    });
+}
+
+///////////////////////////////////////////REDIRECCIONAR PAGINA///////////////////////////////
+function redireccionar(pagina) {
+    location.href = pagina;
+}
+
+//////////////////////////////////////////BUSCAR CLIENTES/////////////////////////////////
+function fn_consultarCliente() {
+    $("#txtClienteCI").autocomplete({
+        source: "config_clientes.php?clienteBuscar",
+        minLength: 2,
+        select: function(event, ui) {
+            $("#txtClienteCI").focus();
+            $(".ui-helper-hidden-accessible").hide();
+        },
+        create: function(event, ui) {}
+    });
+}
+
+///////////////////////////////////////////DATOS CONSUMIDOR FINAL////////////////////////
+function fn_consumidorFinal() {
+    $("#hid_conDatos").val(0);
+    fn_cargando(1);
+
+    var send;
+<<<<<<< HEAD
+=======
+    //$("#btnConsumidorFinal").hide();
+>>>>>>> origin/MXP_Version_1.9.10.6
+    var cambio = calcularCambio();
+    var pagadoesta = $("#pagoGranTotal").val();
+    send = {
+        "consultabasefactura": 1
+    };
+    send.valorpagadoo = pagadoesta;
+    $.getJSON("config_clientes.php", send, function(datos) {
+        var base = datos.pais_base_factura;
+        if (parseFloat(pagadoesta) >= parseFloat(base)) {
+            alertify.alert("Debe ingresar factura con datos. No puede ser consumidor final. <br><br>");
+            fn_cargando(0);
+            return false;
+        } else {
+            notificarCambio(cambio);
+            $("#txtClienteCI").val(datos.Documento);
+            fn_limpiarCamposCliente();
+            $("#txtClienteNombre").val(datos.Cliente);
+            fn_bloquearIngreso();
+            $("#dominio1").css({
+                display: "none",
+                position: "absolute"
+            });
+            $("#dominio2").css({
+                display: "none",
+                position: "absolute"
+            });
+            fn_btnOk(numPadCliente);
+            fn_ocultar_alfanumerico();
+            
+            if (BANDERA_AGREGADOR === 1) {
+                fn_clienteConsumirFinal();
+            } else {
+                fn_printFactura();
+                fn_cargando(0);
+            }
+        }
+    });
+}
+
+///////////////////////////////////////////LIMPIAR DATOS////////////////////////////////
+function fn_bloquearIngreso() {
+    $("#txtClienteNombre").attr("disabled", "-1");
+    $("#txtClienteApellido").attr("disabled", "-1");
+    $("#txtClienteDireccion").attr("disabled", "-1");
+    $("#txtClienteFono").attr("disabled", "-1");
+    $("#txtCorreo").attr("disabled", "-1");
+}
+
+///////////////////////////////////////////LIMPIAR DATOS////////////////////////////////
+function fn_habilitarIngreso() {
+    $("#txtClienteNombre").removeAttr("disabled");
+    $("#txtClienteDireccion").removeAttr("disabled");
+    $("#txtClienteFono").removeAttr("disabled");
+    $("#txtCorreo").removeAttr("disabled");
+}
+
+///////////////////////////////////////////DATOS CONSUMIDOR FINAL////////////////////////
+function fn_clienteNuevo(ci) {
+    fn_limpiarCamposCliente();
+    $("#txtClienteNombre").focus();
+    $("#numPadCliente").hide();
+    fn_alfaNumerico_letrass(txtClienteNombre);
+    $("#txtClienteCI").removeAttr("disabled");
+    $("#txtClienteCI").val(ci);
+    $("#btnConsumidorFinal").hide();
+    fn_habilitarIngreso();
+    $("#lupaCliente").show();
+    $("#btnClienteGuardar").show();
+    $("#btnClienteGuardarActualiza").hide();
+    $("#btnClienteConfirmarDatos").hide();
+    //$("#txtClienteCI").attr("disabled", "-1"); 
+    $("#rdo_ruc").attr("disabled", "-1");
+    $("#rdo_pasaporte").attr("disabled", "-1");
+}
+
+function fn_habilitarCamposCliente(documento) {
+    $("#txtClienteCI").val(documento);
+    fn_limpiarCamposCliente();
+    fn_habilitarIngreso();
+    fn_alfaNumerico_letrass(txtClienteNombre);
+    $("#btnConsumidorFinal").hide();
+    $("#btnClienteGuardar").show();
+    $("#btnClienteGuardarActualiza").hide();
+}
+
+//////////////////////////////////////////CANCELAR CAMBIOS///////////////////////////////
+function fn_clienteCancelar() {
+    $("#txtClienteCI").val("");
+    fn_limpiarCamposCliente();
+    fn_bloquearIngreso();
+    location.reload();
+}
+
+/* Verifica que los campos sean llenados */
+function fn_clienteGuardar() {
+    var cambio = calcularCambio();
+
+    if ($("#hid_pasaporte").val() == 1) {
+        tipoDocumento = "PASAPORTE";
+
+        var consumidor_final = '9999999999'; 
+        
+        if ($("#txtClienteCI").val() == consumidor_final
+            || $("#txtClienteCI").val() == consumidor_final + '9'
+            || $("#txtClienteCI").val() == consumidor_final + '99'
+            || $("#txtClienteCI").val() == consumidor_final + '999') {
+            alertify.alert("Debe ingresar factura con datos. No puede ser consumidor final. <br><br>");
+        
+            fn_alfaNumericoo(txtClienteCI);
+            
+            $("#btnClienteConfirmarDatos").hide();
+            $("#btnClienteGuardar").hide();
+            $("#btnClienteGuardarActualiza").hide();
+            $("#btnClienteConfirmarDatosFacturar").hide();            
+            $("#btnConsumidorFinal").show();
+        }
+    }
+
+    if ($("#txtClienteCI").val() === "") {
+        alertify.error("Documento de identificaci&oacute;n obligatorio.");
+        $(".alertify-logs").css("top", 300 + "px");
+        $("#txtClienteCI").focus();
+        return false;
+    } else if ($("#txtClienteNombre").val().trim() === "") {
+        $("#keyboardCliente").hide();
+        alertify.error("Ingrese los nombres del Cliente.");
+        $(".alertify-logs").css("top", 300 + "px");
+        $("#txtClienteNombre").focus();
+        fn_focoinput_nombres();
+        return false;
+    } else if ($("#txtClienteDireccion").val().trim() === "") {
+        $("#keyboardCliente").hide();
+        alertify.error("Ingrese la direcci&oacute;n del Cliente.");
+        $(".alertify-logs").css("top", 300 + "px");
+        $("#txtClienteDireccion").focus();
+        fn_focoinput_direccion();
+        return false;
+    }
+    fn_ingresoCliente(cambio);
+}
+
+/* Verifica que el cliente no exista */
+function fn_ingresoCliente(cambio) {
+
+    // fn_clienteRepetido();
+    if (CLIENTE_REPETIDO == 0) {
+        if (fn_validarEmail($("#txtCorreo").val())) {
+            if ($("#txtClienteFono").val() !== "") {
+                if (($("#txtClienteFono").val().length < 7) || ($("#txtClienteFono").val().length > 10)) {
+                    alertify.error("Ingrese un numero de telefono v\u00e1lidO.");
+                    $(".alertify-logs").css("top", 300 + "px");
+                    return false;
+                }
+            }
+            fn_nuevoCliente(cambio);
+        } else {
+            alertify.error("Direcci\u00f3n de correo electr&oacute;nico no v\u00e1lida..");
+            $(".alertify-logs").css("top", 300 + "px");
+        }
+    } else {
+        alertify.error("Ya existe un cliente con este documento de identificaci\u00f3n");
+        $(".alertify-logs").css("top", 300 + "px");
+    }
+}
+
+/* Registro de clientes en la DB del local */
+function fn_nuevoCliente(cambio) {
+    fn_cargando(1);
+    var send;
+    var Accion = 'I';
+    var tipoDocumento;
+    var estado = $("#clienteEstado").val();
+    if ($("#txtClienteCI").val().length == 10) {
+        tipoDocumento = "CEDULA";
+    } else if ($("#txtClienteCI").val().length == 13) {
+        tipoDocumento = "RUC";
+    }
+
+    if ($("#hid_pasaporte").val() == 1) {
+        tipoDocumento = "PASAPORTE";
+
+        var consumidor_final = '9999999999';
+
+        if ($("#txtClienteCI").val() == consumidor_final
+            || $("#txtClienteCI").val() == consumidor_final + '9'
+            || $("#txtClienteCI").val() == consumidor_final + '99'
+            || $("#txtClienteCI").val() == consumidor_final + '999') {
+            alertify.alert("Debe ingresar factura con datos. No puede ser consumidor final. <br><br>");
+        
+            fn_alfaNumericoo(txtClienteCI);
+            
+            $("#btnClienteConfirmarDatos").hide();
+            $("#btnClienteGuardar").hide();
+            $("#btnClienteGuardarActualiza").hide();
+            $("#btnClienteConfirmarDatosFacturar").hide();            
+            $("#btnConsumidorFinal").show();
+        }
+    }
+
+    send = {
+        "nuevoCliente": 1
+    };
+    send.accion = Accion;
+    send.clienteTipoDoc = tipoDocumento;
+    send.clienteDocumento = $("#txtClienteCI").val();
+    send.clienteDescripcion = $("#txtClienteNombre").val();
+    send.clienteDireccion = $("#txtClienteDireccion").val();
+    send.clienteFono = $("#txtClienteFono").val();
+    send.clienteCorreo = $("#txtCorreo").val();
+    send.usuario = $('#idUser').val();
+    send.estadoWS = $("#estadoWS").val();
+    send.tipoCliente = "NULL";
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_clientes.php",
+        data: send,
+        success: function(datos) {
+            notificarCambio(cambio);
+            $(".alertify-logs").css("top", 70 + "px");
+            $("#btnConsumidorFinal").hide();
+            $("#btnClienteGuardar").hide();
+            $("#dominio1").hide();
+            $("#dominio2").hide();
+            fn_bloquearIngreso();
+            fn_btnOk(numPadCliente);
+            fn_ocultar_alfanumerico();
+            
+            //if (banderaUber === 1) {
+            if (BANDERA_AGREGADOR === 1) {
+                var cedulaC = $("#txtClienteCI").val();
+                var nombreC = $("#txtClienteNombre").val();
+                var direccionC = $("#txtClienteDireccion").val();
+                var telefonoC = $("#txtClienteFono").val();
+                var correoC = $("#txtCorreo").val();
+                fn_selecionaClienteAx(nombreC, cedulaC, cedulaC, telefonoC, direccionC, correoC, 'NULL');
+            } else {
+                fn_printFactura();
+                fn_cargando(0);
+            }
+        }
+    });
+
+    // Envio la informacion solo si el cliente no existe en el local ni en Azur
+    if (estado == 2) {
+        fn_envioDatosClienteWS(tipoDocumento, $("#txtClienteCI").val(), $("#txtClienteNombre").val(), $("#txtClienteDireccion").val(), $("#txtClienteFono").val(), $("#txtCorreo").val());
+    }
+}
+
+/* Envio datos de cliente por Web Services */
+function fn_envioDatosClienteWS(tipoDocumento, documento, descripcion, direccion, telefono, correo) {
+    var send;
+    var autorizacion = $("#clienteAutorizacion").val();
+    send = {};
+    send.metodo = "enviarCliente";
+    send.autorizacion = autorizacion;
+    send.tipoDocumento = tipoDocumento;
+    send.documento = documento;
+    send.descripcion = descripcion;
+    send.direccion = direccion;
+    send.telefono = telefono;
+    send.correo = correo;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../facturacion/clienteWSClientes.php",
+        data: send,
+        success: function(datos) {
+            //alert(JSON.stringify(datos));
+        }
+    });
+}
+
+function calcularCambio() {
+    var cambio = parseFloat($("#hid_cambio").val()).toFixed(2);
+    cambio = parseFloat(cambio * (parseFloat(-1)));
+    cambio = parseFloat(cambio).toFixed(2);
+    return cambio;
+}
+
+/* Finaliza la transacción */
+function fn_clienteGuardarActualiza() {
+    var cambio = calcularCambio();
+
+    if ($("#rdo_ruc").hasClass("btnRucCiActivo")) {
+        if (fn_validarDocumento($("#txtClienteCI").val())) {
+            fn_actualizaCliente(cambio);
+        } else {
+            alertify.error("N&uacute;mero de documento no v&aacute;lido");
+            $(".alertify-logs").css("top", 300 + "px");
+        }
+    } else {
+        fn_actualizaCliente(cambio);
+    }
+}
+
+/* Finaliza la transaccion */
+function fn_actualizaCliente(cambio) {
+    fn_cargando(1);
+    $("#btnConsumidorFinal").hide();
+    $("#btnClienteGuardarActualiza").hide();
+    fn_bloquearIngreso();
+    fn_btnOk(numPadCliente);
+    fn_ocultar_alfanumerico();
+    notificarCambio(cambio);
+    $(".alertify-logs").css("top", 300 + "px");
+    
+    //if (banderaUber === 1) {
+    if (BANDERA_AGREGADOR === 1) {
+        var cedulaC = $("#txtClienteCI").val();
+        var nombreC = $("#txtClienteNombre").val();
+        var direccionC = $("#txtClienteDireccion").val();
+        var telefonoC = $("#txtClienteFono").val();
+        var correoC = $("#txtCorreo").val();
+        fn_selecionaClienteAx(nombreC, cedulaC, cedulaC, telefonoC, direccionC, correoC, 'NULL');
+    } else if ($("#hide_ordenKiosko").val() === '1') {
+        fn_actualizarRegistroCliente();
+    } else {
+        fn_printFactura();
+        fn_cargando(0);
+    }
+
+}
+
+/* Valida email */
+function fn_validarEmail() {
+    var evaluar = $("#txtCorreo").val();
+    evaluar = evaluar.trim();
+    var filter = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+    if (evaluar.length == 0)
+        return true;
+    if (filter.test(evaluar))
+        return true;
+    else {
+        $("#txtCorreo").focus();
+        $("#keyboardCliente").hide();
+        $("#dominio1").hide();
+        $("#dominio2").hide();
+        return false;
+    }
+}
+
+function fn_solicitaCredencialesAdministrador() {
+<<<<<<< HEAD
+    $("#btnClienteConfirmarDatos").hide();
+    $("#btnConsumidorFinal").show(); 
+
+=======
+
+    $("#btnClienteConfirmarDatos").hide();
+    $("#btnConsumidorFinal").show();    
+    
+>>>>>>> origin/MXP_Version_1.9.10.6
+    var send;
+    send = {
+        "solicitaCredencialesAdministrador": 1
+    };
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_clientes.php",
+        data: send,
+        success: function(datos) {
+            if (datos.solicita === 1) {
+                fn_abremodalAdministradorPasporte();
+            } else if (datos.solicita === 0) {
+                fn_btnOk(numPadCliente);
+                $("#rdo_ruc").removeClass('btnRucCiActivo');
+                $("#rdo_ruc").addClass('btnRucCiInactivo');
+                $("#rdo_pasaporte").removeClass('btnRucCiInactivo');
+                $("#rdo_pasaporte").addClass('btnRucCiActivo');
+                $("#hid_bandera_teclado").val(2);
+                fn_alfaNumericoo(txtClienteCI);
+                fn_bloquearIngreso();
+                $("#txtClienteCI").focus();
+                $("#nombres_obligatorios").show();
+                $("#direccion_obligatorios").show();
+            } else {
+                fn_abremodalAdministradorPasporte();
+            }
+        }
+    });
+}
+
+function fn_abremodalAdministradorPasporte() {
+    $("#rdo_ruc").removeClass('btnRucCiActivo');
+    $("#rdo_ruc").addClass('btnRucCiInactivo');
+    $("#rdo_pasaporte").removeClass('btnRucCiInactivo');
+    $("#rdo_pasaporte").addClass('btnRucCiActivo');
+    $("#txtClienteCI").val('');
+    fn_limpiarCamposCliente();
+    $("#txtClienteCI").focus();
+    fn_numerico(txtClienteCI);
+    $("#div_adminPasaporte").show();
+    $("#txt_passPasaporte").val('');
+    $("#rdo_pasaporte").attr("checked", true);
+    $("#div_adminPasaporte").dialog({
+        modal: true,
+        width: 500,
+        heigth: 500,
+        resize: false,
+        opacity: 0,
+        show: "explode",
+        hide: "explode",
+        duration: 5000,
+        position: "center",
+        open: function(event, ui) {}
+    });
+
+    fn_ocultar_alfanumerico();
+    fn_btnOk(numPadCliente);
+}
+
+function fn_agregarNumeroPasaporte(valor) {
+    var lc_cantidad = document.getElementById("txt_passPasaporte").value;
+    var coma2;
+    if (lc_cantidad == 0 && valor == ".") {
+        //si escribimos una coma al principio del n�mero
+        document.getElementById("txt_passPasaporte").value = "0."; //escribimos 0.
+        coma2 = 1;
+    } else {
+        //continuar escribiendo un n�mero
+        if (valor == "." && coma2 == 0) {
+            //si escribimos una coma decimal p�r primera vez
+            lc_cantidad = lc_cantidad + valor;
+            document.getElementById("txt_passPasaporte").value = lc_cantidad;
+            coma2 = 1; //cambiar el estado de la coma  
+        }
+        //si intentamos escribir una segunda coma decimal no realiza ninguna acci�n.
+        else if (valor == "." && coma2 == 1) {}
+        //Resto de casos: escribir un n�mero del 0 al 9:    
+        else {
+            $("#txt_passPasaporte").val('');
+            lc_cantidad = lc_cantidad + valor;
+            document.getElementById("txt_passPasaporte").value = lc_cantidad;
+        }
+    }
+    fn_focusLectorPasaporte();
+}
+
+function fn_focusLectorPasaporte() {
+    $("#txt_passPasaporte").focus();
+}
+
+function fn_eliminarCantidadPasaporte() {
+    var lc_cantidad = document.getElementById("txt_passPasaporte").value.substring(0, document.getElementById("txt_passPasaporte").value.length - 1);
+    var coma2;
+
+    if (lc_cantidad == "") {
+        lc_cantidad = "";
+        coma2 = 0;
+    }
+    if (lc_cantidad == ".") {
+        coma2 = 0;
+    }
+    document.getElementById("txt_passPasaporte").value = lc_cantidad;
+    fn_focusLectorPasaporte();
+}
+
+function fn_canPasaporte() {
+    $("#hid_bandera_teclado").val(1);
+    $("#div_adminPasaporte").dialog("destroy");
+    $("#rdo_ruc").removeClass("btnRucCiInactivo");
+    $("#rdo_ruc").addClass("btnRucCiActivo");
+    $("#rdo_pasaporte").removeClass("btnRucCiActivo");
+    $("#rdo_pasaporte").addClass("btnRucCiInactivo");
+    $("#txtClienteCI").focus();
+    fn_numerico(txtClienteCI);
+    fn_ocultar_alfanumerico();
+}
+
+function fn_okPasaporte() {
+    if ($("#txt_passPasaporte").val() == "") {
+        alertify.alert("Ingrese una clave.");
+        return false;
+    }
+
+    var send;
+    send = {
+        "validarUsuarioCreditoSinCupon": 1
+    };
+    send.usr_claveSinCupon = $("#txt_passPasaporte").val();
+    $.getJSON("config_facturacion.php", send, function(datos) {
+        if (datos.admini == 1) {
+            $("#hid_bandera_teclado").val(2);
+            $("#div_adminPasaporte").dialog("destroy");
+            fn_alfaNumericoo(txtClienteCI);
+            fn_bloquearIngreso();
+            $("#txtClienteCI").focus();
+            $("#nombres_obligatorios").show();
+            $("#direccion_obligatorios").show();
+        } else {
+            alertify.confirm("Clave no autorizada. Ingrese clave de Administrador.", function(e) {
+                if (e) {
+                    alertify.set({
+                        buttonFocus: "none"
+                    });
+                    $("#txt_passPasaporte").focus();
+                }
+            });
+            $("#txt_passPasaporte").val("");
+        }
+    });
+}
+
+function fn_focoinput_nombres() {
+    $("#txtClienteNombre").focus();
+    fn_alfaNumerico_letrass(txtClienteNombre);
+}
+
+function fn_focoinput_direccion() {
+    $("#txtClienteDireccion").focus();
+    fn_alfaNumericoo(txtClienteDireccion);
+}
+
+function fn_focoinput_telefono() {
+    $("#txtClienteFono").focus();
+    fn_alfaNumerico_numeross(txtClienteFono);
+}
+
+function fn_focoinput_email() {
+    $("#txtCorreo").focus();
+    fn_alfaNumericoo(txtCorreo);
+}
+
+function fn_cargando(estado) {
+    if (estado) {
+        $("#mdl_rdn_pdd_crgnd").css("display", "block");
+        $("#mdl_pcn_rdn_pdd_crgnd").css("display", "block");
+    } else {
+        $("#mdl_rdn_pdd_crgnd").css("display", "none");
+        $("#mdl_pcn_rdn_pdd_crgnd").css("display", "none");
+    }
+}
+
+/* Se confirma si los datos del cliente son correctos -si no es pedido de kiosko-
+ * de ser "SI", se realiza el cierre de la facturación.
+ * de ser "NO", se obtiene del Azure los datos del cliente por WS. */
+function fn_confirmarDatos() {
+    if ($("#hide_ordenKiosko").val() === '1') {
+        guardaActualizaCliente();
+    } else {
+        alertify.set({
+            labels: {
+                ok: "SI",
+                cancel: "NO"
+            }
+        });
+
+        alertify.confirm("<h4>¿LOS DATOS DE CLIENTE SON CORRECTOS?</h4><br>", function(e) {
+            if (e) {
+                fn_clienteGuardarActualiza();
+            } else {
+                fn_obtenerDatosCliente();
+
+                // CORRECCION TEMPORAL FIDELIZACION CON FOOD CLUB /////////////////////////////////////
+                $("#btnConsumidorFinal").hide();
+                ///////////////////////////////////////////////////////////////////////////////////////
+
+                fn_habilitarIngreso();
+                $("#btnClienteConfirmarDatos").hide();
+                $("#btnClienteConfirmarDatosFacturar").show();
+                fn_focoinput_nombres();
+                $("#txtClienteCI").attr("disabled", "-1");
+                $("#rdo_ruc").attr("disabled", "-1");
+                $("#rdo_pasaporte").attr("disabled", "-1");
+            }
+        });
+    }
+}
+
+function fn_confirmarDatosFIDELIZACION() {
+    fn_clienteGuardarActualiza();
+}
+
+function fn_validarConfirmacion() {
+    if ($("#txtClienteCI").val() !== "") {
+        if ($("#rdo_ruc").hasClass("btnRucCiActivo")) {
+            if (fn_validarDocumento($("#txtClienteCI").val())) {
+                fn_confirmarDatos();
+            } else {
+                alertify.alert("N\u00famero de documento no v\u00e1lido.");
+                $("#txtClienteCI").focus();
+                $("#keyboardCliente").hide();
+            }
+        } else {
+            fn_confirmarDatos();
+        }
+    } else {
+        alertify.error("Documento de identificaci&oacute;n obligatorio.");
+    }
+}
+
+/* Obtenemos los datos del cliente por WS */
+function fn_obtenerDatosCliente() {
+    fn_cargando(1);
+    var send;
+    var documento = $("#txtClienteCI").val();
+    var tipoDocumento;
+    if ($("#txtClienteCI").val().length == 10) {
+        tipoDocumento = "CEDULA";
+    } else if ($("#txtClienteCI").val().length == 13) {
+        tipoDocumento = "RUC";
+    }
+    if ($("#hid_pasaporte").val() == 1) {
+        tipoDocumento = "PASAPORTE";
+    }
+    send = {};
+    send.metodo = "obtenerDatosCliente";
+    send.documento = documento;
+    send.tipoDocumento = tipoDocumento;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        "Accept": "application/json, text/javascript2",
+        contentType: "application/x-www-form-urlencoded; charset=utf-8; application/json",
+        url: "../facturacion/clienteWSClientes.php",
+        data: send,
+        success: function(datos) {
+            if (datos.hasOwnProperty("cliente")) {
+                var cliente = datos.cliente;
+                if (datos.estado === 1) { // Existe                      
+                    if (cliente.tipoIdentificacion === "CEDULA") {
+                        fn_cargando(0);
+                        fn_cargaDatosCliente(1, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                    } else if (cliente.tipoIdentificacion === "RUC") {
+                        fn_cargando(0);
+                        fn_cargaDatosCliente(1, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                    } else {
+                        fn_cargando(0);
+                        fn_cargaDatosCliente(2, cliente.IDCliente, cliente.identificacion, cliente.descripcion, cliente.direccionDomicilio, cliente.telefonoDomiclio, cliente.correo, cliente.tipoCliente, datos.estado);
+                    }
+                } else {
+                    // Cuando el WS no esta en linea o error en la consulta
+                    fn_cargando(0);
+                }
+            }
+        },
+        error: function() { // Cuando el WS no esta en linea 
+            fn_cargando(0);
+        }
+    });
+}
+
+/* Actualiza los datos del cliente */
+function fn_actualizarDatosCliente(cambio) {
+    fn_cargando(1);
+    var send;
+    var Accion = "U";
+    var tipoDocumento = "0";
+    send = {
+        "actualizarDatosCliente": 1
+    };
+    send.accion = Accion;
+    send.clienteTipoDoc = tipoDocumento;
+    send.clienteDocumento = $("#txtClienteCI").val();
+    send.clienteDescripcion = $("#txtClienteNombre").val();
+    send.clienteDireccion = $("#txtClienteDireccion").val();
+    send.clienteFono = $("#txtClienteFono").val();
+    send.clienteCorreo = $("#txtCorreo").val();
+    send.usuario = $("#idUser").val();
+    send.estadoWS = 1;
+    send.tipoCliente = "NULL";
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_clientes.php",
+        data: send,
+        success: function(datos) {
+            notificarCambio(cambio);
+            $(".alertify-logs").css("top", 300 + "px");
+            $("#btnClienteConfirmarDatosFacturar").hide();
+            $("#dominio1").hide();
+            $("#dominio2").hide();
+            fn_bloquearIngreso();
+            fn_btnOk(numPadCliente);
+            fn_ocultar_alfanumerico();
+            
+            //if (banderaUber === 1) {
+            if (BANDERA_AGREGADOR === 1) {
+                var cedulaC = $("#txtClienteCI").val();
+                var nombreC = $("#txtClienteNombre").val();
+                var direccionC = $("#txtClienteDireccion").val();
+                var telefonoC = $("#txtClienteFono").val();
+                var correoC = $("#txtCorreo").val();
+                fn_selecionaClienteAx(nombreC, cedulaC, cedulaC, telefonoC, direccionC, correoC, 'NULL');
+            } else {
+                fn_printFactura();
+                fn_cargando(0);
+            }
+
+            }
+
+        
+    });
+}
+
+/* Finaliza la transacción al presionar el botón FACTURAR */
+function fn_actualizarRegistroCliente() {
+    var cambio = calcularCambio();
+
+    if ($("#txtClienteNombre").val().trim() === '') {
+        $("#keyboardCliente").hide();
+        alertify.error("Ingrese los nombres del Cliente.");
+        $(".alertify-logs").css("top", 300 + "px");
+        $("#txtClienteNombre").focus();
+        fn_focoinput_nombres();
+        return false;
+    } else if ($("#txtClienteDireccion").val() === '') {
+        $("#keyboardCliente").hide();
+        alertify.error("Ingrese la direcci&oacute;n del Cliente.");
+        $(".alertify-logs").css("top", 300 + "px");
+        $("#txtClienteDireccion").focus();
+        fn_focoinput_direccion();
+        return false;
+    } else if (fn_validarEmail($("#txtCorreo").val())) {
+        if ($("#txtClienteFono").val() !== "") {
+            if (($("#txtClienteFono").val().length < 7) || ($("#txtClienteFono").val().length > 10)) {
+                alertify.error("Ingrese un n&uacute;mero de tel&eacute;fono v\u00e1lido.");
+                $(".alertify-logs").css("top", 300 + "px");
+                $("#txtClienteFono").focus();
+                fn_focoinput_telefono();
+                return false;
+                // fn_btnOk(numPadCliente);
+                // fn_ocultar_alfanumerico();
+            }
+        }
+        fn_actualizarDatosCliente(cambio);
+    } else {
+        alertify.error("Direcci\u00f3n de correo electr&oacute;nico no v\u00e1lida..");
+        $(".alertify-logs").css("top", 300 + "px");
+        $("#txtCorreo").focus();
+        fn_focoinput_email();
+    }
+}
+
+///********INTEGRACION PARA BIOMETRICA******////
+function Identificar() {
+    var send;
+    var respuesta = '';
+    var Respuesta;
+    var Mensaje;
+    var cedula = '1720758364'; //$("#txtClienteCI").val();
+    CapturaHuellaCr(cedula, 6, 2);
+    if (Respuesta === 0) {
+        send = {
+            "biometrika": 1
+        };
+        send.hid_bio = Mensaje; //$("#d2trama").val();//
+        send.cedula_bio = cedula;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: "json",
+            contentType: "application/x-www-form-urlencoded",
+            url: "../facturacion/config_facturacion.php",
+            data: send,
+            success: function(datos) {
+                respuesta = datos[0]['respuesta'];
+            }
+        });
+        return respuesta;
+    } else {
+        alert("Error " + Mensaje);
+    }
+    return false;
+}
+
+function notificarCambio(cambio) {
+    alertify.error("Su cambio es de $" + cambio);
+}
+
+// Crear o actualizar cliente
+function guardaActualizaCliente() {
+    var send = {
+        "guardaActualizaCliente": 1
+    };
+    var tipoDocumento;
+    if ($("#txtClienteCI").val().length == 10) {
+        tipoDocumento = "CEDULA";
+    } else if ($("#txtClienteCI").val().length == 13) {
+        tipoDocumento = "RUC";
+    }
+    send.clienteTipoDoc = tipoDocumento;
+    send.clienteDocumento = $("#txtClienteCI").val();
+    send.clienteDescripcion = $("#txtClienteNombre").val();
+    send.clienteDireccion = $("#txtClienteDireccion").val();
+    send.clienteTelefono = $("#txtClienteFono").val();
+    send.clienteCorreo = $("#txtCorreo").val();
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_clientes.php",
+        data: send,
+        success: function(datos) {
+            notificarCambio(calcularCambio());
+            $(".alertify-logs").css("top", 70 + "px");
+            $("#btnConsumidorFinal").hide();
+            $("#btnClienteConfirmarDatos").hide();
+            $("#dominio1").hide();
+            $("#dominio2").hide();
+            fn_bloquearIngreso();
+            fn_btnOk(numPadCliente);
+            fn_ocultar_alfanumerico();
+            if (banderaUber === 1) {
+                var cedulaC = $("#txtClienteCI").val();
+                var nombreC = $("#txtClienteNombre").val();
+                var direccionC = $("#txtClienteDireccion").val();
+                var telefonoC = $("#txtClienteFono").val();
+                var correoC = $("#txtCorreo").val();
+                fn_selecionaClienteAx(nombreC, cedulaC, cedulaC, telefonoC, direccionC, correoC, 'NULL');
+            } else {
+                fn_printFactura();
+                fn_cargando(0);
+            }
+        }
+    });
+}

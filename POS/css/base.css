@@ -1,0 +1,21 @@
+.container-ppre{
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.178);
+    transition: all .5s;
+}
+
+.card-ppre{
+    width: 500px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+}

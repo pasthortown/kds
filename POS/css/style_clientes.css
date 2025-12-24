@@ -1,0 +1,128 @@
+@charset "utf-8";
+/* CSS Document */
+
+#ventanaVisuliza{
+	height: 350px;
+	width: 750px;
+	border-radius: 10px;
+	border:1px solid #FFFFFF;
+	position: absolute;
+	visibility: visible;
+	display: inline;
+}
+
+#datosFactura{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	background-color: #FFFFFF;
+	border: 2px solid #06C;
+}
+
+#listaFactura
+{
+	position: absolute;
+	top:  60px; 
+    left: 5px;
+	background:  #ffffff;
+	width:250px; 
+	height: 480px;
+    border-radius: 10px;
+	/*font-family:Arial, Helvetica, sans-serif;*/
+	font-size: 14px;
+}
+
+#totalesFactura
+{
+	position: absolute;
+	top:  545px;
+	left: 5px;
+	background:  #ffffff;
+	width:250px;
+	height: 75px;
+	border-radius: 10px;
+	font-size: 14px;
+	font-weight: bold;
+}
+#izquierdo{
+	width: 125px;
+	position: absolute;
+	visibility: visible;
+	display: inline;
+	top:60px;
+	left: 260px;
+}
+
+#centro{
+	width:250px;
+	height: 485px;
+	border: aqua;
+	border-radius: 10px;
+	position: absolute;
+	visibility: visible;
+	display: inline;
+	left: 385px;
+	top:60px;
+	background-color: #D5D9FF;
+}
+
+#derecho{
+	heihgt: 500px;
+	width: 125px;
+	position: absolute;
+	visibility: visible;
+	display: inline;
+	left: 640px;
+	top:60px;
+}
+
+.listaproductosCant { 
+	float:left; 
+	width:15px; 
+	text-align:right;
+}
+
+.listaproductosDesc { 
+	float:left; 
+	margin-left:10px; 
+	width:145px; 
+	text-align:left; 
+	letter-spacing:-1px;
+}
+
+.listaproductosVal { 
+	float:left; 
+	width:60px; 
+	margin-left:10px; 
+	text-align:right;
+}
+
+#item{
+	float:left;
+	width:100%;
+	margin-top:5px;
+	margin-left:5px; 
+	text-align:right;
+	height: auto;
+}
+
+.valores {
+	font-size: 30px;
+	font-weight: bold;
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	background-color: transparent;
+	text-align: right;
+}
+
+.valorListado {
+	font-size: 14px;
+	font-weight: bold;
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	background-color: transparent;
+	text-align: right;
+}

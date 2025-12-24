@@ -1,0 +1,570 @@
+<?php
+
+session_start();
+
+////////////////////////////////////////////////////////////////////////////////////////////
+///////CREADO POR: Jorge Tinoco ////////////////////////////////////////////////////////////
+///////FECHA CREACION: 06-02-2016 //////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+include_once "../parametros.php";
+include_once "../system/conexion/clase_sql.php";
+include_once "../clases/clase_ordenPedido.php";
+include_once "../clases/clase_webservice.php";
+include_once "../clases/clase_execWebService.php";
+
+use Maxpoint\Mantenimiento\promociones\Clases\PromocionesController;
+
+$lc_config = new menuPedido();
+$objExecuteWs = new ExecWebService();
+$servicioWebObj = new webservice();
+$cdn_id = $_SESSION['cadenaId'];
+$ip = $_SESSION['direccionIp'];
+$usuario = $_SESSION['usuarioIdAdmin'];
+$restaurante = $_SESSION['rstId'];
+$estacion = $_SESSION['estacionId'];
+$tipo_servicio = $_SESSION['TipoServicio'];
+$nombre_usuario = $_SESSION['nombre'];
+$perfil = $_SESSION['perfil'];
+$control = $_SESSION['IDControlEstacion'];
+
+if (isset($_GET["cargarConfiguracionRestaurante"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $tipo_servicio;
+    $lc_condiciones[2] = $estacion;
+    $lc_condiciones[3] = $cdn_id;
+    print $lc_config->fn_consultar("cargarConfiguracionRestaurante", $lc_condiciones);
+} else if (isset($_GET["cargarMenuEstacionDinamico"])) {
+    $lc_condiciones[0] = $cdn_id;
+    $lc_condiciones[1] = $restaurante;
+    $lc_condiciones[2] = $estacion;
+    $lc_condiciones[3] = isset($_GET["fidelizacionActivo"]) ? $_GET["vitalityActivo"] : 0;
+    $lc_condiciones[4] = isset($_GET["vitalityActivo"]) ? $_GET["vitalityActivo"] : 0;
+    print $lc_config->fn_consultar("cargarMenuEstacionDinamico", $lc_condiciones);
+} else if (isset($_GET["agregarComentarioOrdenPedido"])) {
+    $lc_condiciones[0] = $_GET["odp_id"];
+    $lc_condiciones[1] = $_GET["comentario"];
+    print $lc_config->fn_consultar("agregarComentarioOrdenPedido", $lc_condiciones);
+} else if (isset($_GET["configuracionOrdenPedido"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["mesa_id"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $estacion;
+    $lc_condiciones[4] = isset($_GET["num_Pers"]) ? $_GET["num_Pers"] : 0;
+    $lc_condiciones[5] = isset($_GET["estado"]) ? 1 : 0;
+    print $lc_config->fn_consultar("configuracionOrdenPedido", $lc_condiciones);
+} else if (isset($_GET["validaFechaOtroPeriodo"])) {
+    $lc_condiciones[0] = "1";
+    $lc_condiciones[1] = $ip;
+    $lc_condiciones[2] = $_GET["fechaPeriodoAbierto"];
+    print $lc_config->fn_validaFechaAtencionPeriodo($lc_condiciones);
+} else if (isset($_GET["insertaQsr"])) {
+    $lc_condiciones[0] = $_GET["odpQsr"];
+    $lc_condiciones[1] = $ip;
+    $lc_condiciones[2] = $usuario;
+    print $lc_config->fn_consultar("insertaQsr", $lc_condiciones);
+} else if (isset($_GET["cargarMenuCategoria"])) {
+    $lc_condiciones[0] = $cdn_id;
+    $lc_condiciones[1] = $restaurante;
+    $lc_condiciones[2] = $_GET["menu_id"];
+    $lc_condiciones[3] = $_GET["cla_id"];
+    print $lc_config->fn_consultar("cargarMenuCategoria", $lc_condiciones);
+} else if (isset($_GET["cargarProducto"])) {
+    $lc_condiciones[0] = $_GET["cat_id"];
+    $lc_condiciones[1] = $_GET["mag_id"];
+    $lc_condiciones[2] = $_GET["cla_id"];
+    $lc_condiciones[3] = $_GET["menu_id"];
+    $lc_condiciones[4] = $restaurante;
+    print $lc_config->fn_consultar("cargarProducto", $lc_condiciones);
+} else if (isset($_GET["cargarProductoBuscador"])) {
+    $lc_condiciones[0] = $_GET["cat_id"];
+    $lc_condiciones[1] = $_GET["mag_id"];
+    $lc_condiciones[2] = $_GET["cla_id"];
+    $lc_condiciones[3] = $_GET["descripcion"];
+    $lc_condiciones[4] = $_GET["menu_id"];
+    $lc_condiciones[5] = $restaurante;
+    print $lc_config->fn_consultar("cargarProductoBuscador", $lc_condiciones);
+} else if (isset($_GET["insertarComentario"])) {
+    $lc_condiciones[0] = $_GET["odp_id"];
+    $lc_condiciones[1] = $_GET["dop_id"];
+    $lc_condiciones[2] = $_GET["comentario"];    
+    $lc_condiciones[3] = $_GET["dop_cuenta"];
+    print $lc_config->fn_consultar("insertarComentario", $lc_condiciones);
+} else if (isset($_GET["agregarPlusOrdenPedido"])) {
+    $lc_condiciones[0] = $_GET["cat_id"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["plu_id"];
+    $lc_condiciones[3] = $_GET["cantidad"];
+    $lc_condiciones[4] = $_GET["menuId"];
+
+    $lc_condiciones[5] = $_GET["numSplit"] ? $_GET["numSplit"] : 1;
+    $lc_condiciones[6] = $_GET["plus_puntos"];
+    $lc_condiciones[7] = $_GET["idProductoBase"];
+
+    /*
+      //print $lc_config->fn_consultar("agregarPlusOrdenPedido", $lc_condiciones);
+      if (isset($_GET["numSplit"]) != 0) {
+      $lc_condiciones[5] = $_GET["numSplit"];
+      print $lc_config->fn_consultar("agregarPlusOrdenPedido_FS", $lc_condiciones);
+      } else {
+      print $lc_config->fn_consultar("agregarPlusOrdenPedido", $lc_condiciones);
+      }
+     */
+    print $lc_config->fn_consultar("agregarPlusOrdenPedido", $lc_condiciones);
+} else if (isset($_GET["verificarPreguntasSugerida"])) {
+    $lc_condiciones[0] = $_GET["cat_id"];
+    $lc_condiciones[1] = $_GET["plu_id"];
+    $lc_condiciones[2] = $_GET["menu_id"];
+    print $lc_config->fn_consultar("verificarPreguntasSugerida", $lc_condiciones);
+} else if (isset($_GET["verificarRespuestaPreguntasSugeridas"])) {
+    $lc_condiciones[0] = $_GET["cat_id"];
+    $lc_condiciones[1] = $_GET["psug_id"];
+    print $lc_config->fn_consultar("verificarRespuestaPreguntasSugeridas", $lc_condiciones);
+} else if (isset($_GET["verificarUltimoElemento"])) {
+    $lc_condiciones[0] = $_GET["dop_id"];
+    $lc_condiciones[1] = $_GET["cantidadAnular"];
+    print $lc_config->fn_consultar("verificarUltimoElemento", $lc_condiciones);
+} else if (isset($_GET["agregarPreguntaSugerida"])) {
+    $lc_condiciones[0] = $_GET["cat_id"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["plus"];
+    $lc_condiciones[3] = $_GET["cantidad"];
+    $lc_condiciones[4] = $_GET["plus_puntos"];
+    $lc_condiciones[5] = isset($_GET["dop_cuenta"]) ? $_GET["dop_cuenta"] : 1;
+    $lc_condiciones[6] = $_GET["idProductoBase"];
+    /*
+      if (isset($_GET['dop_cuenta'])) {
+      $lc_condiciones[5] = $_GET["dop_cuenta"];
+      print $lc_config->fn_consultar("agregarPreguntaSugerida_FS", $lc_condiciones);
+      } else {
+      print $lc_config->fn_consultar("agregarPreguntaSugerida", $lc_condiciones);
+      }
+     */
+    print $lc_config->fn_consultar("agregarPreguntaSugerida", $lc_condiciones);
+} else if (isset($_GET["eliminarUltimoElemento"])) {
+    $lc_condiciones[0] = $_GET["dop_id"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["cantidadAnular"];
+    $lc_condiciones[3] = $_GET["gramos"];
+    $lc_condiciones[4] = $_GET["tipoBeneficioCupon"] ? $_GET["tipoBeneficioCupon"] : 0;
+    $lc_condiciones[5] = $usuario;
+    $lc_condiciones[6] = $restaurante;
+    print $lc_config->fn_consultar("eliminarUltimoElemento", $lc_condiciones);
+} else if (isset($_GET["eliminarunElemento"])) {
+    $lc_condiciones[0] = $_GET["dop_id"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["cantidadAnular"];
+    $lc_condiciones[3] = $_GET["gramos"];
+    $lc_condiciones[4] = $_GET["tipoBeneficioCupon"] ? $_GET["tipoBeneficioCupon"] : 0;
+    $lc_condiciones[5] = $usuario;
+    $lc_condiciones[6] = $restaurante;
+    print $lc_config->fn_consultar("eliminarunElemento", $lc_condiciones);
+} else if (isset($_GET["cargar_ordenPedidoPendiente"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["cat_id"];
+    $lc_condiciones[3] = $_GET["numSplit"] ? $_GET["numSplit"] : 1;
+    /* if (isset($_GET["numSplit"]) != 0) {
+      $lc_condiciones[3] = $_GET["numSplit"];
+      print $lc_config->fn_consultar("cargar_ordenPedidoPendiente_FS", $lc_condiciones);
+      } else {
+      print $lc_config->fn_consultar("cargar_ordenPedidoPendiente", $lc_condiciones);
+      }
+     */
+    print $lc_config->fn_consultar("cargar_ordenPedidoPendiente", $lc_condiciones);
+} else if (isset($_GET["validarUsuario"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["usr_clave"];
+    $lc_condiciones[2] = $_GET["usr_tarjeta"];
+    print $lc_config->fn_consultar("validarUsuario", $lc_condiciones);
+} else if (isset($_GET["validarTiempoPlu"])) {
+    $lc_condiciones[0] = $_GET["dop_id"];
+    print $lc_config->fn_consultar("validarTiempoPlu", $lc_condiciones);
+} else if (isset($_GET["lectorBarras"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[2] = $_GET["cat_id"];
+    $lc_condiciones[3] = $_GET["num_plu"];
+    $lc_condiciones[4] = $_GET["idClasificacion"];
+    $lc_condiciones[5] = $_GET["menu_id"];
+    print $lc_config->fn_consultar("lectorBarras", $lc_condiciones);
+} else if (isset($_GET["obtenerMesa"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $estacion;
+
+    print $lc_config->fn_consultar("obtenerMesa", $lc_condiciones);
+} else if (isset($_GET["ipEstacion"])) {
+    $lc_condiciones[0] = $_GET["est_id"];
+    print $lc_config->fn_consultar("ipEstacion", $lc_condiciones);
+} else if (isset($_GET["canalesImpresion"])) {
+    $lc_condiciones[0] = $_GET["odp_id"];
+    print $lc_config->fn_consultar("canalesImpresion", $lc_condiciones);
+} else if (isset($_GET["enviarImpresion"])) {
+    $lc_condiciones[0] = $_GET["imp_ip_estacion"];
+    $lc_condiciones[1] = $_GET["imp_url"];
+    $lc_condiciones[2] = $_GET["imp_impresora"];
+    $lc_condiciones[3] = $usuario;
+    print $lc_config->fn_consultar("enviarImpresion", $lc_condiciones);
+} else if (isset($_GET["eliminarTextoPlu"])) {
+    $lc_condiciones[0] = $_GET["dop_id"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["dop_cuenta"] ? $_GET["dop_cuenta"] : 1;
+    print $lc_config->fn_consultar("eliminarTextoPlu", $lc_condiciones);
+} else if (isset($_POST["impresionDetalleCuponOrdenPedido"])) {
+    $lc_condiciones[0] = $_POST["cupon"];
+    $lc_condiciones[1] = $usuario;
+    $lc_condiciones[2] = $control;
+    $lc_condiciones[3] = $restaurante;
+    $lc_condiciones[4] = $nombre_usuario;
+    $lc_condiciones[5] = $_POST["mensaje"];
+    $lc_condiciones[6] = $_POST["estado"];
+    $lc_condiciones[7] = $_POST["cantidad"];
+    $lc_condiciones[8] = $_POST["bruto"];
+    $lc_condiciones[9] = $_POST["neto"];
+    $lc_condiciones[10] = $_POST["iva"];
+    $lc_condiciones[11] = $_POST["descriptionTipo"];
+    $lc_condiciones[12] = $_POST["codigoTipo"];
+    print $lc_config->fn_consultar("impresionDetalleCuponOrdenPedido", $lc_condiciones);
+} else if (isset($_GET["estaImpreso"])) {
+    $lc_condiciones[0] = $_GET["dop_id"];
+    print $lc_config->fn_consultar("estaImpreso", $lc_condiciones);
+} else if (isset($_GET["impresionOrdenPedido"])) {
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $restaurante;
+    if (isset($_GET["dop_cuenta"])) {
+        $lc_condiciones[4] = $_GET["dop_cuenta"];
+    } else {
+        $lc_condiciones[4] = 1;
+    }
+    $lc_condiciones[5] = 1;
+    print $lc_config->fn_consultar("impresionOrdenPedido", $lc_condiciones);
+} else if (isset($_GET["impresionOrdenPedidoTodas"])) {
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $restaurante;
+    if (isset($_GET["dop_cuenta"])) {
+        $lc_condiciones[4] = $_GET["dop_cuenta"];
+    } else {
+        $lc_condiciones[4] = 1;
+    }
+    $lc_condiciones[5] = 1;
+    $lc_condiciones[6] = $_GET['todas'];
+    print $lc_config->fn_consultar("impresionOrdenPedidoTodas", $lc_condiciones);
+} else if (isset($_GET["impresionPrecuenta"])) {
+    $lc_condiciones[0] = $_GET["est_ipd"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $restaurante;
+
+    if (isset($_GET["dop_cuenta"])) {
+        $lc_condiciones[4] = $_GET["dop_cuenta"];
+    } else {
+        $lc_condiciones[4] = 1;
+    }
+    $lc_condiciones[5] = $estacion;
+    $lc_condiciones[6] = $_GET["opcionImpresion"];
+    print $lc_config->fn_consultar("impresionPrecuenta", $lc_condiciones);
+} else if (isset($_GET["cargarAccesosPerfil"])) {
+    $lc_condiciones[0] = $_GET["pnt_id"];
+    $lc_condiciones[1] = $usuario;
+    $lc_condiciones[2] = $perfil;
+    print $lc_config->fn_consultar("cargarAccesosPerfil", $lc_condiciones);
+} else if (htmlspecialchars(isset($_POST["validaAdministradorBuscar"]))) {
+    $lc_condiciones[1] = $perfil;
+    print $lc_config->fn_consultar("validaAdministradorBuscar", $lc_condiciones);
+} else if (isset($_POST["buscarValidacionesPLU"])) {
+    $lc_condiciones[0] = isset($_POST["plu_id"]) ? $_POST["plu_id"] : 0;
+    $lc_condiciones[1] = $cdn_id;
+    print $lc_config->fn_consultar("buscarValidacionesPLU", $lc_condiciones);
+} else if (isset($_POST["split_cuentas"])) {
+    $lc_condiciones[0] = 1;
+    $lc_condiciones[1] = $_POST["mesa_id"];
+    $lc_condiciones[2] = $_POST["estado"];
+    print $lc_config->fn_consultar("split_cuentas", $lc_condiciones);
+} else if (isset($_GET["informacionMesa"])) {
+    $lc_condiciones[0] = $_GET["odp_id"];
+    $lc_condiciones[1] = $ip;
+    $lc_condiciones[2] = $_GET["IDMesa"];
+<<<<<<< HEAD
+=======
+    ;
+>>>>>>> origin/MXP_Version_1.9.10.6
+    print $lc_config->fn_consultar("informacionMesa", $lc_condiciones);
+} else if (isset($_GET["informacionMesaAll"])) {
+    $lc_condiciones[0] = $_GET["odp_id"];
+    print $lc_config->fn_consultar("informacionMesaAll", $lc_condiciones);
+} else if (isset($_GET["dividirProductos"])) {
+    $lc_condiciones[0] = $_GET["accion"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["IDMesa"];
+    $lc_condiciones[3] = $_GET["cantidad"];
+    print $lc_config->fn_consultar("dividirProductos", $lc_condiciones);
+} else if (isset($_GET["obtenerDatosRegresar"])) {
+    $lc_condiciones[0] = $_GET["mesa_id"];
+    $lc_condiciones[1] = $estacion;
+    print $lc_config->fn_consultar("obtenerDatosRegresar", $lc_condiciones);
+} else if (isset($_GET["obtenerDatosRegresarG"])) {
+    $lc_condiciones[0] = $_GET["mesa_id"];
+    $lc_condiciones[1] = $_GET["rst_id"];
+    $lc_condiciones[2] = $_GET["IDUserPos"];
+    print $lc_config->fn_consultar("obtenerDatosRegresarG", $lc_condiciones);
+} else if (isset($_GET["guardarCuenta"])) {
+    $lc_condiciones[0] = $_GET["mesa_id"];
+    $lc_condiciones[1] = $_GET["idEstacion"];
+    $lc_condiciones[2] = $_GET["IDUsersPos"];
+    $lc_condiciones[3] = $_GET["rst_id"];
+    print $lc_config->fn_consultar("guardarCuenta", $lc_condiciones);
+} else if (isset($_GET["ActualizaEstadosDop"])) {
+    $lc_condiciones[0] = $_GET['opcion'];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["dop_cuenta"];
+    print $lc_config->fn_ActualizaEstadosDop("ActualizaEstadosDop", $lc_condiciones);
+} else if (isset($_POST["limite_min_max"])) {
+    $lc_condiciones[0] = $_POST["rst_id"];
+    print $lc_config->fn_consultar("limite_min_max", $lc_condiciones);
+} else if (isset($_GET['NumeroPersonas'])) {
+    $lc_condiciones[0] = $_GET['opcion'];
+    $lc_condiciones[1] = $_GET['odp_id'];
+    $lc_condiciones[2] = 0;
+    print $lc_config->fn_ActualizaEstadosDop("CargaNumPersonas", $lc_condiciones);
+} else if (isset($_POST['cargarClienteDistrib'])) {
+    $lc_condiciones[0] = $_POST['cdn_id'];
+    $lc_condiciones[1] = $_POST['rst_id'];
+    $urlWSRetornaPrecios = $servicioWebObj->retorna_rutaWS($lc_condiciones[1], 'VOUCHER', 'OBTIENE CLIENTES');
+    $urlWSRetornaPrecios = $urlWSRetornaPrecios["urlwebservice"] . "cdn_id=" . $lc_condiciones[0]; //$urlWSRetornaPrecios["urlwebservice"] . "cdn_id=" . $lc_condiciones[0] . "&rst_id=" . $lc_condiciones[1] . "";
+
+    $resultJSON = $objExecuteWs->executeWs($urlWSRetornaPrecios);
+    $respuesta["respuesta"] = json_decode($resultJSON, true);
+    $respuesta["str"] = count(json_decode($resultJSON, true));
+    print json_encode(($respuesta));
+} else if (isset($_POST['VisualizaBoton'])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $estacion;
+    print $lc_config->fn_consultar("VisualizaBoton", $lc_condiciones);
+} else if (isset($_POST['verificarPoliticaCodigo'])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_POST['idFormaPago'];
+    print $lc_config->fn_consultar("verificarPoliticaCodigo", $lc_condiciones);
+} else if (isset($_POST['ConsultaClienteExterno'])) {
+    $lc_condiciones[0] = $_POST['cdn_id'];
+    $lc_condiciones[1] = $_POST['rst_id'];
+    $urlWSRetornaPrecios = $servicioWebObj->retorna_rutaWS($lc_condiciones[1], 'VOUCHER', 'OBTIENE FP');
+    $urlWSRetornaPrecios = $urlWSRetornaPrecios["urlwebservice"] . "cdn_id=" . $lc_condiciones[0] . "&rst_id=" . $lc_condiciones[1] . "";
+    $resultJSON = $objExecuteWs->executeWs($urlWSRetornaPrecios);
+
+    $respuesta["respuesta"] = json_decode($resultJSON, true);
+    $respuesta["str"] = count(json_decode($resultJSON, true));
+    print json_encode(($respuesta));
+} else if (isset($_POST['obtienePatronesVocuher'])) {
+    $lc_condiciones[0] = 1;
+    $lc_condiciones[1] = $_POST['cdn_id'];
+    $lc_condiciones[2] = '';
+    print $lc_config->fn_ActualizaEstadosDop("obtienePatronesVocuher", $lc_condiciones);
+} else if (isset($_POST['obtieneClienteSegunPatronesVocuher'])) {
+    $lc_condiciones[0] = 2;
+    $lc_condiciones[1] = $_POST['cdn_id'];
+    $lc_condiciones[2] = $_POST['IDColeccionDeDatosPais'];
+    print $lc_config->fn_ActualizaEstadosDop("obtieneClienteSegunPatronesVocuher", $lc_condiciones);
+} else if (isset($_POST['obtenerTiposdeCupo'])) {
+    $lc_condiciones[0] = $_POST['cdn_id'];
+    $lc_condiciones[1] = $_POST['documento_cliente'];
+    print $lc_config->fn_ActualizaEstadosDop("obtenerTiposdeCupo", $lc_condiciones);
+} else if (isset($_POST['queAlcanza'])) {
+    $lc_condiciones[0] = $_POST['rst_id'];
+    print $lc_config->fn_ActualizaEstadosDop("queAlcanza", $lc_condiciones);
+} else if (isset($_GET['FiltroQueMeAlcanza'])) {
+    $lc_condiciones[0] = $_GET['rst_id'];
+    $lc_condiciones[1] = $_GET['cla_id'];
+    $lc_condiciones[2] = $_GET['num_puntos'];
+    print $lc_config->fn_ActualizaEstadosDop("FiltroQueMeAlcanza", $lc_condiciones);
+} else if (isset($_GET['transferirMesas'])) {
+    $lc_condiciones[0] = $_GET['mesa_id_origen'];
+    $lc_condiciones[1] = $_GET['nombre_mesa_destino'];
+    $lc_condiciones[2] = $_GET['IDPeriodo'];
+    print $lc_config->fn_transferirMesas('transferirMesas', $lc_condiciones);
+} else if (isset($_GET['cancelarOrdenPedido'])) {
+    $_SESSION['fdznDocumento'] = null;
+    $_SESSION['fdznNombres'] = null;
+
+    $_SESSION['vitality'] = null;
+    $_SESSION['idClienteVitality'] = null;
+    $_SESSION['balanceVitality'] = null;
+
+    $lc_condiciones[0] = $_GET['odp_id'];
+    print $lc_config->fn_consultar("cancelarOrdenPedido", $lc_condiciones);
+} else if (isset($_POST['insertaOrdenPedidoFidelizacion'])) {
+    $lc_condiciones[0] = $_POST['odp_id'];
+    $lc_condiciones[1] = $_SESSION['fb_document'];
+    print $lc_config->fn_ActualizaEstadosDop("insertaOrdenPedidoFidelizacion", $lc_condiciones);
+} else if (htmlspecialchars(isset($_POST["visualizarCantidadProducto"]))) {
+    $lc_condiciones[0] = "1";
+    $lc_condiciones[1] = $restaurante;
+    print $lc_config->visualizarCantidadProducto($lc_condiciones);
+} else if (htmlspecialchars(isset($_POST["insertarBeneficiosOrdenPedido"]))) {
+    $param[0] = 1;
+    $param[1] = htmlspecialchars($_POST['idCabeceraOrdenPedido']);
+    $param[2] = htmlspecialchars($_POST['Id_Promociones']);
+    $param[3] = htmlspecialchars($_POST['idUsuario']);
+    $param[4] = $restaurante;
+    $param[5] = '';
+    $param[6] = htmlspecialchars($_POST["dop_cuenta"]);
+    print $lc_config->insertarBeneficiosOrdenPedido($param);
+} else if (htmlspecialchars(isset($_GET["ValidarPromocion"]))) {
+    $lc_condiciones[0] = $_GET["opcion"];
+    $lc_condiciones[1] = $_GET["odp_id"];
+    $lc_condiciones[2] = $_GET["dop_cuenta"];
+    print $lc_config->fn_ValidarPromocion("ValidarPromocion", $lc_condiciones);
+} else if (htmlspecialchars(isset($_GET["statusPromociones"]))) {
+    $lc_condiciones[0] = $_GET["cdn_id"];
+    $lc_condiciones[1] = $_GET["rst_id"];
+    print $lc_config->habilitarBotonQR($lc_condiciones[0], $lc_condiciones[1]);
+} else if (isset($_POST['guadarDescripcionVoucher'])) {
+    $lc_condiciones[0] = $_POST['opcion'];
+    $lc_condiciones[1] = $_POST['IDCabeceraOrdenPedido'];
+    $lc_condiciones[2] = $_POST['observacion'];
+    print $lc_config->fn_ActualizaEstadosDop('guadarDescripcionVoucher', $lc_condiciones);
+} else if (isset($_POST['verificarPoliticaTipoVenta'])) {
+    $restaurante = $_SESSION['rstId'];
+    print $lc_config->fn_VerificarEstadoTipoVenta($restaurante);
+} else if (isset($_POST['ConsultarCanalVenta'])) {
+    $restaurante = $_SESSION['rstId'];
+    print $lc_config->fn_ConsultarCanalVenta($restaurante);
+} else if (isset($_POST['insertarTipoCanalVenta'])) {
+    $restaurante = $_SESSION['rstId'];
+    $idcabecerapedido = $_POST['cabeceraordenpedido'];
+    $idTipoPedido = $_POST['idTipoVentaCanal'];
+    print $lc_config->fn_insertarTipoPedido($restaurante, $idcabecerapedido, $idTipoPedido);
+} else if (htmlspecialchars(isset($_POST['solicitudHorneado']))) {
+    $accion = 1;
+    $idCadena = $cdn_id;
+    $plu_id = htmlspecialchars($_POST["plu_id"]);
+    $idControlEstacion = htmlspecialchars($_POST["idControlEstacion"]);
+    $idEstacion = htmlspecialchars($_POST["idEstacion"]);
+    print $lc_config->solicitudHorneado($accion, $idCadena, $plu_id, $idControlEstacion, $idEstacion);
+<<<<<<< HEAD
+
+}else if (isset($_POST['guadarDescripcionVoucher'])) {
+    $lc_condiciones[0] = $_POST['opcion'];
+    $lc_condiciones[1] = $_POST['IDCabeceraOrdenPedido'];
+    $lc_condiciones[2] = $_POST['observacion'];
+    print $lc_config->fn_ActualizaEstadosDop('guadarDescripcionVoucher', $lc_condiciones);
+
+} else if (isset($_GET['ValidaSecuencial'])) {
+    $lc_condiciones[0] = $_GET['rst_id'];
+    print $lc_config->fn_consultar("ValidaSecuencial", $lc_condiciones);
+
+} else if (isset($_POST['obtenerTotalOrdenPedido'])) {
+    $idOrdenPedido = $_POST['idOrdenPedido'];
+    print $lc_config->obtenerTotalOrdenPedido($idOrdenPedido);
+
+}
+else if (isset($_POST['desactivarCanjeCuponOrdenMasterData'])) {
+=======
+} else if (isset($_POST['desactivarCanjeCuponOrdenMasterData'])) {
+>>>>>>> origin/MXP_Version_1.9.10.6
+    /*
+      desactivarCanjeCuponOrdenAzure: 1
+      idOrden: E86A0BE4-14E8-E811-810E-00505686417C
+      idDetalleOrden: CD1EC5CF-27E8-E811-810E-00505686417C
+     */
+    $respuestaError = (object) [
+                "estado" => "error",
+                "mensaje" => "No se pudo desactivar el canje"
+    ];
+
+    if (!(isset($_POST['idOrden']) && ($_POST['idOrden'] !== ''))) {
+        $respuestaError->mensaje = "Falta el parámetro 'idOrden'";
+        $promocionesControllerObj->enviarRespuestaJson($respuestaError);
+    }
+
+    if (!(isset($_POST['idDetalleOrden']) && ($_POST['idDetalleOrden'] !== ''))) {
+        $respuestaError->mensaje = "Falta el parámetro 'idDetalleOrden'";
+        $promocionesControllerObj->enviarRespuestaJson($respuestaError);
+    }
+
+    $idOrden = $_POST['idOrden'];
+    $idDetalleOrden = $_POST['idDetalleOrden'];
+
+    $conexionTienda = $conexionDinamica->conexionTienda();
+    $promocionesControllerObj = new PromocionesController($conexionTienda);
+    $parametrosDesactivar = ["idOrden" => $idOrden, "idDetalleOrden" => $idDetalleOrden];
+    $respuestaDesactivacion = $promocionesControllerObj->desactivarCanjeCuponOrdenMasterData($parametrosDesactivar);
+    $promocionesControllerObj->enviarRespuestaJson($respuestaDesactivacion);
+} else if (isset($_POST['desactivarCanjeCuponOrdenTextoMasterData'])) {
+    /*
+      desactivarCanjeCuponOrdenAzure: 1
+      idOrden: E86A0BE4-14E8-E811-810E-00505686417C
+      idDetalleOrden: CD1EC5CF-27E8-E811-810E-00505686417C
+     */
+    $respuestaError = (object) [
+                "estado" => "error",
+                "mensaje" => "No se pudo desactivar el canje"
+    ];
+
+    if (!(isset($_POST['idOrden']) && ($_POST['idOrden'] !== ''))) {
+        $respuestaError->mensaje = "Falta el parámetro 'idOrden'";
+        $promocionesControllerObj->enviarRespuestaJson($respuestaError);
+    }
+
+    if (!(isset($_POST['idCupon']) && ($_POST['idCupon'] !== ''))) {
+        $respuestaError->mensaje = "Falta el parámetro 'idCupon'";
+        $promocionesControllerObj->enviarRespuestaJson($respuestaError);
+    }
+
+    $idOrden = $_POST['idOrden'];
+    $idDetalleOrden = $_POST['idCupon'];
+
+    $conexionTienda = $conexionDinamica->conexionTienda();
+    $promocionesControllerObj = new PromocionesController($conexionTienda);
+    $parametrosDesactivar = ["idOrden" => $idOrden, "idCupon" => $idDetalleOrden];
+    $respuestaDesactivacion = $promocionesControllerObj->desactivarCanjeCuponOrdenTextoMasterData($parametrosDesactivar);
+    $promocionesControllerObj->enviarRespuestaJson($respuestaDesactivacion);
+} else if (isset($_POST['retomarOrdenKiosko'])) {
+    $Factura = $_POST['codigoFactura'];
+    $_SESSION['reimpresionKiosko'] = $_POST['reimpresionkiosko'];
+    $respuesta = $lc_config->fn_retomarOrdenKiosko($Factura, $ip, $usuario);
+
+    $resp = new stdClass();
+    $resp = json_decode($respuesta, true);
+    if ($resp[0]['mensajes'] == "") {
+        $_SESSION['kioskoActivo'] = 1;
+    } else {
+        $_SESSION['kioskoActivo'] = 0;
+    }
+    print $respuesta;
+} else if (isset($_POST['cargarPedidosKiosko'])) {
+    print $lc_config->fn_cargarPedidosKiosko($cdn_id, $restaurante);
+} else if (isset($_POST['cancelarOrdenKiosko'])) {
+    $ordenPedido = $_POST['ordenPedido'];
+    $_SESSION['kioskoActivo'] = null;
+    print $lc_config->fn_cancelarOrdenKiosko($ordenPedido);
+} else if (isset($_POST['PayPhoneFormularioEnOrdenPedido'])) {
+    $lc_condiciones[0] = $restaurante;
+    print $lc_config->fn_consultar("PayPhoneFormularioEnOrdenPedido", $lc_condiciones);
+} else if (isset($_POST['PayPhoneCargarTipoInmueble'])) {
+    $lc_condiciones[0] = $cdn_id;
+    print $lc_config->fn_consultar("PayPhoneCargarTipoInmueble", $lc_condiciones);
+} else if (isset($_POST['actualizarOrdenPedidoApp'])) {
+
+<<<<<<< HEAD
+} else if (isset($_POST['cancelarOrdenKiosko'])) {
+	$ordenPedido = $_POST['ordenPedido'];
+	$_SESSION['kioskoActivo'] = null;
+    print $lc_config->fn_cancelarOrdenKiosko($ordenPedido);
+
+=======
+    $lc_condiciones[0] = $_POST['odp_id'];
+    $lc_condiciones[1] = $_POST['cliente'];
+    $lc_condiciones[2] = $_POST['telefono'];
+    $lc_condiciones[3] = $_POST['direccion'];
+    $lc_condiciones[4] = $_POST['direccion2'];
+    $lc_condiciones[5] = $_POST['cedulaCliente'];
+    $lc_condiciones[6] = $_POST['accion'];
+    
+    print $lc_config->fn_consultar("actualizarOrdenPedidoApp", $lc_condiciones);
+}
+
+else if (isset($_POST['obtieneInformacionFormulario'])) {
+    $lc_condiciones[0] = $_POST['odp_id'];
+    print $lc_config->fn_consultar("obtieneInformacionFormulario", $lc_condiciones);
+>>>>>>> origin/MXP_Version_1.9.10.6
+}

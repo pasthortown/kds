@@ -1,0 +1,26 @@
+@charset "utf-8";
+/* CSS Document */
+
+.facturacion
+{
+	text-align:center;
+	margin:auto;
+	width:250px;
+	padding-top:0px; 
+	font-size:11px;
+	font-family:Arial, Helvetica, sans-serif;
+}
+
+.promociones
+{
+	font-size:11px;
+	font-family:Arial, Helvetica, sans-serif;
+	width:240px;
+	margin-left:2px;
+
+}
+
+#numero_general
+{
+		font-size:12px;
+}

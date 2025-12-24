@@ -1,0 +1,270 @@
+@charset "utf-8";
+body{
+    background:#7DAAEC url(../imagenes/ordenpedido/bg_tomaPedido.png) repeat;
+    font-family: arial, helvetica, monospace;
+}
+
+button {
+    height: 60px;
+    width: 120px;
+}
+
+#alertify-ok {
+    background-color:#3b7808;
+    height: 60px;
+    width: 120px;
+    border:1px solid #3b7808
+}
+
+#alertify-cancel{
+    height: 60px;
+    width: 120px;
+}
+
+.contenedor {
+    height: auto;
+    width: auto;
+    padding: 0;
+    margin: 0;
+}
+
+.cntMovimientos {
+    margin: 100px auto 0 auto;
+    width: 800px;
+    height: 560px;
+    border: 0px rgb(80,80,80) solid;
+    background: rgb(250, 250, 250);
+    -moz-box-shadow:  0px 0px 0px 3px rgb(80,80,80);
+    -webkit-box-shadow:  0px 0px 0px 3px rgb(80,80,80);
+    box-shadow:  0px 0px 0px 3px rgb(80,80,80);
+    border-radius: 6px 6px 6px 6px;
+}
+
+.cntTituloMovimiento {
+    background: rgb(80,80,80);
+    padding: 10px 0 0 0;
+    margin-top: 20px;
+    height: 40px;
+}
+
+.cntTituloMovimiento h3{
+    margin: 0 20px;
+    font-size: 24px;
+    color: #FFF;
+}
+
+.cntTipoMovimiento{
+    padding: 40px 40px 20px 40px;
+    height: 60px;
+    width: 710px;
+}
+
+/*RADIO BUTTON*/
+input[type=radio].css-checkbox {
+    position:absolute;
+    z-index:-1000;
+    left:-1000px;
+    overflow: no-content;
+    height:1px;
+    width:1px;
+    margin:-1px;
+    padding:0;
+    border:0;
+}
+
+input[type=radio].css-checkbox + label.css-label {
+    padding-left:55px;
+    height:50px; 
+    display:inline-block;
+    line-height:50px;
+    background-repeat:no-repeat;
+    background-position: 0 0;
+    font-size: 17px;
+    vertical-align:middle;
+    cursor:pointer;
+}
+
+input[type=radio].css-checkbox:checked + label.css-label {
+    background-position: 0 -50px;
+}
+
+label.css-label {
+    background-image:url(../imagenes/checbox.png);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.cntSelectMovimiento{
+    padding: 10px 40px;
+    height: 60px;
+    width: 760px;
+}
+
+.cntSelectMovimiento select{
+    font-size: 18px;
+    width: 450px;
+    height: 50px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    width: 585px;
+}
+
+.cntSelectMovimiento option {
+    padding: 12px 0;
+}
+
+
+.cntSelectMovimiento label{
+    font-size: 18px;
+}
+
+.cntFiltros {
+    padding: 10px 40px;
+    font-size: 18px;
+}
+
+.cntFiltros input {
+    width: 190px;
+    margin-top: 10px;
+    margin-left: 4px;
+    height: 40px;
+    font-size: 18px;
+}
+
+.cntEntradas {
+    padding: 10px 40px;
+    font-size: 18px;
+}
+.numeroAutorizacionn{
+    padding: 10px 16px;
+    font-size: 17px;
+    width: 350px;
+}
+
+.cntMensaje {
+    margin: 10px 0;
+    padding: 10px 40px;
+    font-size: 18px;
+}
+
+.cntFiltros label {
+    padding: 0 40px 0 0;
+}
+
+.cntEntradas input {
+    width: 190px;
+    margin-top: 10px;
+    height: 40px;
+    font-size: 18px;
+}
+
+.cntEntradas label {
+    padding: 0 54px 0 0;
+}
+
+
+
+
+.numeroAutorizacionn input {
+    width: 190px;
+    margin-top: 10px;
+    height: 40px;
+    font-size: 18px;
+}
+
+.numeroAutorizacionn label {
+    padding: 0 30px 0 25px;
+}
+
+
+
+
+
+
+.cntMensaje label {
+    padding: 0 20px 0 0;
+}
+
+.cntMensaje span {
+    font-size: 15px;
+}
+
+.labelPadding {
+    padding: 0 24px 0 0;
+}
+
+.cntBotones {
+    text-align: center;
+    font-size: 15px;
+}
+
+.cntBotones input[type=button] {
+    height: 70px;
+    width: 150px;
+    font-size: 15px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.cntTeclas {
+    width: 200px;
+    margin: 10px auto;
+}
+.tamanioTeclasCalculadora{ font-size: 20px;}
+.cntInput {
+    margin: 10px 0;
+}
+
+.inputTotal {
+    width: 160px;
+    height: 30px;
+}
+
+.btnNumeros {
+    width: 60px;
+    height: 60px;
+    margin: 1px;
+}
+
+.boton {
+    -moz-box-shadow:inset 0 1px 0 0 #fff;
+    -webkit-box-shadow:inset 0 1px 0 0 #fff;
+    background-color:#dfeffc;
+    -moz-border-radius:6px;
+    -webkit-border-radius:6px;
+    border-radius:6px;
+    border:1px solid #dcdcdc;
+    display:inline-block;
+    cursor:pointer;
+    color:#1d5987;
+    text-decoration:none;
+    text-shadow:-1px 1px 0 #fff;
+    margin-left: 16px;
+    font-weight:600;
+}
+
+.botonBloqueado {
+    -moz-box-shadow:inset 0 1px 0 0 #fff;
+    -webkit-box-shadow:inset 0 1px 0 0 #fff;
+    -moz-border-radius:6px;
+    -webkit-border-radius:6px;
+    border-radius:6px;
+    background-color:#dfeffc;
+    border:1px solid #dcdcdc;
+    display:inline-block;
+    cursor:pointer;
+    color:#88989a;
+    text-decoration:none;
+    text-shadow:-1px 1px 0 #fff;
+    margin-left: 16px;
+    width:70px;
+    font-weight:600;
+}
+
+.modal_cargando{position:fixed;top:0;left:0;width:100%;height:766px;background:rgba(0,0,0,0.2);z-index:999999;margin:0;padding:0}
+.modal_cargando_contenedor{margin:300px auto;width:140px;height:140px;color:#333;z-index:9999999;overflow-x:hidden;overflow-y:hidden;background:#fff;-webkit-box-shadow:0 0 37px 4px rgba(0,0,0,0.75);-moz-box-shadow:0 0 37px 4px rgba(0,0,0,0.75);box-shadow:0 0 37px 4px rgba(0,0,0,0.75)}
+.modal_cargando_contenedor img{margin:5px}

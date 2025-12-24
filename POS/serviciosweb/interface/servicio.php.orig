@@ -1,0 +1,78 @@
+<?php 
+    /*
+    DESARROLLADO POR: Darwin Mora
+    DESCRIPCION: Web Services de producto
+    TABLAS INVOLUCRADAS: Detalle_Factura, Cabecera_Factura
+    FECHA CREACION:19/04/2016
+    FECHA ULTIMA MODIFICACION:
+    USUARIO QUE MODIFICO:
+    DECRIPCION ULTIMO CAMBIO:
+    */
+    ini_set("soap.wsdl_cache_enabled", 0);
+    include_once "../../system/conexion/clase_sql.php";
+    include_once "../../clases/clase_wsInterfaceProducto.php";
+    require_once "../../soap/lib/nusoap.php";
+    $server = new soap_server;
+    //$ns = "http://localhost/maxpoint/serviciosweb/interface/";
+    $url_original = "http".(!empty($_SERVER['HTTPS'])?"s":"")."://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+    $url_original=full_url($_SERVER);
+    $ns=str_replace("servicio.php","",$url_original);
+    $server->configureWSDL('InterfaceProducto', $ns);
+    $server->wsdl->schematargetnamespace = $ns;
+    
+    // REGISTRANDO LA ESTRUCTURA DE DATOS PRODUCTOS
+    $server->wsdl->addComplexType('InterfaceProducto', 'complexType', 'struct', 'all', '',
+        array(
+            'Respuesta' => array('name' => 'Respuesta', 'type' => 'xsd:string'),
+            'Mensaje'   => array('name' => 'Mensaje',   'type' => 'xsd:string'),
+            'PlusTrans' => array('name' => 'PlusTrans', 'type' => 'xsd:string')
+        )
+    );
+<<<<<<< HEAD
+    
+    //REGISTRANDO EL METODO
+    $server->register('InterfaceProducto'   
+=======
+
+    //REGISTRANDO EL METODO 
+    $server->register('InterfaceProducto'  
+>>>>>>> origin/MXP_Version_1.9.10.6
+                                        ,array( 'cod_restaurante'   => 'xsd:string',
+                                                'lc_fecha'          => 'xsd:dateTime')
+                                        ,array( 'return' => 'tns:InterfaceProducto'),$ns);
+    
+    //Función de interface 
+    function InterfaceProducto($cod_restaurante, $lc_fecha) {
+        $obj_ws_interface_producto = new ws_interface_producto();
+
+        $lc_condiciones[0] = $cod_restaurante;
+        $lc_condiciones[1] = $lc_fecha;
+        $dato=$obj_ws_interface_producto->fn_consultar("interfaceProducto",$lc_condiciones);
+
+        return new soapval('return', 'xsd:string', $dato);
+    }
+    
+    function url_origin( $s, $use_forwarded_host = false ) {
+        $ssl      = ( ! empty( $s['HTTPS'] ) && $s['HTTPS'] == 'on' );
+        $sp       = strtolower( $s['SERVER_PROTOCOL'] );
+        $protocol = substr( $sp, 0, strpos( $sp, '/' ) ) . ( ( $ssl ) ? 's' : '' );
+        $port     = $s['SERVER_PORT'];
+        $port     = ( ( ! $ssl && $port=='80' ) || ( $ssl && $port=='443' ) ) ? '' : ':'.$port;
+        $host     = ( $use_forwarded_host && isset( $s['HTTP_X_FORWARDED_HOST'] ) ) ? $s['HTTP_X_FORWARDED_HOST'] : ( isset( $s['HTTP_HOST'] ) ? $s['HTTP_HOST'] : null );
+        $host     = isset( $host ) ? $host : $s['SERVER_NAME'] . $port;
+        return $protocol . '://' . $host;
+    }
+<<<<<<< HEAD
+    
+=======
+
+>>>>>>> origin/MXP_Version_1.9.10.6
+    function full_url( $s, $use_forwarded_host = false ) {
+        return url_origin( $s, $use_forwarded_host ) . $s['REQUEST_URI'];
+    }
+
+    //PROCESA LA SOLICITUD Y DEVUELVE LA RESPUESTA 
+    $input = (isset($HTTP_RAW_POST_DATA)) ? $HTTP_RAW_POST_DATA : implode("\r\n", file('php://input'));
+    $server -> service($input);
+
+    exit;

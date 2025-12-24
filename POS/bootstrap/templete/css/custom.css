@@ -1,0 +1,35 @@
+/* -----------------------------------------
+   Custom.css - put your own changes here 
+  
+DESARROLLADO POR: DARWIN MORA
+DESCRIPCION: Estilos personalizados CSS Max Point
+FECHA CREACION: 15/07/2015
+MODIFICADO POR: 
+DESCRIPCION: 
+FECHA MODIFICACION: 
+----------------------------------------- */
+
+/*====================================================*/
+/*QUITAR MARGEN PARA OCUPAR TODA LA PANTALLA      	  */
+/*====================================================*/
+.page-content.right-sidebar-page {
+  margin-right: 8px;
+}
+/*====================================================*/
+/* TAMAÑO DE LA LETRA DEL MENU						  */
+/*====================================================*/
+.page-sidebar .side-nav {
+  width: 100%;
+  float: left;
+  font-size: 12px;
+}
+/*====================================================*/
+/* TAMAÑO DE LA LETRA DEL MENU						  */
+/*====================================================*/
+.page-navbar .navbar-nav > li > a:hover {
+  background-color: #303946;
+}
+
+.page-navbar .navbar-nav > li.open > a {
+  background-color: #303946;
+}

@@ -1,0 +1,117 @@
+<?php
+
+session_start();
+include_once '../system/conexion/clase_sql.php';
+include_once "../clases/clase_ordenPedido.php";
+include_once "../clases/clase_webservice.php";
+
+$cliente = new menuPedido();
+$servicioWebObj = new webservice();
+$array_ini = parse_ini_file("../serviciosweb/interface/config.ini");
+
+$lc_rest = $_SESSION['rstId'];
+$lc_cadena = $_SESSION['cadenaId'];
+
+$request = (object) filter_input_array(INPUT_POST);
+
+if ($request->metodo === "validaCodigo") {
+    $codigo = $request->codigo;
+    $bandera = $request->bandera;
+
+    $datosWebservice = $servicioWebObj->retorna_WS_Go_Trade_Canje($lc_rest);
+    $urlServicioWeb = $datosWebservice["urlwebservice"];
+    //$urlServicioWeb = ($array_ini["urlServicioWebGoTradeCanje"]); ---- V1.7
+    try {
+        $url = $urlServicioWeb . $codigo;
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_ENCODING, "");
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 10);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_AUTOREFERER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        //execute post
+        $result = curl_exec($ch);
+        $respuestaSolicitud = json_decode($result);
+
+        if (property_exists($respuestaSolicitud, 'status') == false) {
+            $respuesta["status"] = -1;
+            $respuesta["mensaje"] = $respuestaSolicitud->message;
+        } else {
+            $respuesta["status"] = $respuestaSolicitud->status;
+            $respuesta["mensaje"] = $respuestaSolicitud->message;
+
+        }
+
+        print json_encode($respuesta);
+        //close connection
+        curl_close($ch);
+    } catch (Exception $e) {
+        print json_encode($e);
+    }
+
+} else if ($request->metodo === "validaCajeroHeladeria") {
+    $lc_condiciones[0] = 2;
+    $lc_condiciones[1] = $lc_rest;
+    $lc_condiciones[2] = $lc_cadena;
+    $array = $cliente->fn_consultar("ObtieneDatosDestino", $lc_condiciones);
+    $array2 = $array[0];
+    $bddDestino = $array2['NombreBdd'];
+    $cadenaDestino = $array2['cdn_id'];
+    $restauranteDestino = $array2['rst_id'];
+        $fecha_prd =   str_replace("/","",$request->fecha_prd);    
+
+    $datosWebservice = $servicioWebObj->retorna_WS_Trans_Venta_ValidaCajero($lc_rest);
+    $urlServicioCajeroActivoHeladeria = $datosWebservice["urlwebservice"];
+    //$urlServicioCajeroActivoHeladeria = ($array_ini["urlWSCajeroActivo"]);
+    try {
+        $url=$urlServicioCajeroActivoHeladeria."?rst_id=".$restauranteDestino."&cdn_id=".$cadenaDestino."&bdd=".$bddDestino."&fecha_prd=".$fecha_prd;
+         
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "GET");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        //execute post
+        $result = curl_exec($ch);
+        //close connection
+        curl_close($ch);
+        $respuestaSolicitud = json_decode($result);
+        $respuesta["estado"] = $respuestaSolicitud[1];
+        $respuesta["mensaje"] = $respuestaSolicitud[2];
+        print json_encode($respuesta);
+    } catch (Exception $e) {
+        print json_encode($e);
+    }
+
+} else {
+    $datosWebservice = $servicioWebObj->retorna_WS_Go_Trade_Anulacion($lc_rest);
+    $urlServicioWebAnulacion = $datosWebservice["urlwebservice"];
+    //$urlServicioWebAnulacion = ($array_ini["urlServicioWebGoTradeAnula"]);   
+
+    try {
+        $url = $urlServicioWebAnulacion . $codigo;
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        //execute post
+        $result = curl_exec($ch);
+        //close connection
+        curl_close($ch);
+        $respuestaSolicitud = json_decode($result);
+        //$respuesta["status"] = $respuestaSolicitud->status; 
+        //$respuesta["mensaje"] = $respuestaSolicitud->message; 
+        print json_encode($respuestaSolicitud);
+    } catch (Exception $e) {
+        print json_encode($e);
+    }
+}

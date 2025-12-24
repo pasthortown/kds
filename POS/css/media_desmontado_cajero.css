@@ -1,0 +1,27 @@
+@media screen and (max-width:1280px) and (max-height:800px) {
+    #ModalBilletesDesmontarCajero .modal-dialog{
+        top: -4%;
+    }
+    #ModalBilletesDesmontarCajero .modal-dialog .modal-content .modal-body{
+        margin-bottom: 0;
+        padding: 0 15px;
+    }
+    #ModalBilletesDesmontarCajero .modal-dialog .modal-content .modal-body .table{
+        margin-bottom: 0;
+    }
+    #ModalTarjetas #dialogTarjetas #txt_montoTarjeta{
+        width: 100%;
+    }
+    #ModalMotivo .modal-dialog{
+        top: -4%;
+
+    }
+}
+
+.disabled-button {
+    background-color: #ccc;
+    color: #999;
+    cursor: not-allowed;
+    pointer-events: none; 
+    opacity: 0.6;
+}

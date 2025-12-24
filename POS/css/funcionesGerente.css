@@ -1,0 +1,179 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #7DAAEC url(../imagenes/ordenpedido/bg_tomaPedido.png) repeat;
+    font-family: Arial;
+    font-weight: 700;
+}
+
+.contenedor {
+    height: auto;
+    width: auto;
+    padding: 0;
+    margin: 0;
+}
+
+.cntFuncionesGerente {
+    margin: 100px auto 0 auto;
+    width: 800px;
+    height: 560px;
+    border: 0px rgb(80, 80, 80) solid;
+    background: rgb(250, 250, 250);
+    -moz-box-shadow: 0px 0px 0px 3px rgb(80, 80, 80);
+    -webkit-box-shadow: 0px 0px 0px 3px rgb(80, 80, 80);
+    box-shadow: 0px 0px 0px 3px rgb(80, 80, 80);
+    border-radius: 6px 6px 6px 6px;
+}
+
+.btnReiniciarTurnero {
+    background-image: url(../imagenes/refresh.png);
+    background-repeat: no-repeat;
+    background-position: left;
+    text-align: right;
+    background: transparent url(../imagenes/refresh.png) no-repeat scroll 10px;
+    border: none;
+    width: 152px;
+    height: 60px;
+    font-size: 20px;
+    margin: 5px 0 0 0;
+}
+
+.cntTituloFuncionesGerente {
+    background: rgb(80, 80, 80);
+    padding: 10px 0 0 0;
+    margin-top: 20px;
+    height: 40px;
+}
+
+.cntTituloFuncionesGerente h3 {
+    margin: 0 20px;
+    font-size: 24px;
+    color: #FFF;
+}
+
+.cntBotones {
+    padding: 20px 0 0 0;
+    text-align: justify;
+    height: 410px;
+}
+
+.btnFuncionGerente {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 5px 10px 0 10px;
+    width: 180px;
+    height: 80px;
+    font-size: 14px;
+    padding: 22px 12px;
+}
+
+.cntFooter {
+    height: 80px;
+    width: 800px;
+    font-size: 16px;
+}
+
+#alertify-ok {
+    margin-top: 10px;
+    width: 120px;
+    height: 60px;
+}
+
+#alertify-cancel {
+    margin-top: 10px;
+    width: 120px;
+    height: 60px;
+}
+
+.btnApagarEstacion {
+    background-image: url(../imagenes/apagado.png);
+    background-repeat: no-repeat;
+    background-position: left;
+    text-align: right;
+    background: transparent url(../imagenes/apagado.png) no-repeat scroll 14px 4px;
+    border: none;
+    width: 140px;
+    height: 60px;
+    font-size: 20px;
+    margin: 5px 0 0 0;
+}
+
+.btnReiniciarImpresion {
+    background-image: url(../imagenes/reiniciarImpresion.png);
+    background-repeat: no-repeat;
+    background-position: left;
+    text-align: right;
+    background: transparent url(../imagenes/reiniciarImpresion.png) no-repeat scroll 14px 4px;
+    border: none;
+    width: 250px;
+    height: 60px;
+    font-size: 20px;
+    margin: 5px 0 0 0;
+}
+
+.cntIzquierda {
+    float: left;
+    left: 0px;
+    width: 200px;
+}
+
+.cntDerecha {
+    float: right;
+    width: 160px;
+    margin: 0 10px 0 0;
+}
+
+.btnSalir {
+    font-size: 18px;
+    width: 160px;
+    height: 70px;
+}
+
+.modal_cargando {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 766px;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 999999;
+    margin: 0;
+    padding: 0
+}
+
+.modal_cargando_contenedor {
+    margin: 300px auto;
+    width: 140px;
+    height: 140px;
+    color: #333;
+    z-index: 9999999;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    background: #fff;
+    -webkit-box-shadow: 0 0 37px 4px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0 0 37px 4px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 0 37px 4px rgba(0, 0, 0, 0.75)
+}
+
+.modal_cargando_contenedor img {
+    margin: 5px
+}
+
+.boton {
+    -moz-box-shadow: inset 0 1px 0 0 #fff;
+    -webkit-box-shadow: inset 0 1px 0 0 #fff;
+    background-color: #dfeffc;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    cursor: pointer;
+    color: #1d5987;
+    text-decoration: none;
+    text-shadow: -1px 1px 0 #fff;
+    float: left
+}

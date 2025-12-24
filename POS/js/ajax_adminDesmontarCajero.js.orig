@@ -1,0 +1,2395 @@
+////////////////////////////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: CHRISTIAN PINTO///////////////////////////////////////////
+///////////DESCRIPCION: DESMONTAR CAJERO ///////////////////////////////////////////
+////////////////TABLAS: Control_Estacion, Periodo, Estacion/////////////////////////
+////////FECHA CREACION: 13/10/2015//////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+///////MODIFICADO POR       : Christian Pinto //////////////////////////////////////
+///////DESCRIPCION          : Remediación para mejorar la Mantenibilidad en el /////
+////////////////////////////  código ///////////////////////////////////////////////
+///////FECHA MODIFICACIÓN   : 17/10/2016 ///////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+/* 
+ * HISTORIAL DE CAMBIOS:
+    10/01/2017 Francisco Sierra
+        Se incorpora el proceso de transferencia de venta 
+    20/04/2018 Juan Esteban Canelos
+        Se incorpora animación de carga al realizar interface
+*/
+/* global parseFloat */
+
+var arrayBilletes2 = new Array();
+
+var array = 50;
+var ocultos2 = new Array(array);
+var ocultos = new Array(array);
+var ocultos3 = new Array(array);//id de usuario
+var resultado = new Array(array);
+var denominaciones = new Array(array);
+var multiplicaciones = new Array(array);
+var cantidades = new Array(array);
+var subtotales = new Array(array);//array q contiene los datos de la columna de totales
+
+var bandera = -1;
+var banderaIdDias = -1;
+var banderaDias = -1;
+var id_botones = new Array();
+var id_botonesDatafast = new Array();
+var alertify;
+var send;
+var numeroFormasPago; //guarda numero de formas de pago 
+var cssDegradadoModal; //variable para degradar la modal
+var usr_id_cajero;
+var controlEstacion;
+var controlBilletes = 0; //variable para control billetes: 0 = trae billetes nuevos ; 1 = trae billetes modificados 
+var ctrc_id;
+var banderaEstadoCajero = '';//bandera para ejecutar acción si abro modal por cerrar, activo, inactivo; 
+var banderaDesmontado;
+
+$(document).ready(function () { /*Inicio ventana modal de inicio*/
+    fn_cargarBotonesDias();
+    banderaArqueoTarjeta = 0;
+});
+
+//FUNCIÓN QUE CARGA BOTONOS EN LA PARTE SUPERIOR MUESTRA 5 DIAS, 10 DIAS, 15 DIAS ATRAS DE LA FECHA ACTUAL                
+function fn_cargarBotonesDias() {
+    send = {"cargarBotonesDias": 1};
+    send.accion = 1;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#tabla_usuarios").empty();
+                html = "<tr class=''>";
+                html += "<td style = 'width:170px; text-align:center; border: hidden'></td>";
+                for (i = 0; i < datos.str; i++) {
+                    if (i == 0) {
+                        banderaIdDias = datos[i]['id_dias'];
+                        banderaDias = datos[i]['dias'];
+                    }
+                    html += "<td align='center' style=' border: hidden'><button id=" + datos[i]['id_dias'] + " onclick='fn_muestraFechas(\"" + datos[i]['id_dias'] + "\", " + datos[i]['dias'] + ");' class='btn btn-default btn-lg'>" + datos[i]['dias'] + "</button></td>";
+                }
+                html += "</tr>";
+                $("#tabla_usuarios").append(html);
+                fn_muestraFechas(banderaIdDias, banderaDias);
+            }
+        }
+    });
+}
+
+//FUNCIÓN QUE PERMITE MOSTRAR LAS FECHAS EN QUE LOS PERIODOS FUERON CREADOS
+function fn_muestraFechas(id_boton_dia, dias) {
+    send = {"cargarfechas": 1};
+    send.accion = 1;
+    send.dias = dias;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#tabla_fechas").empty();
+                for (i = 0; i < datos.str; i++) {
+                    html = "<tr>";
+                    html += "<td align='' style='width:170px; height:50px; text-align:justify;'><button id='b" + datos[i]['prd_id'] + "' value= '" + datos[i]['prd_fechaapertura'] + "' onclick='fn_muestraUsuariosEstado(" + datos[i]['prd_fechaapertura'] + ",\"" + datos[i]['prd_id'] + "\",1);' style='width:150px;' class='btn btn-default btn-lg btn-primary'><span class='glyphicon glyphicon-calendar' aria-hidden='true'></span>&nbsp;&nbsp;" + datos[i]['prd_fechaapertura'] + "</button></td></tr>";
+                    $("#tabla_fechas").append(html);
+                    $("#hide_fecha").val(datos[i]['prd_fechaapertura']);
+                    $("#hide_periodo").val(datos[i]['prd_id']);
+                    $("#t" + datos[i]['prd_id']).show();
+                }
+            }
+        }
+    });
+}
+
+// FUNCIÓN QUE MUESTRA LOS CAJEROS DE CONTROL ESTACIÓN CON SU RESPECTIVO ESTADO DE ACUERDO AL PERIODO
+function fn_muestraUsuariosEstado(fechaAperturaPeriodo, prd_id, banderaDesmontado) {
+    var fecha = $("#b" + prd_id + "").val();
+    $("#hide_fecha").val("" + fecha + "");
+    $("#hide_periodo").val(prd_id);
+    id = $("#elimina").val();
+    if ($("#elimina").val() !== '') {
+        $("#t" + id).empty();
+    }
+    send = {"muestraUsuariosEstado": 1};
+    send.accion = 1;
+    if (banderaDesmontado === 1) {
+        send.fecha = fecha;
+    } else {
+        send.fecha = fechaAperturaPeriodo;
+    }
+    send.prd_id = prd_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#tabla_estado_usuarios").empty();
+                html = "<tr>";
+                for (i = 0; i < datos.str; i++) {
+                    var nColumnas = $("#tabla_estado_usuarios tr:last td").length;
+                    //boton interface
+                    if (i === 0) {
+                        $("#IDPeriodo").val("" + datos[i]['IDPeriodo'] + "");
+                        html += "<tr><td align='right' colspan=2>";
+                        html += "<div class='btn-group'>";
+                        html += "<div class=''></div><div class='row' style='width:220px'><button id='' onclick='fn_generar_interface()' style='width:160px;' class='btn btn-success'><span class='glyphicon glyphicon-refresh' aria-hidden='true'></span>&nbsp;&nbsp;Interface SGWeb</button></div></td><td align='right' colspan=2><div class=''></div><div class='row' style='width:220px'><button id='' onclick='fn_reporteFinDeDia(\"" + prd_id + "\")' style='width:160px;' class='btn btn-success'><span class='glyphicon glyphicon-list' aria-hidden='true'></span>&nbsp;&nbsp;Reporte Fin de D&iacutea</button></div></td>";
+                        html += "</tr><td>&nbsp;</td></tr>";
+                    }
+                    if (nColumnas < 9) {
+                        html += "<td align='center'>";
+                        html += "<div class=''><div class=''><h6>" + datos[i]['usr_usuario'] + "</h6><img src='../../imagenes/admin_resources/icon-user_activo.png'/></div>";
+                        html += "<div class='btn-group'>";
+                        if (datos[i]['estado_usuario'] === 'Inactivo' && datos[i]['PorEnviar'] === 0) {
+                            html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoInactivo(\"" + datos[i]['usr_id'] + "\",\"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\",\"" + prd_id + "\")' style='width:90px;' class='btn btn-default btn-block'>" + datos[i]['estado_usuario'] + "</button></div>";
+                        } else if (datos[i]['estado_usuario'] === 'Inactivo' && datos[i]['PorEnviar'] === 1) {
+                            html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoInactivo(\"" + datos[i]['usr_id'] + "\",\"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\",\"" + prd_id + "\")' style='width:90px;' class='btn btn-default btn-warning'>" + datos[i]['estado_usuario'] + "</button></div>";
+                        } else {
+                            if (datos[i]['estado_usuario'] === 'Activo') {
+                                html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoActivo(\"" + datos[i]['usr_id'] + "\", \"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\",\"" + datos[i]['ctrc_usuario_desmontarcaja'] + "\",\"" + datos[i]['est_id'] + "\",\"" + prd_id + "\")' style='width:90px;' class='btn btn-success'>" + datos[i]['estado_usuario'] + "</button></div>";
+                            } else if (datos[i]['estado_usuario'] === 'Por Cerrar') {
+                                html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoPorCerrar(\"" + datos[i]['usr_id'] + "\",\"" + datos[i]['ctrc_usuario_desmontarcaja'] + "\", \"" + datos[i]['est_id'] + "\", \"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\",\"" + prd_id + "\")' style='width:90px;' class='btn btn-info'>" + datos[i]['estado_usuario'] + "</button></div>";
+                            }
+                        }
+                        html += "</div></td>";
+                        $("#tabla_estado_usuarios").html(html);
+                    } else {
+                        html += "</tr>";
+                        html += "<td align='center'>";
+                        html += "<div class=''><div class=''><h6>" + datos[i]['usr_usuario'] + "</h6><img src='../../imagenes/admin_resources/icon-user_activo.png'/></div>";
+                        html += "<div class='btn-group'>";
+                        if (datos[i]['estado_usuario'] === 'Inactivo') {
+                            html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoInactivo(\"" + datos[i]['usr_id'] + "\",\"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\",\"" + prd_id + "\")' style='width:90px;' class='btn btn-info'>" + datos[i]['estado_usuario'] + "</button></div>";
+                        } else if (datos[i]['estado_usuario'] === 'Activo') {
+                            html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoActivo(\"" + datos[i]['usr_id'] + "\", \"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\",\"" + datos[i]['ctrc_usuario_desmontarcaja'] + "\",\"" + datos[i]['est_id'] + "\",\"" + prd_id + "\")' style='width:90px;' class='btn btn-success'>" + datos[i]['estado_usuario'] + "</button></div>";
+                        } else if (datos[i]['estado_usuario'] === 'Por Cerrar') {
+                            html += "<div class='row' style='width:125px'><button id='' value= '" + datos[i]['estado_usuario'] + "' onclick='fn_formasPagoPorCerrar(\"" + datos[i]['usr_id'] + "\",\"" + datos[i]['ctrc_usuario_desmontarcaja'] + "\", \"" + datos[i]['est_id'] + "\", \"" + datos[i]['ctrc_id'] + "\", \"" + datos[i]['usr_usuario'] + "\", \"" + prd_id + "\")' style='width:90px;' class='btn btn-danger'>" + datos[i]['estado_usuario'] + "</button></div>";
+                        }
+                        html += "</div></td>";
+                        $("#tabla_estado_usuarios").html(html);
+                    }
+                }
+                html += "</tr>";
+            } else {
+                alertify.error("No existen usuarios logueados para este periodo.");
+                $("#tabla_estado_usuarios").html('');
+                return false;
+            }
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA LAS FORMAS DE PAGO DEL CAJERO INACTIVO
+function fn_formasPagoInactivo(usr_id, ctrc_id, usr_usuario, prd_id) {
+    var send;
+    var html;
+    controlEstacion = ctrc_id;
+    $("#hid_controlEstacion").val(controlEstacion);
+    banderaEstadoCajero = 'CajeroInactivo';
+    var fechai = $("#hide_fecha").val();
+    $('#ModalFormasPagoInactivo').modal('show');
+    $("#titulomodalNuevo").html("Desmontado de Cajero: <span class='glyphicon glyphicon-user' aria-hidden='true'></span>&nbsp;&nbsp;  " + usr_usuario + "");
+    send = {"formasPagoInactivo": 1};
+    send.accion = 1;
+    send.fechai = fechai;
+    send.usr_id = usr_id;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            html = "<tr class='bg-primary'>";
+            html += "<td style='text-align:center; width:;'>Formas de Pago</td>";
+            html += "<td style='text-align:center; width:;'>Retiros</td>";
+            html += "<td style='text-align:center; width:;'>Transacciones</td>";
+            html += "<td style='text-align:center; width:;'>Monto Actual</td>";
+            html += "<td style='text-align:center; width:;'>POS Calculado</td>";
+            html += "<td style='text-align:center; width:;'>Diferencia</td>";
+            html += "</tr>";
+            $("#formaPago").empty();
+            if (datos.str > 0) {
+
+                for (var i = 0; i < datos.str; i++) {
+                    html += "<tr id='" + i + "'>";
+                    html += "<td style='text-align:center;'>" + datos[i]['fmp_descripcion'] + "</td>";
+                    if (datos[i]['retiro_efectivo'] !== '-') {
+                        html += "<td style='text-align:center;'>" + parseFloat(datos[i]['retiro_efectivo']).toFixed(2) + "";
+                    } else {
+                        html += "<td style='text-align:center;' >" + datos[i]['retiro_efectivo'] + "";
+                    }
+<<<<<<< HEAD
+
+                    var es_agregador_o_transferencia = datos[i]['es_agregador_o_transferencia'];
+
+                    html += "</td>";
+                    html += "<td style='text-align:center;'>" + datos[i]['Transacciones'] + "</td>";
+                    if (datos[i]['fmp_descripcion'] == 'VITALITY') {
+                        html += "<td style='text-align:center;'>" + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</td>";
+                    } else {
+                        //html += "<td style='text-align:center;'><button type='button' id='btn_" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' disabled='true' style='width:130px; height:35px;' class='btn btn-primary modifi' onclick='fn_modalModificarValor(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "\",\"" + ctrc_id + "\",\"" + usr_id + "\",\"" + usr_usuario + "\",\"" + prd_id + "\"," + datos[i]['fpf_total_pagar'] + "," + datos[i]['tpenv_id'] + ")'>" + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</buton></td>";
+                        if (es_agregador_o_transferencia == 'SI') {
+                            html += "<td style='text-align:center;'><button type='button' id='btn_" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' disabled='true' style='width:130px; height:35px;' class='btn btn-primary'>" + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</buton></td>";
+                        } else {
+                        html += "<td style='text-align:center;'><button type='button' id='btn_" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' disabled='true' style='width:130px; height:35px;' class='btn btn-primary modifi' onclick='fn_modalModificarValor(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "\",\"" + ctrc_id + "\",\"" + usr_id + "\",\"" + usr_usuario + "\",\"" + prd_id + "\"," + datos[i]['fpf_total_pagar'] + "," + datos[i]['tpenv_id'] + ")'>" + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</buton></td>";
+                    }
+                    }
+
+=======
+                    
+                    var es_agregador_o_transferencia = datos[i]['es_agregador_o_transferencia'];
+                    
+                    html += "</td>";
+                    html += "<td style='text-align:center;'>" + datos[i]['Transacciones'] + "</td>";
+                    
+                    if (es_agregador_o_transferencia == 'SI') {
+                        html += "<td style='text-align:center;'><button type='button' id='btn_" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' disabled='true' style='width:130px; height:35px;' class='btn btn-primary'>" + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</buton></td>";
+                    } else {
+                        html += "<td style='text-align:center;'><button type='button' id='btn_" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' disabled='true' style='width:130px; height:35px;' class='btn btn-primary modifi' onclick='fn_modalModificarValor(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "\",\"" + ctrc_id + "\",\"" + usr_id + "\",\"" + usr_usuario + "\",\"" + prd_id + "\"," + datos[i]['fpf_total_pagar'] + "," + datos[i]['tpenv_id'] + ")'>" + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</buton></td>";
+                    }
+                    
+>>>>>>> origin/MXP_Version_1.9.10.6
+                    html += "<td style='text-align:center;'>" + parseFloat(datos[i]['fpf_total_pagar']).toFixed(2) + "</td>";
+                    html += "<td style='text-align:center;'>" + parseFloat(datos[i]['diferenciaValor']).toFixed(2) + "</td></tr>";
+                    $("#formaPago").html(html);
+                }
+                fn_consultaCupones(usr_id, ctrc_id, prd_id);
+                fn_totalesFormasPagoInactivo(ctrc_id, usr_id, fechai);
+
+                $("#pie_formaPagoInactivo").empty();
+                var htmlpie = "<div class='col-xs-2'><button type='button' id='btn_modificarCajero' class='btn btn-success' onclick=fn_modificarValores('modificar') ><span class='glyphicon glyphicon-edit' aria-hidden='true'></span>&nbsp;&nbsp;Modificar Valores</button></div>";
+                htmlpie += "<div class='col-xs-4'><button type='button' id='btn_agregarFormaPagoo' class='btn btn-success' onclick=fn_modificarValores('agregar') ><span class='glyphicon glyphicon-edit' aria-hidden='true'></span>&nbsp;&nbsp;Agregar Forma de Pago</button></div>";
+                htmlpie += "<button type='button' class='btn btn-primary' data-dismiss='modal'>Aceptar</button>";
+                htmlpie += "<button type='button' class='btn btn-default' data-dismiss='modal'>Cancelar</button>";
+                $("#pie_formaPagoInactivo").append(htmlpie);
+            } else {
+                html += "<tr>";
+                html += "<td colspan='6'>No existen datos para el usuario.</td></tr>";
+                $("#formaPago").html(html);
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA TOTALES DE LAS FORMAS DE PAGO DEL CAJERO INACTIVO
+function fn_totalesFormasPagoInactivo(ctrc_id, usr_id, fechai) {
+    var send;
+    var html;
+    send = {"totalesPagoInactivo": 1};
+    send.accion = 2;
+    send.fechai = fechai;
+    send.usr_id = usr_id;
+    send.ctrc_id = ctrc_id;
+    var num_cupones = $("#hide_num_cupones").val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#formaPagoTotales").empty();
+                for (var i = 0; i < datos.str; i++) {
+                    html = "<tr id='" + i + "' class='success'>";
+                    html += "<th style='text-align:center; width:195px;'>TOTALES:</th>";
+                    html += "<th style='text-align:center; width:80px;'>$ " + parseFloat(datos[i]['retiro_efectivo']).toFixed(2) + "</th>";
+                    html += "<th style='text-align:center; width:140px;'>" + (parseInt(datos[i]['arc_numero_transacciones']) + parseInt(num_cupones)) + "</th>";
+                    html += "<th style='text-align:center; width:190px;'>$ " + parseFloat(datos[i]['arc_valor']).toFixed(2) + "</th>";
+                    html += "<th style='text-align:center; width:140px;'>$ " + parseFloat(datos[i]['fpf_total_pagar']).toFixed(2) + "</th>";
+                    html += "<th style='text-align:center; width:100px;'>$ " + parseFloat(datos[i]['diferencia']).toFixed(2) + "</th></tr>";
+                    $("#formaPagoTotales").html(html);
+                }
+            } else {
+                html += "<tr>";
+                html += "<td colspan='6'></td></tr>";
+                $("#formaPagoTotales").html(html);
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA LAS FORMAS DE PAGO DEL CAJERO ACTIVO
+function fn_formasPagoActivo(usr_id, ctrc_id, usr_usuario, usr_id_admin, est_id, prd_id) {
+    //guardamos variables
+    $("#hid_usr_id_cajero").val(usr_id);
+    $("#hid_usuario").val(usr_id_admin);
+    $("#hid_estacion").val(est_id);
+    $("#hid_controlEstacion").val(ctrc_id);
+    $("#hid_usuarioDescripcion").val(usr_usuario);
+    $("#IDPeriodo").val(prd_id);
+
+    banderaEstadoCajero = 'CajeroActivo';
+    fechai = $("#hide_fecha").val();
+    $('#ModalFormasPagoActivo').modal('show');
+    $("#titulomodalNuevoActivo").html("Activo: <span class='glyphicon glyphicon-user modal-title' aria-hidden='true'></span>&nbsp;&nbsp; " + usr_usuario + "");
+    send = {"formasPagoActivo": 1};
+    send.accion = 3;
+    send.fechai = fechai;
+    send.usr_id = usr_id;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            html = "<tr class='bg-primary'>";
+            html += "<td style='text-align:center; width:;'>Formas de Pago</td>";
+            html += "<td style='text-align:center; width:;'>Retiro Efectivo</td>";
+            html += "<td style='text-align:center; width:;'>Transacciones</td>";
+            html += "<td style='text-align:center; width:;'>POS Calculado</td>";
+            html += "<td style='text-align:center; width:;'>Diferencia</td>";
+            html += "</tr>";
+            $("#formaPagoActivo").empty();
+            if (datos.str > 0) {
+                for (i = 0; i < datos.str; i++) {
+                    html += "<tr id='" + i + "'>";
+                    html += "<td style='text-align:center;'>" + datos[i]['fmp_descripcion'] + "</td>";
+                    if (datos[i]['retiro_efectivo'] !== '-') {
+                        html += "<td style='text-align:center;'>" + parseFloat(datos[i]['retiro_efectivo']).toFixed(2) + "</td>";
+                    } else {
+                        html += "<td style='text-align:center;'>" + datos[i]['retiro_efectivo'] + "</td>";
+                    }
+                    html += "<td style='text-align:center;'>" + datos[i]['numero_transacciones'] + "</td>";
+                    html += "<td style='text-align:center;'>" + parseFloat(datos[i]['cfac_total']).toFixed(2) + "</td>";
+                    html += "<td style='text-align:center;'>" + parseFloat(datos[i]['diferenciaValor']).toFixed(2) + "</td></tr>";
+
+                    $("#formaPagoActivo").html(html);
+                }
+                fn_consultaCupones(usr_id, ctrc_id, prd_id);
+                fn_totalesEstacion(usr_id, ctrc_id, fechai);
+            } else {
+                html += "<tr>";
+                html += "<td colspan='6'>No existen datos para el usuario.</td></tr>";
+                $("#formaPagoActivo").html(html);
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+    html = "<div class='col-xs-2'><button type='button' id='btn_desmontadoDirecto' class='btn btn-danger' onclick='fn_validaCuentasAbiertas()' ><span class='glyphicon glyphicon-usd' aria-hidden='true'></span>&nbsp;Desasignar Cajero</button></div>";
+    html += "<div class='col-md-offset-9'><button type='button' onclick='fn_cerraModal();' class='btn btn-primary' data-dismiss='modal'>Aceptar</button><button type='button' onclick='fn_cerraModal();' class='btn btn-default' data-dismiss='modal'>Cancelar</button></div>";
+    $("#pie_formaPagoActivo").html(html);
+}
+
+//FUNCIÓN QUE CONSULTA LOS CUPONES CANJEADOS
+function fn_consultaCupones(usr_id, ctrc_id, prd_id) {
+    $("#hide_num_cupones").val(0);
+    send = {"consultaCupones": 1};
+    send.accion = 'C';
+    send.usr_id_cajero = usr_id;
+    send.ctrc_id = ctrc_id;
+    send.prd_id = prd_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                for (j = 0; j < datos.str; j++) {
+                    html = "<tr><td width='180' align='center' style='vertical-align:middle'>" + datos[j]['fmp_descripcion'] + "</td>";
+                    html += "<td style='text-align:center;'>0.00</td>";
+                    html += "<td style='text-align:center;'>" + datos[j]['Transacciones'] + "</td>";
+                    html += "<td style='text-align:center;'>0.00</td>";
+                    html += "<td style='text-align:center;'>0.00</td></tr>";
+                    //html+="<td style='text-align:center;'>-</td></tr>";
+                    $("#hide_num_cupones").val(datos[j]['Transacciones']);
+                }
+                if (banderaEstadoCajero === 'CajeroActivo') {
+                    $("#formaPagoActivo").append(html);
+                } else if (banderaEstadoCajero === 'CajeroPorCerrar') {
+                    $("#tabla_formaPagoPorCerrar").append(html);
+                } else if (banderaEstadoCajero === 'CajeroInactivo') {
+                    $("#formaPago").append(html);
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+    num_cupones = $("#hide_num_cupones").val();
+}
+
+//FUNCIÓN QUE CONSULTA LOS TOTALES DE LA ESTACIÓN
+function fn_totalesEstacion(usr_id, ctrc_id, fechai) {
+    send = {"totalesPagoActivo": 1};
+    send.accion = 4;
+    send.fechai = fechai;
+    send.usr_id = usr_id;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                for (i = 0; i < datos.str; i++) {
+                    html = "<tr id='" + i + "' class='success'>";
+                    html += "<th style='text-align:center;'>TOTALES:</th>";
+                    html += "<th style='text-align:center;'>$ " + parseFloat(datos[i]['totalRetiros']).toFixed(2) + "</th>";
+                    html += "<th style='text-align:center;'>" + (parseInt(datos[i]['totalTransacciones']) + parseInt(num_cupones)) + "</th>";
+                    html += "<th style='text-align:center;'>$ " + parseFloat(datos[i]['totalEstacion']).toFixed(2) + "</th>";
+                    html += "<th style='text-align:center;'>$ " + parseFloat(datos[i]['totalDiferencia']).toFixed(2) + "</th></tr>";
+                    $("#formaPagoActivo").append(html);
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+function fn_cerraModal() {
+    banderaModalActivo = 0;
+}
+
+//DESMONTADO DIRECTO DE CAJERO SIN CUADRE DE VENTAS//
+function fn_desmontadoDirecto(ctrc_id) {
+    usr_id_cajero = $("#hid_usr_id_cajero").val();
+    send = {"retirofondo": 1};
+    send.accion = 'F';
+    send.usr_id_cajero = usr_id_cajero;
+    send.controlEstacion = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                if (datos.retirofondo === 1) {
+                    alertify.confirm("Esta seguro que desea Desasignar el Cajero??");
+                    $("#alertify-ok").click(function () {
+                        send = {"DesmontadoDirecto": 1};
+                        send.accion = 'U';
+                        send.usr_id_cajero = usr_id_cajero;
+                        send.controlEstacion = ctrc_id;
+                        $.ajax({
+                            async: false,
+                            type: "POST",
+                            dataType: "json",
+                            contentType: "application/x-www-form-urlencoded",
+                            url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                            data: send,
+                            success: function () {
+                                alertify.success("Desmontado exitoso");
+                                $("#ModalFormasPagoActivo").modal('hide');
+                                fecha_periodo = $("#hide_fecha").val();
+                                periodo = $("#hide_periodo").val();
+                                fn_muestraUsuariosEstado(fecha_periodo, periodo, 0);
+                            }
+                        });
+                    });
+                } else {
+                    alertify.error("ADVERTENCIA!! No puede desasignar el cajero porque el Administrador no ha retirado el fondo");
+                    return false;
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA FORMAS DE PAGO DE CAJERO POR CERRAR (DESMONTADO DIRECTO POS)
+function fn_formasPagoPorCerrar(usr_id_cajero, usr_id_admin, est_id, ctrc_id, usr_usuario, prd_id) {
+    banderaEstadoCajero = 'CajeroPorCerrar';
+    fn_modalDegradado('normal');
+    controlBilletes = 0;
+    $("#titulomodalformapagoPorCerrar").html("Desasignar Cajero: <pan class='glyphicon glyphicon-user' aria-hidden='true'></span>" + usr_usuario + "");
+    $("#hide_totalBilletes").val('');
+    $("#hid_usr_id_cajero").val(usr_id_cajero);
+    $("#hid_controlEstacion").val(ctrc_id);
+    send = {"consultaformaPago": 1};
+    send.accion = 1;
+    idformaPago = 0;
+    send.usr_id_cajero = usr_id_cajero;
+    send.ctrc_id = ctrc_id;
+    send.prd_id = prd_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            var html = "<thead><tr class='active'><th width='130px' style='text-align:center'>Formas de Pago</th><th width='130px' style='text-align:center'>Retirado</th><th width='130px' style='text-align:center'>Transacciones</th><th style='text-align:center' width='130px'>Monto Actual</th><th style='text-align:center' width='130px'>POS Calculado</th><th style='text-align:center' width='130px'>Diferencia</th></thead>";
+            if (datos.str > 0) {
+                $("#tabla_formaPagoPorCerrar").empty();
+                numeroFormasPago = datos.str;
+                for (i = 0; i < datos.str; i++) {
+                    html += "<tr><td width='180' align='center' style='vertical-align:middle'>" + datos[i]['fmp_descripcion'] + "</td>";
+                    html += "<td><input readonly='readonly' class='form-control' style='text-align:center; type='text' type='text' id='" + datos[i]['fmp_descripcion'] + "' value='" + datos[i]['retiroValor'].toFixed(2) + "'></td>";
+                    html += "<td style='text-align:center;'><input readonly='readonly' style='text-align:center;' class='form-control' value=" + datos[i]['Transacciones'] + "></td>";//
+                    if (datos[i]['fmp_descripcion'] === 'EFECTIVO') {
+                        html += "<td><input id='btnT" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' type='button'  style='width:130px;' class='btn btn-primary' value='Presione Aqui' onclick='fn_modalBilletes(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['ctrc_id'] + "\",\"" + datos[i]['usr_id'] + "\"," + datos[i]["retiroValor"] + "," + datos[i]["Transacciones"] + "," + datos[i]["fpf_total_pagar"] + "," + datos[i]["diferenciaValor"] + "," + datos[i]["estadoSwt"] + ")'></td>";
+                        idformaPago = datos[i]['fmp_id'];
+                        $("#tpie3 tr:eq(1) td:eq(1)").html('');
+                        $("#tpie3 tr:eq(1) td:eq(1)").html(datos[i]["diferenciaValor"].toFixed(2));
+                        $("#hid_diferencia").val(datos[i]["diferenciaValor"]);
+                        $("#tpie3 tr:eq(2) td:eq(1)").html(datos[i]['retiroValor'].toFixed(2));
+                        $("#tpie3 tr:eq(3) td:eq(1)").html(datos[i]['fpf_total_pagar']);
+                    } else if (datos[i]['fmp_descripcion'] == 'VITALITY') {
+                        estadoSwitch = 100;
+                        datos[i]['estadoSwt'] = 100;
+                        // estadoSwitch = datos[i]['estadoSwitch'];
+                        html += "<td><input id='btnT" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' style='width:130px;' type='button' value='Presione Aqui' class='btn btn-primary'    onclick='fn_modalTarjetas(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['ctrc_id'] + "\",\"" + datos[i]['usr_id'] + "\"," + datos[i]['retiroValor'] + "," + datos[i]['Transacciones'] + "," + datos[i]['fpf_total_pagar'] + "," + datos[i]['diferenciaValor'] + "," + datos[i]['estadoSwt'] + ", \"" + datos[i]['fmp_descripcion'] + "\", " + datos[i]['fpf_total_pagar'] + ")'></td>";
+                    } else {
+
+                        if (datos[i]['estadoSwt'] === 3) {
+                            html += "<td><input id='btnT" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' style='width:130px;' type='button' value='Presione Aqui' class='btn btn-primary'	onclick='fn_modalTarjetasDatafast(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['ctrc_id'] + "\",\"" + datos[i]['usr_id'] + "\",\"" + prd_id + "\"," + datos[i]["retiroValor"] + "," + datos[i]["Transacciones"] + "," + datos[i]["fpf_total_pagar"] + "," + datos[i]["diferenciaValor"] + "," + datos[i]["estadoSwt"] + ")'></td>";
+                            idformaPago = datos[i]['fmp_id'];
+                        } else {
+                            html += "<td><input id='btnT" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' style='width:130px;' type='button' value='Presione Aqui' class='btn btn-primary'	onclick='fn_modalTarjetas(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['ctrc_id'] + "\",\"" + datos[i]['usr_id'] + "\"," + datos[i]["retiroValor"] + "," + datos[i]["Transacciones"] + "," + datos[i]["fpf_total_pagar"] + "," + datos[i]["diferenciaValor"] + "," + datos[i]["estadoSwt"] + ")'></td>";
+                            idformaPago = datos[i]['fmp_id'];
+                        }
+                    }
+                    html += "<td><input readonly='readonly' class='form-control' style='text-align:center; type='text' type='text' id='" + datos[i]['fmp_descripcion'] + "' value='" + datos[i]['fpf_total_pagar'].toFixed(2) + "'></td>";
+                    html += "<td><input class='form-control' readonly='readonly' style='text-align:center;' type='text' id='diferenciat" + datos[i]['fmp_descripcion'] + "' value = '" + datos[i]["diferenciaValor"].toFixed(2) + "'></td>";
+                    html += "<input type='hidden' value=" + datos[i]['fmp_id'] + "></tr>";
+                    $("#hid_controlEstacion").val(datos[i]['ctrc_id']);
+                    $("#tabla_formaPagoPorCerrar").html(html);
+
+                    id_botones[i] = "btnT" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "";
+                }
+                fn_consultaCupones(usr_id_cajero, ctrc_id, prd_id);
+                $("#modal_formaPago").modal('show');
+                $("#hid_controlEfectivo").val(0);
+                fn_cargaTotal(ctrc_id, idformaPago, usr_id_cajero);
+                if ($("#valorEfectivoTotal").val() === '') {
+                    $("#valorEfectivoTotal").val(0);
+                }
+                if ($("#totalPosCalculado").val() === '') {
+                    $("#totalPosCalculado").val(0);
+                }
+            } else {
+                alertify.error("No existen datos de esta estacion");
+                $("#alertify-ok").click(function () {
+                    return false;
+                });
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+
+}
+
+//FUNCION QUE VALIDA SI UNA CUENTA ESTA ABIERTA.
+function fn_validaCuentasAbiertas() {
+    ctrc_id = $("#hid_controlEstacion").val();
+    send = {"existeCuentaAbiertaMesa": 1};
+    send.accion = 2;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                if (datos.cuentaAbiertaMesa === 0) {
+                    send = {"existeCuentaAbierta": 1};
+                    send.accion = 1;
+                    $.ajax({
+                        async: false,
+                        type: "POST",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                        data: send,
+                        success: function (datos) {
+                            if (datos.str > 0) {
+                                if (datos.cuentaAbierta === 1) {
+                                    alertify.alert("No puede desasignar el cajero porque el usuario tiene ordenes abiertas");
+                                    $("#alertify-ok").click(function () {
+                                        return false;
+                                    });
+                                } else {
+                                    if (banderaEstadoCajero === 'CajeroPorCerrar') {
+                                        fn_formasPagoPorCerrarActivo();
+                                    } else if (banderaEstadoCajero === 'CajeroActivo') {
+                                        fn_desmontadoDirecto(ctrc_id);
+                                    }
+                                }
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            alert(jqXHR);
+                            alert(textStatus);
+                            alert(errorThrown);
+                        }
+                    });
+                } else {
+                    nombreUsr = $("#hid_usuarioDescripcion").val();
+                    alertify.alert("No puede desasignar el cajero porque el usuario tiene cuentas abiertas");
+                    $("#alertify-ok").click(function () {
+                        return false;
+                    });
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCION QUE ACLARA O DEGRADA LA MODAL CUANDO ES LLAMADA
+function fn_modalDegradado(cssDegradadoModal) {
+    if (cssDegradadoModal === 'degrado') {
+        $('.cp').addClass('magla');
+    } else {
+        $('.cp').removeClass('magla');
+    }
+}
+
+//FUNCIÓN QUE VALIDA EL MONTO DE DESCUADRE QUE NO SEA MAYOR AL CONFIGURADO POR COLECCIÓN CUANDO SE DESMONTA EL CAJERO
+function fn_validaMontoDescuadreCajero() {
+    for (i = 0; i < id_botones.length; i++) {
+        if ((isNaN($("#" + id_botones[i] + "").val()))) {
+            alertify.error("ALERTA!! Faltan valores por ingresar");
+            return false;
+        }
+    }
+    var valor_descuadre = $("#hid_controlDiferencia").val();
+    if (valor_descuadre !== 0) {
+        send = {"validaMontoDescuadre": 1};
+        send.accion = 'M';
+        send.fpf_total_pagar = valor_descuadre;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: "json",
+            contentType: "application/x-www-form-urlencoded",
+            url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+            data: send,
+            success: function (datos) {
+                if (datos.str > 0) {
+                    for (i = 0; i < datos.str; i++) {
+                        if (datos[i]['validamontodescuadre'] === 1) { // 1 = Si valor de descuadre es mayor al configurado
+                            $("#ModalMotivo").modal("show");//alert("debo ingresar el motivo dl descuadre de valores");	
+                            $("#txtArea").val('');
+                            $('#ModalMotivo').on('shown.bs.modal', function () {
+                                $("#txtArea").focus();
+                            });
+                            cssDegradadoModal = 'degrado';
+                            fn_modalDegradado(cssDegradadoModal); //degrada la modal
+                            fn_botonesDinamicosTecladoDescuadre();
+                        } else {
+                            fn_actualizaCajero();
+                        }
+                    }
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR);
+                alert(textStatus);
+                alert(errorThrown);
+            }
+        });
+    } else {
+        fn_actualizaCajero();
+    }
+}
+
+//FUNCIÓN QUE ACTUALIZA EL CAJERO A INACTIVO EN CONTROL ESTACIÓN CUANDO EXITE DESCUADRE MAYOR AL CONFIGURADO
+function fn_actualizaCajeroMotivoDescuadre() {
+    var area = $("#txtArea").val();
+    if ($.trim(area) === '') {
+        alertify.error("ALERTA!! Debe ingresar el motivo del descuadre de valores");
+        return false;
+    }
+    usr_id_cajero = $("#hid_usr_id_cajero").val();
+    controlEstacion = $("#hid_controlEstacion").val();
+    send = {"actualizaCajeroMotivo": 1};
+    send.accion = 'I';
+    send.accion_int = 1;
+    send.usuario = $("#hid_usuario").val();
+    send.motivoDescuadre = $("#txtArea").val();
+    send.usr_id_cajero = usr_id_cajero;
+    send.controlEstacion = controlEstacion;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function () {
+            usuarioCajero = $("#hid_usuarioDescripcion").val();
+            controlEstacion = $("#hid_controlEstacion").val();
+            send = {"auditoriaCajero": 1};
+            send.accion = 'I';
+            send.accion_int = 2;
+            send.usuarioCajero = $("#hid_usuarioDescripcion").val();
+            send.usr_id_cajero = usr_id_cajero;
+            send.controlEstacion = controlEstacion;
+            $.ajax({
+                async: false,
+                type: "POST",
+                dataType: "json",
+                contentType: "application/x-www-form-urlencoded",
+                url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                data: send,
+                success: function () {
+                    fn_imprimeDesmontadoCajero();
+                    $("#ModalMotivo").modal('hide');
+                    fecha_periodo = $("#hide_fecha").val();
+                    periodo = $("#hide_periodo").val();
+                    fn_muestraUsuariosEstado(fecha_periodo, periodo);
+                    alertify.success("Desmontado exitoso");
+                    $("#modal_formaPago").modal('hide');
+                }
+            });
+        }
+    });
+}
+
+//FUNCIÓN QUE ACTUALIZA EL CAJERO A INACTIVO EN CONTROL ESTACIÓN
+function fn_actualizaCajero() {
+    alertify.set({labels: {ok: "SI", cancel: "NO"}});
+    alertify.confirm("Esta seguro que desea Desasignar el Cajero?");
+    $("#alertify-ok").click(function () {
+        controlEstacion = $("#hid_controlEstacion").val();
+        usr_id_cajero = $("#hid_usr_id_cajero").val();
+        send = {"actualizaCajero": 1};
+        send.accion = 'U';
+        send.usr_id_cajero = usr_id_cajero;
+        send.controlEstacion = controlEstacion;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: "json",
+            contentType: "application/x-www-form-urlencoded",
+            url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+            data: send,
+            success: function () {
+                controlEstacion = $("#hid_controlEstacion").val();
+                usr_id_cajero = $("#hid_usr_id_cajero").val();
+                usuarioCajero = $("#hid_usuarioDescripcion").val();
+                send = {"auditoriaCajero": 1};
+                send.accion = 'I';
+                send.accion_int = 2;
+                send.usuarioCajero = $("#hid_usuarioDescripcion").val();
+                send.usr_id_cajero = usr_id_cajero;
+                send.controlEstacion = controlEstacion;
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                    data: send,
+                    success: function () {
+                        fn_imprimeDesmontadoCajero();
+                        $("#ModalMotivo").modal('hide');
+                        $("#tabla_estado_usuarios").empty();
+                        fecha_periodo = $("#hide_fecha").val();
+                        periodo = $("#hide_periodo").val();
+                        baderaDesmontado = 0;
+                        fn_muestraUsuariosEstado(fecha_periodo, periodo, baderaDesmontado);
+                        alertify.success("Desmontado exitoso");
+                    }
+                });
+            }
+        });
+        $("#modal_formaPago").modal('hide');
+    });
+}
+
+//FUNCIÓN QUE CONSULTA LA FORMA DE PAGO TARJETAS, CHEQUES, ETC.. DIFERENTE DE EFECTIVO, TRAE MODAL TARJETAS
+function fn_modalTarjetas(formaPago, ctrEstacion, id_usuario, retiroValor, transacciones, posCalculado, diferenciaValor, estadoSwt, nombre, valor) {
+    if (estadoSwt != 100) {
+        send = {"consultaTarjeta": 1};
+        send.accion = 1;
+        send.idPago = formaPago;
+        send.id_usuario = id_usuario;
+        send.ctrEstacion = ctrEstacion;
+        send.estadoSwt = estadoSwt;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: "json",
+            contentType: "application/x-www-form-urlencoded",
+            url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+            data: send,
+            success: function (datos) {
+                if (datos.str > 0) {
+                    $("#dialogTarjetas").empty();
+                    for (i = 0; i < datos.str; i++) {
+                        $("#titulomodalTarjetas").html(datos[i]['fmp_descripcion']);
+                        descripcionTarjeta = datos[i]['fmp_descripcion'];
+                        totals = datos[i]['total'].toFixed(2);
+                        html = "<table align='center'><tr></tr>";
+                        html += "<tr><th>Ingrese Monto:</th></tr>";
+                        html += "<tr><td><input id='txt_montoTarjeta' onkeypress='return NumCheck(event,txt_montoTarjeta)'  style='text-align:center; font-size:26px' type='text' value=" + totals + "></td></tr>";
+                        html += "</table></br>";
+                        html += "<table align='center'><tr><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('7') >7</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('8')>8</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('9')>9</button></td></tr><tr><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('4')>4</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('5')>5</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('6')>6</button></td></tr><tr><td><button class='btnVirtual'  style='font-size: 34px;' onclick=fn_agregarNumero('1')>1</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('2')>2</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('3')>3</button></td></tr><tr><td ><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumero('0')>0</button></td><td><button class='btnVirtualBorrarTarjetas' style='font-size: 34px;' id='btn_punto' onclick=fn_agregarNumero('.')>.</button></td><td><button class='btnVirtualBorrarTarjetas' style='font-size: 34px;' id='btn_borrar' onclick=fn_eliminarCantidad()>&larr;</button></td></tr><tr><td colspan='3'><button class='btnVirtualLimpiar' style='font-size: 34px;' id='btn_limpiar' onclick='fn_limpiarCantidad()'>LIMPIAR</button></td></tr></table><br/>";
+                        html += "<div class=''><div align='center'><button type='button' id='btn_okTarjeta" + datos[i]['fmp_descripcion'] + "' class='btn btn-primary ' style='height:65px;width:140px; font-size: 30px;' onclick='fn_guardarTarjetas(\"" + formaPago + "\",\"" + id_usuario + "\", \"" + ctrEstacion + "\", " + retiroValor + ", " + transacciones + ", " + posCalculado + ", " + diferenciaValor + ", " + estadoSwt + ", \"" + descripcionTarjeta + "\");' value='OK' >OK</button><button type='button' class='btn btn-default' id='btn_cancelTarjeta' style='height:65px;width:140px; font-size: 30px;' data-dismiss='modal' value='Cancelar'>Cancelar</button></div></div>";
+                        $("#dialogTarjetas").append(html);
+                    }
+                    fn_modalDegradado('degrado');
+                    $("#ModalTarjetas").modal('show');
+                    $("#btn_cancelTarjeta").click(function () {
+                        fn_modalDegradado('normal');
+                        $("#modal_formaPago").modal('show');
+                    });
+                    if (estadoSwt === 1 || estadoSwt === 2) { //si la forma de pago es con pinpad o banda
+                        $("#txt_montoTarjeta").attr('disabled', 'disabled');
+                        $(".btnVirtualLimpiar").attr('disabled', 'disabled');
+                        $(".btnVirtualBorrarTarjetas").attr('disabled', 'disabled');
+                        $(".btnVirtual").attr('disabled', 'disabled');
+                    }
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                alert(jqXHR);
+                alert(textStatus);
+                alert(errorThrown);
+            }
+        });
+    } else {
+        $("#dialogTarjetas").empty();
+        $("#titulomodalTarjeta").html(nombre);
+        descripcionTarjeta = nombre;
+        totals = valor;
+        arqueoTransacciones = $("#transaccionesIngresadas" + nombre.replace(/\s/g, "") + "").val();
+        html = "<table align='center'><tr></tr>";
+        html += "<tr><th>" + nombre + "</th></tr>";
+        html += "<tr><td><input id='txt_montoTarjeta' style='text-align:center; font-size:26px' type='text' value=" + totals + "></td></tr>";
+        html += "</table></br>";
+        html += "<div class=''><div align='center'><button type='button' id='btn_okTarjeta" + nombre + "' class='btn btn-primary ' style='height:65px;width:140px; font-size: 30px;' onclick='fn_guardarTarjetas(\"" + formaPago + "\",\"" + id_usuario + "\", \"" + ctrEstacion + "\"," + retiroValor + "," + transacciones + "," + posCalculado + "," + diferenciaValor + "," + 0 + "," + estadoSwt + ",\"" + descripcionTarjeta + "\");' value='OK' >OK</button><button type='button' class='btn btn-default' id='btn_cancelTarjeta' style='height:65px;width:140px; font-size: 30px;' data-dismiss='modal' value='Cancelar'>Cancelar</button></div></div>";
+        $("#dialogTarjetas").append(html);
+        $("#ModalTarjetas").modal('show');
+        $("#txt_montoTarjeta").attr('disabled', 'disabled');
+    }
+}
+
+//FUNCIÓN QUE GUARDA FORMA DE PAGO TARJETAS, CHEQUES OTROS..
+function fn_guardarTarjetas(formaPago, id_usuario, ctrEstacion, retiroValor, transacciones, posCalculado, diferencia, estadoSwt, descripcionTarjeta) {
+    if (($("#txt_montoTarjeta").val()) == '') {
+        alertify.error("Ingrese una cantidad");
+        return false;
+    }
+    if (isNaN($("#txt_montoTarjeta").val())) {
+        alertify.error("Ingrese monto valido");
+        return false;
+    }
+    send = {"grabaarqueotarjeta": 1};
+    totalTarjeta = $("#txt_montoTarjeta").val();
+    send.accion = 'I';
+    send.accion_int = 2;
+    send.idPago = formaPago;
+    send.totaltarjeta = totalTarjeta;
+    send.idUser = id_usuario;
+    send.ctrEstacion = ctrEstacion;
+    send.retiroValor = retiroValor;
+    send.transacciones = transacciones;
+    send.posCalculado = posCalculado;
+    send.diferencia = diferencia;
+    send.estadoSwt = estadoSwt;
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            fn_auditoriaTarjeta(descripcionTarjeta, totalTarjeta);
+            fn_consultaFormaPagoModificado(id_usuario, ctrEstacion, formaPago);
+            fn_totalesPos(id_usuario, ctrEstacion);
+            $("#ModalTarjetas").modal('hide');
+            fn_modalDegradado('normal');
+        }
+    });
+}
+
+//FUNCIÓN QUE GUARDA AUDITORIA DE TARJETAS, CHEQUES OTROS.. 
+function fn_auditoriaTarjeta(descripcionTarjeta, totalTarjeta) {
+    send = {"auditoriaTarjeta": 1};
+    send.accion = 'I';
+    send.tipoTarjeta = descripcionTarjeta;
+    send.totalTarjeta = totalTarjeta;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA LA FORMA DE PAGO TARJETAS, CHEQUES, ETC.. DIFERENTE DE EFECTIVO, TRAE MODAL TARJETAS CUANDO MODIFICAMOS
+function fn_consultaFormaPagoModificado(id_usuario, ctrEstacion, formaPago) {
+    send = {"consultaformaPagoModificadoTarjeta": 1};
+    send.id_User = id_usuario;
+    send.ctrEstacion = ctrEstacion;
+    send.formaPago = formaPago;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            totaleS = 0;
+            for (i = 0; i < datos.str; i++) {
+                if (datos[i]['estadoSwt'] == 3) {
+                    $("#btnTarjetaDatafast" + datos[i]['fmp_descripcion'] + "").val(datos[i]['arc_valor'].toFixed(2));
+                    $("#diferenciaTarjetaDatafast" + datos[i]['fmp_descripcion'] + "").val(datos[i]['diferencia'].toFixed(2));
+                } else {
+                    $("#btnT" + datos[i]['fmp_descripcion'] + "").val(datos[i]['arc_valor'].toFixed(2));
+                    $("#diferenciat" + datos[i]['fmp_descripcion'] + "").val(datos[i]['diferencia'].toFixed(2));
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA TOTALES DE ESTACIÓN EN CAJERO POR CERRAR
+function fn_cargaTotal(ctrc_id, idformaPago, usr_id_cajero) {
+    send = {"consultatotalEstacion": 1};
+    send.accion = 1;
+    send.usr_id_cajero = usr_id_cajero;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#tpie tr:eq(0) td:eq(4)").html('$' + (datos.total).toFixed(2));
+                $("#tpie tr:eq(0) td:eq(2)").html(parseInt(datos.Transacciones) + parseInt($("#hide_num_cupones").val()));
+                $("#totalPosCalculado").val(datos.total);
+                $("#tpie tr:eq(0) td:eq(1)").html(datos.totalRetiros.toFixed(2));
+                $("#tpie tr:eq(0) td:eq(5)").html(datos.totalDiferencia.toFixed(2));
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CALCULA TOTALES DE EFECTIVO
+function fn_totalesIngresados(id_usuarioo, ctrEstacion) {
+    send = {"totalesIngresados": 1};
+    send.User = id_usuarioo;
+    send.accion = 1;
+    send.ctrEstacion = ctrEstacion;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            for (i = 0; i < datos.str; i++) {
+                if (datos[i]['arc_valor'] !== 0) {
+                    if (datos[i]['estadoSwt'] === 3) {
+                        $("#btnTarjetasDatafast" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "").val(datos[i]['arc_valor'].toFixed(2));
+                    } else {
+                        $("#btnT" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "").val(datos[i]['arc_valor'].toFixed(2));
+                    }
+                }
+                banderaArqueoTarjeta = 1;
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCION PARA CERRAR LA MODAL FORMAS DE PAGO
+function fn_btnCancelarFormasPago() {
+    fn_eliminaFormasPagoAgregadas();
+    id_botones.length = 0;
+    $("#modal_formaPago").modal('hide');
+    $("#tpie tr:eq(0) td:eq(3)").html('');
+    fn_eliminaBilletes();
+    controlBilletes = 0;
+}
+
+//FUNCIÓN QUE ELIMINA LOS BILLETES EN ESTADO PENDIENTE
+function fn_eliminaBilletes() {
+    send = {"eliminaBilletes": 1};
+    send.accion = 'D';
+    send.ctrc_id = $("#hid_controlEstacion").val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN PARA CONSULTAR LOS BILLETES NUEVOS O MODIFICADOS
+function fn_modalBilletes(codigo_formaPago, codigo_ctrEstacion, idUsuario, retiroValor, transacciones, posCalculado, diferencia, estadoSwt) {
+    $("#retiroValor").val(retiroValor);
+    $("#transacciones").val(transacciones);
+    $("#posCalculado").val(posCalculado);
+    $("#diferencia").val(diferencia);
+    $("#estadoSwt").val(estadoSwt);
+    $("#tpie3 tr:eq(0) td:eq(1)").html('');
+    if (controlBilletes === 0) {
+        $("#hid_totalNuevo").val('');
+        send = {"consultaBilletes": 1};
+        send.accion = 'B';
+        send.codigo_ctrEstacion = codigo_ctrEstacion;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: 'json',
+            contentType: "application/x-www-form-urlencoded",
+            url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+            data: send,
+            success: function (datos) {
+                var html = "<thead><tr class='active'><th width='266px' colspan='2' style='text-align:center' class='tituloEtiqueta'>Denominaciones</th><th width='266px' class='tituloEtiqueta' style='text-align:center'>Cantidad</th><th width='266px' class='tituloEtiqueta' style='text-align:center'>Total</th></thead>";
+                if (datos.str > 0) {
+                    $("#billetes").empty();
+                    miarray = new Array(datos.str);
+                    miarray_denominaciones = new Array(datos.str);
+                    for (i = 0; i < datos.str; i++) {
+                        miarray_denominaciones[i] = datos[i]['btd_Valor'];
+                        if ($.trim(datos[i]['btd_Tipo']) === 'BILLETE') {
+                            miarray[i] = "billete" + datos[i]['btd_Valor'] + "";
+                            miarray[i] = miarray[i].replace(/\./g, "");
+                            html += "<tr><td align='center'><img src='../../imagenes/billete_admin.png'/></td><td width='266px' style='text-align:center'><input width='266px' class='form-control' align='center' style='text-align:center;' readonly='readonly' type='text' id=" + miarray[i] + "  value=" + datos[i]['btd_Valor'].toFixed(2) + "></td>";
+                        } else {
+                            miarray[i] = "moneda" + datos[i]['btd_Valor'] + "";
+                            miarray[i] = miarray[i].replace(/\./g, "");
+                            html += "<tr><td align='center'><img src='../../imagenes/moneda_admin.png'/></td><td width='266px' style='text-align:center'><input width='266px' class='form-control' align='center'  style='text-align:center;' readonly='readonly' type='text' id=" + miarray[i] + "  value=" + datos[i]['btd_Valor'].toFixed(2) + "></td>";
+                        }
+                        html += "<td width='266px' style='text-align:center'><input class='form-control' align='center' width='266px' onkeypress='return fn_numeros(event)' maxlength='7' name = " + datos[i]['btd_id'] + " onclick='fn_borrarcantidad(\"" + datos[i]['btd_id'] + "\")' id='bi" + miarray[i] + "' align='right' style='text-align:center;' type='text' value=0></td>";
+                        html += "<td width='266px' style='text-align:center'><input class='form-control' name = 't" + datos[i]['btd_id'] + "' align='center' width='266px' id='t" + miarray[i] + "' align='right' style='text-align:center;' type='text' readonly='readonly' value=0.00></td>";//
+                        html += "<input type='hidden' id='h" + miarray[i] + "' value=" + datos[i]['btd_id'] + ">";
+                        html += "<input type='hidden' id='h2" + miarray[i] + "' value=" + codigo_ctrEstacion + ">";
+                        html += "<input type='hidden' id='h3" + miarray[i] + "' value=" + idUsuario + "></tr>";//VERIFICAR VARIABLE SESION USUARIO
+                        $("#billetes").html(html);
+                    }
+                    diferencia = $("#hid_diferencia").val();
+                    $("#hid_masomenos").val("$" + parseFloat(diferencia).toFixed(2) + "");
+                    fn_calculaSubtotales(miarray, codigo_formaPago, idUsuario, codigo_ctrEstacion);
+                }
+            }
+        });
+    } else if (controlBilletes === 1) { //billetes modificados
+        send = {"consultaBilletes": 1};
+        send.accion = 'M';
+        send.codigo_ctrEstacion = codigo_ctrEstacion;
+        $.ajax({
+            async: false,
+            type: "POST",
+            dataType: 'json',
+            contentType: "application/x-www-form-urlencoded",
+            url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+            data: send,
+            success: function (datos) {
+                var html = "<thead><tr class='active'><th width='266px' colspan='2' style='text-align:center' class='tituloEtiqueta'>Denominaciones</th><th width='266px' class='tituloEtiqueta' style='text-align:center'>Cantidad</th><th width='266px' class='tituloEtiqueta' style='text-align:center'>Total</th></thead>";
+                if (datos.str > 0) {
+                    $("#billetes").empty();
+                    miarray = new Array(datos.str);
+                    miarray_denominaciones = new Array(datos.str);
+                    for (i = 0; i < datos.str; i++) {
+                        miarray[i] = "" + datos[i]['btd_Valor'] + "";
+                        miarray[i] = miarray[i].replace(/\./g, "");
+                        miarray_denominaciones[i] = datos[i]['btd_Valor'];
+                        if ($.trim(datos[i]['btd_Tipo']) === 'BILLETE') {
+                            miarray[i] = "billete" + datos[i]['btd_Valor'] + "";
+                            miarray[i] = miarray[i].replace(/\./g, "");
+                            html += "<tr><td align='center'><img src='../../imagenes/billete_admin.png'/></td><td width='266px' style='text-align:center'><input width='266px' class='form-control' align='center'  style='text-align:center;' readonly='readonly' type='text' id=" + miarray[i] + "  value=" + datos[i]['btd_Valor'].toFixed(2) + "></td>";
+                        } else {
+                            miarray[i] = "moneda" + datos[i]['btd_Valor'] + "";
+                            miarray[i] = miarray[i].replace(/\./g, "");
+                            html += "<tr><td align='center'><img src='../../imagenes/moneda_admin.png'/></td><td width='266px' style='text-align:center'><input width='266px' class='form-control' align='center'  style='text-align:center;' readonly='readonly' type='text' id=" + miarray[i] + "  value=" + datos[i]['btd_Valor'].toFixed(2) + "></td>";
+                        }
+                        html += "<td style='text-align:center'><input class='form-control' onkeypress='return fn_numeros(event)' id='bi" + miarray[i] + "'  maxlength='7' name = " + datos[i]['btd_id'] + " onclick='fn_borrarcantidad(\"" + datos[i]['btd_id'] + "\")' style='text-align:center;' type='text' value=" + datos[i]['bte_cantidad'] + "></td>";
+                        html += "<td style='text-align:center'><input class='form-control' id='t" + miarray[i] + "' align='right' style='text-align:center;' readonly='readonly' name ='t" + datos[i]['btd_id'] + "' type='text' value=" + datos[i]['bte_total'] + "></td>";//
+                        html += "<input type='hidden' id='h" + miarray[i] + "' value=" + datos[i]['btd_id'] + ">";
+                        html += "<input type='hidden' id='h2" + miarray[i] + "' value=" + codigo_ctrEstacion + ">";
+                        html += "<input type='hidden' id='h3" + miarray[i] + "' value=" + idUsuario + "></tr>";
+                        $("#billetes").html(html);
+                    }
+                    diferencia = $("#hid_diferencia").val();
+                    $("#hid_masomenos").val("$" + parseFloat(diferencia).toFixed(2) + "");
+                    fn_calculaSubtotalesMod(miarray, codigo_formaPago, idUsuario, codigo_ctrEstacion);
+                }
+            }
+        });
+    }
+}
+
+//FUNCIÓN QUE CALCULA TOTALES EN MODAL DENOMINACIÓN BILLETES
+function fn_calculaSubtotales(array, codigo_formaPago, idUsuario, codigo_ctrEstacion) {
+    $("#hid_usuario_efectivo").val(idUsuario);
+    $("#hid_controlEstacion").val(codigo_ctrEstacion);
+    $("#hid_formaPago").val(codigo_formaPago);
+    $("#array").val(array);
+
+    var longitud_subtotales = subtotales.length;
+    for (i = 0; i < longitud_subtotales; i++) {
+        subtotales[i] = ($("#t" + array[i] + "").val());
+    }
+
+    var longitud_ocultos = ocultos.length;
+    for (i = 0; i < longitud_ocultos; i++) {
+        ocultos[i] = ($("#h" + array[i] + "").val());
+    }
+
+    var longitud_ocultos2 = ocultos2.length;
+    for (i = 0; i < longitud_ocultos2; i++) {
+        ocultos2[i] = ($("#h2" + array[i] + "").val());
+    }
+
+    var longitud_ocultos3 = ocultos3.length;
+    for (i = 0; i < longitud_ocultos3; i++) {
+        ocultos3[i] = ($("#h3" + array[i] + "").val());
+    }
+
+    $("#ModalBilletesDesmontarCajero").modal('show');
+    $("#cancelar").click(function () {
+        $("#modal_formaPago").modal('show');
+    });
+
+    var longitud_array = array.length;
+    for (i = 0; i < longitud_array; i++) {
+        $("#bi" + array[i] + "").keyup(function () {//inicio evento focus
+            var longitud_denominaciones = denominaciones.length;
+            for (i = 0; i < longitud_denominaciones; i++) {
+                denominaciones[i] = (miarray_denominaciones[i]);
+            }
+
+            var longitud_cantidades = cantidades.length;
+            for (i = 0; i < longitud_cantidades; i++) {
+                if (($("#bi" + array[i] + "").val() === '')) {
+                    $("#bi" + array[i] + "").val(0);
+                }
+                cantidades[i] = ($("#bi" + array[i] + "").val());
+            }
+
+            var longitud_resultado = resultado.length;
+            for (i = 0; i < longitud_resultado; i++) {
+                resultado[i] = denominaciones[i] * cantidades[i];
+            }
+            for (i = 0; i < longitud_array; i++) {
+                ($("#t" + array[i] + "").val(resultado[i].toFixed(2)));
+            }
+            suma = 0;
+            for (var i = 0; i < longitud_array; i++) {
+                suma += parseFloat(resultado[i]);
+            }
+            suma2 = suma;//totalNuevo
+            $("#hid_totalNuevo").val(suma2);
+            $("#tpie3 tr:eq(0) td:eq(1)").html('' + suma2.toFixed(2));
+            dif = $("#hid_diferencia").val();
+            dif_Total = parseFloat(dif) + parseFloat(suma2);
+            $("#hid_masomenos").val(dif_Total.toFixed(2));
+            $("#tpie3 tr:eq(1) td:eq(1)").html(dif_Total.toFixed(2));
+            if (dif_Total === 0) {
+                $("#tr_masomenos").addClass("success");
+                $("#tr_masomenos").removeClass("danger");
+            } else {
+                $("#tr_masomenos").addClass("danger");
+                $("#tr_masomenos").removeClass("success");
+            }
+        });
+
+        valorsumabilletes = $("#valorsumabilletes").val();
+        valormasomenos = $("#valormasomenos").val();
+        input_dif_Total = $("#hid_masomenos").val();
+        if (parseFloat(input_dif_Total) === 0) {
+            $("#tr_masomenos").addClass("success");
+            $("#tr_masomenos").removeClass("danger");
+        } else {
+            $("#tr_masomenos").addClass("danger");
+            $("#tr_masomenos").removeClass("success");
+        }
+    }
+}
+
+//FUNCIÓN QUE CALCULA TOTALES EN MODAL DENOMINACIÓN BILLETES CUANDO MODIFICAMOS CANTIDAD DE BILLETES
+function fn_calculaSubtotalesMod(array, codigo_formaPago, idUsuario) {
+    $("#hid_usuario_efectivo").val(idUsuario);
+    $("#hid_formaPago").val(codigo_formaPago);
+    $("#array").val(array);
+
+    longitud_subtotales = subtotales.length;
+    for (i = 0; i < longitud_subtotales; i++) {
+        subtotales[i] = ($("#t" + array[i] + "").val());
+    }
+
+    longitud_ocultos = ocultos.length;
+    for (i = 0; i < longitud_ocultos; i++) {
+        ocultos[i] = ($("#h" + array[i] + "").val());
+    }
+
+    longitud_ocultos2 = ocultos2.length;
+    for (i = 0; i < longitud_ocultos2; i++) {
+        ocultos2[i] = ($("#h2" + array[i] + "").val());
+    }
+
+    longitud_ocultos3 = ocultos3.length;
+    for (i = 0; i < longitud_ocultos3; i++) {
+        ocultos3[i] = ($("#h3" + array[i] + "").val());
+    }
+
+    $("#ModalBilletesDesmontarCajero").modal('show');
+    longitud_array = array.length;
+    for (i = 0; i < longitud_array; i++) {
+        $("#bi" + array[i] + "").keyup(function () {
+            longitud_denominaciones = denominaciones.length;
+            for (i = 0; i < longitud_denominaciones; i++) {
+                denominaciones[i] = (miarray_denominaciones[i]);
+            }
+
+            longitud_cantidades = cantidades.length;
+            for (i = 0; i < longitud_cantidades; i++) {
+                if (($("#bi" + array[i] + "").val() === '')) {
+                    $("#bi" + array[i] + "").val(0);
+                }
+                cantidades[i] = ($("#bi" + array[i] + "").val());
+            }
+
+            longitud_resultado = resultado.length;
+            for (i = 0; i < longitud_resultado; i++) {
+                resultado[i] = denominaciones[i] * cantidades[i];
+            }
+            for (i = 0; i < longitud_array; i++) {
+                ($("#t" + array[i] + "").val(resultado[i].toFixed(2)));
+            }
+            suma = 0;
+            for (var i = 0; i < longitud_array; i++) {
+                suma += parseFloat(resultado[i]);
+            }
+            $("#hid_totalNuevo").val(suma);
+            $("#tpie3 tr:eq(0) td:eq(1)").html('' + suma.toFixed(2));
+            dif = $("#hid_diferencia").val();
+            dif_Total = parseFloat(dif) + parseFloat(suma);
+            $("#hid_masomenos").val(dif_Total.toFixed(2));
+            $("#tpie3 tr:eq(1) td:eq(1)").html(dif_Total.toFixed(2));
+            if (dif_Total === 0) {
+                $("#tr_masomenos").addClass("success");
+                $("#tr_masomenos").removeClass("danger");
+            } else {
+                $("#tr_masomenos").addClass("danger");
+                $("#tr_masomenos").removeClass("success");
+            }
+        });
+
+        valorsumabilletes = $("#valorsumabilletes").val();
+        valormasomenos = $("#valormasomenos").val();
+        $("#tpie3 tr:eq(0) td:eq(1)").html(valorsumabilletes);
+        $("#tpie3 tr:eq(1) td:eq(1)").html(valormasomenos);
+        input_dif_Total = $("#hid_masomenos").val();
+        if (parseFloat(input_dif_Total) === 0) {
+            $("#tr_masomenos").addClass("success");
+            $("#tr_masomenos").removeClass("danger");
+        } else {
+            $("#tr_masomenos").addClass("danger");
+            $("#tr_masomenos").removeClass("success");
+        }
+    }
+}
+
+function fn_borrarcantidad(array) {
+    $('input:text[name=' + array + ']').val('');
+}
+
+//FUNCIÓN QUE GUARDA LOS BILLETES INGRESADOS EN EFECTIVO
+function fn_guardaTotalesBilletes() {
+    codigo_formaPago = $("#hid_formaPago").val();
+    idUsuario = $("#hid_usuario_efectivo").val();
+    ctrEstacion = $("#hid_controlEstacion").val();
+    retiroValor = $("#retiroValor").val();
+    transacciones = $("#transacciones").val();
+    posCalculado = $("#posCalculado").val();
+    diferencia = $("#diferencia").val();
+    estadoSwt = $("#estadoSwt").val();
+    totalNuevo = $("#hid_totalNuevo").val();
+    valorsumabilletes = $("#tpie3 tr:eq(0) td:eq(1)").text();
+    valormasomenos = $("#tpie3 tr:eq(1) td:eq(1)").text();
+    $("#valorsumabilletes").val(valorsumabilletes);
+    $("#valormasomenos").val(valormasomenos);
+    if (($("#hid_totalNuevo").val()) === '') {
+        alertify.error("Ingrese cantidades");
+        return false;
+    }
+    resultado = $.grep(resultado, function (n) {
+        return n == 0 || n;
+    }); //eliminar posiciones vacias de un array//cp
+
+    $("#hid_controlEfectivo").val(1);
+    send = {"grabaBilletes": 1};
+    send.accion = 'I2';
+    send.cantidades2 = cantidades;
+    send.resultado2 = resultado;
+    send.oculto = ocultos;
+    send.oculto2 = ocultos2;
+    send.oculto3 = ocultos3;
+    send.tipoEfectivo = 0;
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            fn_auditoriaEfectivo(totalNuevo);
+            fn_consultaIdBilletes();
+            fn_guardaRetiros(codigo_formaPago, idUsuario, ctrEstacion, retiroValor, transacciones, posCalculado, diferencia, estadoSwt, totalNuevo);
+            controlBilletes = 1;
+        }
+    });
+}
+
+//FUNCIÓN QUE GUARDA FORMA DE PAGO EFECTIVO
+function fn_guardaRetiros(codigo_formaPago, idUsuario, ctrEstacion, retiroValor, transacciones, posCalculado, diferencia, estadoSwt, montoActual) {
+    send = {"grabaArqueo": 1};
+    send.accion = 'I';
+    send.accion_int = 1;
+    send.resNuevo = montoActual;
+    send.formaPago = codigo_formaPago;
+    send.idUsuario = idUsuario;
+    send.ctrEstacion = ctrEstacion;
+    send.retiroValor = retiroValor;
+    send.transacciones = transacciones;
+    send.posCalculado = posCalculado;
+    send.diferencia = diferencia;
+    send.estadoSwt = estadoSwt;
+    send.montoActual = montoActual;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            $("#hid_controlEfectivo").val(1);
+            ctr_estacion = $("#hid_controlEstacion").val();
+            $("#ModalBilletesDesmontarCajero").modal('hide');
+            $("#modal_formaPago").modal('show');
+            fn_consultaFormaPagoModificado(idUsuario, ctrEstacion, codigo_formaPago);
+            fn_totalesIngresados(idUsuario, ctrEstacion);
+            fn_totalesPos(idUsuario, ctrEstacion);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE GUARDA AUDITORIA DE EFECTIVO
+function fn_auditoriaEfectivo(totalNuevo) {
+    send = {"auditoriaEfectivo": 1};
+    send.accion = 'I';
+    send.auditoriaTotal = totalNuevo;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function () {
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA ID DE LOS BILLETES
+function fn_consultaIdBilletes() {
+    array = $("#array").val();
+    send = {"consultaidBilletes": 1};
+    send.accion = 2;
+    send.top = array.length;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            arrayBilletes = new Array(datos.str);
+            for (i = 0; i < datos.str; i++) {
+                arrayBilletes[i] = "" + datos[i]['bte_id'] + "";
+            }
+            arrayBilletes2 = arrayBilletes;
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE CALCULA LOS TOTALES POR ESTACIÓN
+function fn_totalesPos(id_usuario, ctrEstacion) {
+    send = {"totalesPos": 1};
+    send.accion = 1;
+    send.t_idUsuario = id_usuario;
+    send.ctrEstacion = ctrEstacion;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            $("#tpie tr:eq(0) td:eq(1)").html(datos.totalRetiro.toFixed(2));
+            $("#tpie tr:eq(0) td:eq(2)").html(datos.totalTransacciones);
+            $("#tpie tr:eq(0) td:eq(3)").html(datos.totalMontoActual.toFixed(2));
+            $("#tpie tr:eq(0) td:eq(4)").html(datos.totalPos.toFixed(2));
+            $("#tpie tr:eq(0) td:eq(5)").html(datos.totalDiferencia.toFixed(2));
+            $("#hide_totalBilletes").val(datos.totalDiferencia);
+            $("#hid_controlDiferencia").val(datos.totalDiferencia);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//CALCULA TOTALES FORMA DE PAGO EFECTIVO
+function fn_calculatotalesModificados(id_usuario, ctrEstacion) {
+    send = {"calculatotalesModificados": 1};
+    send.userId = id_usuario;
+    send.accion = 1;
+    send.ctr_estacion = ctrEstacion;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            $("#tpie tr:eq(0) td:eq(5)").html(datos.totalModificado.toFixed(2));
+            $("#hid_descuadre").val(datos.totalModificado);
+            $("#hid_controlDiferencia").val(datos.totalModificado);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+function fn_limpiarCantidad() {
+    $("#txt_montoTarjeta").val('');
+    coma = 0;
+}
+
+function fn_agregarNumero(valor) {
+    var cantidad = $("#txt_montoTarjeta").val();
+    if (cantidad.length < 8) {
+        //presionamos la primera vez punto
+        if ((cantidad == "" || cantidad == 0) && valor == ".") {
+            //si escribimos una coma al principio del número
+            $("#txt_montoTarjeta").val("0."); //escribimos 0.
+            coma = 1;
+        } else {
+            //continuar escribiendo un número
+            if (valor == "." && coma == 0) {
+                //si escribimos una coma decimal por primera vez
+                cantidad = cantidad + "" + valor;
+                $("#txt_montoTarjeta").val(cantidad);
+                coma = 1; //cambiar el estado de la coma
+            } else if (!(valor == "." && coma == 1)) { //si intentamos escribir una segunda coma decimal no realiza ninguna acción, resto de casos: escribir un número del 0 al 9
+                var variable = cantidad;
+                var indice = 0;
+                indice = variable.indexOf('.') + 1;
+                if (indice > 0) {
+                    variable = variable.substring(indice, variable.length);
+                    if (variable.length <= 2) {
+                        cantidad = cantidad + "" + valor;
+                        $("#txt_montoTarjeta").val(cantidad);
+                        fn_focusTarjeta();
+                    }
+                } else {
+                    cantidad = cantidad + "" + valor;
+                    $("#txt_montoTarjeta").val(cantidad);
+                    fn_focusTarjeta();
+                }
+            }
+        }
+    }
+    fn_focusTarjeta();
+}
+
+function fn_focusTarjeta() {
+    $("#txt_montoTarjeta").focus();
+}
+
+function fn_eliminarCantidad() {
+    var lc_cantidad = document.getElementById("txt_montoTarjeta").value.substring(0, document.getElementById("txt_montoTarjeta").value.length - 1);
+
+    if (lc_cantidad == "") {
+        lc_cantidad = "";
+        coma = 0;
+    }
+    if (lc_cantidad == ".") {
+        coma = 0;
+    }
+
+    document.getElementById("txt_montoTarjeta").value = lc_cantidad;
+    fn_focusTarjeta();
+}
+
+//FUNCIÓN QUE CONSULTA LOS MOTIVOS DE DESCUADRES CONFIGURADOS
+function fn_botonesDinamicosTecladoDescuadre() {
+    send = {"traeMotivosDescuadre": 1};
+    send.accion = 1;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#motivos_descuadre1").empty();
+                for (i = 0; i < datos.str; i++) {
+                    html = "<div class='col-xs-3'><button class='btnVirtualSugerencias' style = 'width:185px; height:80px' onclick='fn_borrarTextArea(); fn_agregarCaracter(txtArea,\"" + datos[i]["mtv_descripcion"] + "\")'>" + datos[i]["mtv_descripcion"] + "</button></div>";
+                    $("#motivos_descuadre1").append(html);
+                }
+            } else {
+                alertify.error("Motivos de Descuadre no configurados");
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE INSERTA EN LA TABLA CANAL IMPRESIÓN PARA IMPRIMIR REPORTE
+function fn_imprimeDesmontadoCajero() {
+    usr_id = $("#hid_usuario_efectivo").val();
+    ctrc_id = $("#hid_controlEstacion").val();
+    send = {"traeUsuarioAdmin": 1};
+    send.accion = 5;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                usr_id_admin = datos.usr_id;
+                send = {"imprimeDesmontadoCajero": 1};
+                send.usr_id = usr_id;
+                send.ctrc_id = ctrc_id;
+                send.usr_id_admin = usr_id_admin;
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                    data: send,
+                    success: function () {
+                        //window.open("impresionCorteCajaDinamico.php?ctrc_id=" + ctrc_id + "&usr_id= "+ usr_id +"&usr_id_admin= "+ usr_id_admin +"&"," "," scrollbars=yes, resizable=yes, top=500, left=500, width=400, height=800");
+                        //window.open("http://www.w3schools.com", "_blank", "toolbar=yes, scrollbars=yes, resizable=yes, top=500, left=500, width=400, height=400");
+                    }
+                });
+            }
+        }
+    });
+}
+
+//FUNCIÓN QUE CONSULTA FORMAS DE PAGO PARA AGREGAR UNA NUEVA
+function fn_consultaFormaPagoNueva() {
+    fn_modalDegradado('degrado');
+    $("#modal_agregarFormaPago").modal('show');
+    ctr_id = $("#hid_controlEstacion").val();
+    send = {"cargarFormasPago": 1};
+    send.accion = 1;
+    send.ctr_id = ctr_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#sel_formasPago").html("");
+                $('#sel_formasPago').html("<option selected value='0'>----Seleccione Forma de Pago----</option>");
+                for (i = 0; i < datos.str; i++) {
+                    html = "<option value='" + datos[i]['fmp_id'] + "' name ='" + datos[i]['fmp_descripcion'] + "' >" + datos[i]['fmp_descripcion'] + "</option>";
+                    $("#sel_formasPago").append(html);
+                }
+                $("#sel_formasPago").change(function () {
+                    fmp_id = $("#sel_formasPago").val();
+                    fmp_descripcion = $(this).find('option:selected').text();
+                    $("#id_formaPago").val(fmp_id);
+                    $("#hide_fmp_descripcion").val(fmp_descripcion);
+                });
+            }
+        }
+    });
+}
+
+//FUNCIÓN QUE GUARDA Y MUESTRA LA FORMA DE PAGO AGREGADA MANUALMENTE
+function fn_agregarFormaPago() {
+    if ($("#sel_formasPago").val() === "0") {
+        alertify.set({labels: {ok: "OK"}});
+        alertify.error("Seleccione una Forma de Pago");
+        return false;
+    }
+    ctrc_id = $("#hid_controlEstacion").val();
+    fmp_descripcion = $("#hide_fmp_descripcion").val();
+    fmp_id = $("#id_formaPago").val();
+    send = {"grabaarqueoformapago": 1};
+    totalFormaPago = '0';
+    send.accion = 'I';
+    send.accion_int = 3;
+    send.fmp_id = fmp_id;
+    send.totalFormaPago = totalFormaPago;
+    send.banderafp = 1;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            html = "";
+            html += "<tr><td width='180' align='center' style='vertical-align:middle'>" + fmp_descripcion + "</td>";
+            html += "<td><input class='form-control' readonly='readonly' style='text-align:center;' type='text' id='' value = '0.00' ></td>";
+            html += "<td style='text-align:center;'><input readonly='readonly' style='text-align:center;' class='form-control' value='1'></td>";
+            html += "<td><input id='btnT" + fmp_descripcion.replace(/\s/g, "") + "' style='width:130px;' type='button' value='Presione Aqui' class='btn btn-primary'	onclick='fn_modalTecladoFormasPago(\"" + fmp_descripcion + "\",\"" + fmp_id + "\")'></td>";
+            html += "<td><input readonly='readonly' class='form-control' style='text-align:center;' type='text' type='text' id='inputT" + fmp_descripcion.replace(/\s/g, "") + "' value=''></td>";
+            html += "<td><input class='form-control' readonly='readonly' style='text-align:center;' type='text' id='diferenciat" + fmp_descripcion.replace(/\s/g, "") + "' value = '' ></td>";
+            if (($("#modal_formaPago").css('display')) == "none") {
+                $("#formaPago").append(html);
+            } else {
+                $("#tabla_formaPagoPorCerrar").append(html);
+            }
+            numeroFormasPago++;
+            id_botones.push("btnT" + fmp_descripcion.replace(/\s/g, ""));
+            fn_modalDegradado('normal');
+        }
+    });
+    $("#modal_agregarFormaPago").modal('hide');
+}
+
+//FUNCIÓN QUE ELIMINA FORMA DE PAGO PENDIENTE AGREGADA MANUALMENTE
+function fn_eliminaFormasPagoAgregadas() {
+    ctrc_id = $("#hid_controlEstacion").val();
+    send = {"eliminaFormasPagoAgregadas": 1};
+    send.accion = 'D';
+    send.banderafp = 1;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+        }
+    });
+}
+
+//FUNCIÓN QUE TRAE TECLADO PARA FORMA DE PAGO MANUAL
+function fn_modalTecladoFormasPago(fmp_descripcion, fmp_id) {
+    fn_modalDegradado('degrado');
+    $("#tituloModalTecladoNuevaFormaPago").html(fmp_descripcion);
+    ctrc_id = $("#hid_controlEstacion").val();
+    send = {"traeValorFormaPago": 1};
+    send.accion = 2;
+    send.fmp_id = fmp_id;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            $("#tecladoNuevaFormaPago").empty();
+            if (datos.str > 0) {
+                for (i = 0; i < datos.str; i++) {
+                    if (datos[i]['arc_valor'] === 0) {
+                        $("#txt_montoFormaPago").val("");
+                    }
+                    var html = "<table align='center'><tr></tr>";
+                    html += "<tr><th>Ingrese Monto: " + fmp_descripcion + "</th></tr>";
+                    if (datos[i]['arc_valor'] === '0') {
+                        html += "<tr><td><input id='txt_montoFormaPago' onkeypress='return fn_numeros(event)'  style='text-align:center; font-size:26px' type='text' value=''></td></tr>";
+                    } else {
+                        html += "<tr><td><input id='txt_montoFormaPago' onkeypress='return fn_numeros(event)'  style='text-align:center; font-size:26px' type='text' value='" + datos[i]['arc_valor'].toFixed(2) + "'></td></tr>";
+                    }
+                    html += "</table></br>";
+                    html += "<table align='center'><tr><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('7') >7</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('8')>8</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('9')>9</button></td></tr><tr><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('4')>4</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('5')>5</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('6')>6</button></td></tr><tr><td><button class='btnVirtual'  style='font-size: 34px;' onclick=fn_agregarNumerof('1')>1</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('2')>2</button></td><td><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('3')>3</button></td></tr><tr><td ><button class='btnVirtual' style='font-size: 34px;' onclick=fn_agregarNumerof('0')>0</button></td><td><button class='btnVirtualBorrarTarjetas' style='font-size: 34px;' id='btn_punto' onclick=fn_agregarNumerof('.')>.</button></td><td><button class='btnVirtualBorrarTarjetas' style='font-size: 34px;' id='btn_borrar' onclick=fn_eliminarCantidadf()>&larr;</button></td></tr><tr><td colspan='3'><button class='btnVirtualLimpiar' style='font-size: 34px;' id='btn_limpiar' onclick='fn_limpiarCantidadf()'>LIMPIAR</button></td></tr></table><br/>";
+                    html += "<div class=''><div align='center'><button type='button' id='btn_okTarjeta" + fmp_descripcion + "' class='btn btn-primary ' style='height:65px;width:140px; font-size: 30px;' onclick='fn_guardarFormaPago(\"" + fmp_id + "\",\"" + fmp_descripcion + "\");'>OK</button><button type='button' class='btn btn-default' id='btn_cancelTarjeta' style='height:65px;width:140px; font-size: 30px;' data-dismiss='modal' value='Cancelar'>Cancelar</button></div></div>";
+                    $("#tecladoNuevaFormaPago").append(html);
+                    $("#ModalTecladoNuevaFormaPago").modal('show');
+                }
+            }
+        }
+    });
+    $("#btn_cancelTarjeta").click(function () {
+        fn_modalDegradado('normal');
+    });
+}
+
+//FUNCIÓN PARA GUARDAR FORMA DE PAGO AGREGADA MANUALMENTE
+function fn_guardarFormaPago(fmp_id, fmp_descripcion) {
+    if (($("#txt_montoFormaPago").val()) === '') {
+        alertify.error("Ingrese una cantidad");
+        return false;
+    }
+    if (($("#txt_montoFormaPago").val()) === '0.00') {
+        alertify.error("Ingrese una cantidad mayor de cero");
+        return false;
+    }
+    if (isNaN($("#txt_montoFormaPago").val())) {
+        alertify.error("Ingrese monto valido");
+        return false;
+    }
+    id_usuario = $("#hid_usr_id_cajero").val();
+    ctrc_id = $("#hid_controlEstacion").val();
+    banderaFormaPagoCantidad = 1;
+    send = {"grabaarqueoformapago": 1};
+    totalFormaPago = $("#txt_montoFormaPago").val();
+    send.accion = 'I';
+    send.accion_int = 3;
+    send.fmp_id = fmp_id;
+    send.totalFormaPago = totalFormaPago;
+    send.ctrc_id = ctrc_id;
+    send.banderafp = 1;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            send = {"auditoriaTarjeta": 1};
+            send.accion = 'I';
+            send.tipoTarjeta = fmp_descripcion;
+            send.totalTarjeta = $("#txt_montoFormaPago").val();
+            send.banderafp = 1;
+            $.ajax({
+                async: false,
+                type: "POST",
+                dataType: "json",
+                contentType: "application/x-www-form-urlencoded",
+                url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                data: send,
+                success: function (datos) {
+                }
+            });
+            totalPosFormaPagoAgregada = 0;
+            $("#btnT" + fmp_descripcion.replace(/\s/g, "") + "").val(parseFloat(totalFormaPago).toFixed(2));
+            $("#inputT" + fmp_descripcion.replace(/\s/g, "") + "").val(parseFloat(totalPosFormaPagoAgregada).toFixed(2));
+            diferenciaFormaPagoAgregada = (parseFloat(totalFormaPago) - parseFloat(totalPosFormaPagoAgregada));
+            $("#diferenciat" + fmp_descripcion.replace(/\s/g, "") + "").val(diferenciaFormaPagoAgregada.toFixed(2));
+            $("#ModalTecladoNuevaFormaPago").modal('hide');
+            fn_calculatotalesModificados(id_usuario, ctrc_id);
+            fn_totalesPos(id_usuario, ctrc_id);
+            fn_modalDegradado('normal');
+        }
+    });
+}
+
+function fn_agregarNumerof(valor) {
+    var cantidad = $("#txt_montoFormaPago").val();
+    if (cantidad.length < 8) {
+        //presionamos la primera vez punto
+        if ((cantidad == "" || cantidad == 0) && valor == ".") {
+            //si escribimos una coma al principio del nï¿½mero
+            $("#txt_montoFormaPago").val("0."); //escribimos 0.
+            coma = 1;
+        } else {
+            //continuar escribiendo un nï¿½mero
+            if (valor == "." && coma == 0) {
+                //si escribimos una coma decimal por primera vez
+                cantidad = cantidad + "" + valor;
+                $("#txt_montoFormaPago").val(cantidad);
+                coma = 1; //cambiar el estado de la coma
+            } else if (!(valor == "." && coma == 1)) { //si intentamos escribir una segunda coma decimal no realiza ninguna acción, resto de casos: escribir un número del 0 al 9
+                var variable = cantidad;
+                var indice = 0;
+                indice = variable.indexOf('.') + 1;
+                if (indice > 0) {
+                    variable = variable.substring(indice, variable.length);
+                    if (variable.length <= 2) {
+                        cantidad = cantidad + "" + valor;
+                        $("#txt_montoFormaPago").val(cantidad);
+                        fn_focusFormasPago();
+                    }
+                } else {
+                    cantidad = cantidad + "" + valor;
+                    $("#txt_montoFormaPago").val(cantidad);
+                    fn_focusFormasPago();
+                }
+            }
+        }
+    }
+    fn_focusFormasPago();
+}
+
+function fn_focusFormasPago() {
+    $("#txt_montoFormaPago").focus();
+}
+
+function fn_eliminarCantidadf() {
+    var lc_cantidad = document.getElementById("txt_montoFormaPago").value.substring(0, document.getElementById("txt_montoFormaPago").value.length - 1);
+
+    if (lc_cantidad == "") {
+        lc_cantidad = "";
+        coma = 0;
+    }
+    if (lc_cantidad == ".") {
+        coma = 0;
+    }
+
+    document.getElementById("txt_montoFormaPago").value = lc_cantidad;
+    fn_focusFormasPago();
+}
+
+function fn_limpiarCantidadf() {
+    $("#txt_montoFormaPago").val('');
+    coma = 0;
+}
+
+function NumCheck(e, field) {
+    key = e.keyCode ? e.keyCode : e.which;
+    // backspace
+
+    if (key == 8) {
+        return true;
+    }
+    // 0-9
+
+    if (key > 47 && key < 58) {
+        if (field.value == "") {
+            return true;
+        }
+        regexp = /.[0-9]{2}$/;
+        return !(regexp.test(field.value));
+    }
+    // .
+
+    if (key == 46) {
+        if (field.value == "") {
+            return false;
+        }
+        regexp = /^[0-9]+$/;
+        return regexp.test(field.value);
+    }
+    // other key
+
+    return false;
+
+}
+
+//FUNCIÓN QUE CONSULTA LAS TARJETAS COBRADAS POR DATAFAST
+function fn_modalTarjetasDatafast(fmp_id, ctrc_id, usr_id_cajero, prd_id, retiroValor, transacciones, posCalculado, diferenciaValor, estadoSwt) {
+    $("#hid_controlEstacion").val(ctrc_id);
+    $("#hid_usr_id_cajero").val(usr_id_cajero);
+    $("#hide_periodo").val(prd_id);
+    send = {"consultaformaPago": 1};
+    send.accion = 4;
+    idformaPago = 0;
+    send.usr_id_cajero = usr_id_cajero;
+    send.ctrc_id = ctrc_id;
+    send.prd_id = prd_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            var html = "<thead><tr class='active'><th width='130px' style='text-align:center'>Formas de Pago</th><th width='130px' style='text-align:center'>Retirado</th><th width='130px' style='text-align:center'>Transacciones</th><th style='text-align:center' width='130px'>Monto Actual</th><th style='text-align:center' width='130px'>POS Calculado</th><th style='text-align:center' width='130px'>Diferencia</th></tr></thead>";
+            if (datos.str > 0) {
+                $("#tabla_tarjetasDatafast").empty();
+                numeroFormasPago = datos.str;
+                for (i = 0; i < datos.str; i++) {
+                    html += "<tr><td width='180' align='center' style='vertical-align:middle'>" + datos[i]['fmp_descripcion'] + "</td>";
+                    html += "<td><input readonly='readonly' class='form-control' style='text-align:center; type='text' type='text' id='" + datos[i]['fmp_descripcion'] + "' value='" + datos[i]['retiroValor'].toFixed(2) + "'></td>";
+                    html += "<td style='text-align:center;'><input readonly='readonly' style='text-align:center;' class='form-control' value=" + datos[i]['Transacciones'] + "></td>"; //
+                    html += "<td><input id='btnTarjetaDatafast" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "' style='width:130px;' type='button' value='Presione Aqui' class='btn btn-primary'	onclick='fn_modalTarjetas(\"" + datos[i]['fmp_id'] + "\",\"" + datos[i]['ctrc_id'] + "\",\"" + datos[i]['usr_id'] + "\"," + datos[i]["retiroValor"] + "," + datos[i]["Transacciones"] + "," + datos[i]["fpf_total_pagar"] + "," + datos[i]["diferenciaValor"] + "," + datos[i]["estadoSwt"] + ")'></td>";
+                    html += "<td><input readonly='readonly' class='form-control' style='text-align:center; type='text' type='text' id='" + datos[i]['fmp_descripcion'] + "' value='" + datos[i]['fpf_total_pagar'].toFixed(2) + "'></td>";
+                    html += "<td><input class='form-control' readonly='readonly' style='text-align:center;' type='text' id='diferenciaTarjetaDatafast" + datos[i]['fmp_descripcion'] + "' value = '" + datos[i]["diferenciaValor"].toFixed(2) + "'></td>";
+                    html += "<input type='hidden' value=" + datos[i]['fmp_id'] + "></tr>";
+                    id_botonesDatafast[i] = "btnTarjetaDatafast" + datos[i]['fmp_descripcion'].replace(/\s/g, "") + "";
+                    $("#tabla_tarjetasDatafast").html(html);
+                }
+                $("#modal_tarjetasDatafast").modal('show');
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+//FUNCIÓN QUE OBTIENE TOTAL DE TARJETAS DATAFAST
+function fn_btnAceptarTarjetasDatafast() {
+    for (i = 0; i < id_botonesDatafast.length; i++) {
+        if ((isNaN($("#" + id_botonesDatafast[i] + "").val()))) {
+            alertify.set({labels: {ok: "OK"}});
+            alertify.alert("Faltan valores por ingresar");
+            //$("#"+id_botones[i]+"").addClass('btn-danger');
+            return false;
+        }
+    }
+    id_usuario = $("#hid_usr_id_cajero").val();
+    ctrEstacion = $("#hid_controlEstacion").val();
+    send = {"consultaformaPago": 1};
+    send.accion = 5;
+    idformaPago = 0;
+    send.usr_id_cajero = $("#hid_usr_id_cajero").val();
+    send.ctrc_id = $("#hid_controlEstacion").val();
+    send.prd_id = $("#hide_periodo").val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                for (i = 0; i < datos.str; i++) {
+                    $("#btnT" + datos[i]['fmp_descripcion'] + "").val(datos[i]['retiroValor'].toFixed(2));
+                    $("#diferenciat" + datos[i]['fmp_descripcion'] + "").val(datos[i]['diferenciaValor'].toFixed(2));
+                }
+                fn_totalesPos(id_usuario, ctrEstacion);
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+    $("#modal_tarjetasDatafast").modal('hide');
+}
+
+//FUNCIÓN QUE ELIMINA FORMAS DE PAGO DATAFAST PENDIENTES
+function fn_eliminaFormasPagoDatafast() {
+    ctrc_id = $("#hid_controlEstacion").val();
+    send = {"eliminaFormasPagoAgregadas": 1};
+    send.accion = 'D2';
+    send.banderafp = 1;
+    send.ctrc_id = ctrc_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+        }
+    });
+}
+
+function fn_cerrarModalAgregaFormaPago() {
+    fn_modalDegradado('normal');
+
+    if (($("#modal_formaPago").css('display')) == "none") {
+        $("#formaPago").modal("show");
+    } else {
+        $("#modal_formaPago").modal("show");
+    }
+
+    $("#modal_agregarFormaPago").modal('hide');
+}
+
+//FUNCIÓN PARA REALIZAR INTERFACE
+function fn_generar_interface() {
+    alertify.confirm("Está seguro de enviar datos de interface?", function (e) {
+        if (e) {
+            fn_cargando(1);
+            var IDPeriodo = $('#IDPeriodo').val();
+            if (IDPeriodo === '') {
+                alertify.error('ID del Periodo Incorrecto!!');
+                return false;
+            }
+            console.log('ingreso a interface..');
+            send = {"realizaTransferencia": 1};
+            $.ajax({
+                async: false,
+                type: "GET",
+                dataType: "json",
+                contentType: "application/x-www-form-urlencoded",
+                url: "../../corteCaja/config_desmontadoCajero.php",
+                data: send,
+                success: function (datos) {
+                    send = {"generarInterface": 1};
+                    send.IDPeriodo = IDPeriodo;
+                    if (datos.Valida === "ORIGEN") {
+                        // Se genera la interface desde ORIGEN
+                        // (TOTAL DE VENTA - VENTA HELADERÍA)
+                        send.TipoTransferencia = "ORIGEN";
+                    } else if (datos.Valida === "DESTINO") {
+                        // Lógica de interface desde destino
+                        // (TOTAL DE VENTA + VENTA HELADERÍA ENTRANTE)
+                        send.TipoTransferencia = "DESTINO";
+                    } else {
+                        // Lógica de interface normal
+                        // (TOTAL DE VENTA)
+                        send.TipoTransferencia = "NORMAL";
+                    }
+                    $.ajax({
+                        async: false,
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        url: "../../serviciosweb/interface/config_cliente_servicio.php",
+                        data: send,
+                        success: function (datos) {
+                            fn_cargando(0);
+                            console.log('Interface en administracion');
+                            console.log(datos);
+                            if (!datos) {
+                                alertify.error("Error al recuperar la información");
+                            } else {
+                                if (datos['Respuesta'] === 1) {
+                                    alertify.alert(datos['Mensaje']);
+                                    //Finalizar proceso
+                                } else if (datos['Respuesta'] === 0) {
+                                    alertify.alert(datos['Mensaje']);
+                                } else {
+                                    alertify.alert('Existe problemas al realizar la interface, se realizará posteriomente.');
+                                    console.log('ingreso a interface..');
+                                }
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            fn_cargando(0);
+                            alert(jqXHR);
+                            alert(textStatus);
+                            alert(errorThrown);
+                        }
+                    });
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    fn_cargando(0);
+                    alert(jqXHR);
+                    alert(textStatus);
+                    alert(errorThrown);
+                }
+            });
+        } else {
+            return false;
+        }
+    });
+}
+
+function fn_interfaceConsultaTransferencia(cedulaCajero, rst_id, fecha) {
+    //fn_cargando(1);
+    console.log('ingreso a interface transferencia personal..');
+    send = {"validaTransferencia": 1};
+    send.cedulaCajero = cedulaCajero;
+    send.rst_id = rst_id;
+    send.fecha = fecha;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "serviciosweb/interface/config_cliente_servicio.php",
+        data: send,
+        success: function (datos) {
+            if (!datos) {
+                alertify.error("Error al recuperar la información");
+            } else {
+                if (datos['Respuesta'] == 1) {
+                    console.log(datos['mensaje']);
+                    //Finalizar proceso
+                    TRANSFERENCIAPERSONAL = datos['Respuesta'];
+                    MENSAJE = datos['mensaje'];
+                } else if (datos['Respuesta'] == 0) {
+                    console.log(datos['mensaje']);
+                    TRANSFERENCIAPERSONAL = datos['Respuesta'];
+                    MENSAJE = datos['mensaje'];
+                } else {
+                    alertify.alert('Existe problemas al conectarse al servicio, se consultara posteriomente.');
+                    console.log('ingreso a interface transferencia..');
+                }
+                //numeroIntentos++;
+            }
+        }
+    });
+    //fn_cargando(0);
+}
+
+function fn_reporteFinDeDia(periodo) {
+    send = {"reporteFinDeDia": 1};
+    send.periodo = periodo;
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+        data: send,
+        success: function (datos) {
+            if (datos.str > 0) {
+                $("#div_reporteFinDeDia").empty();
+                for (i = 0; i < datos.str; i++) {
+                    $("#div_reporteFinDeDia").append(datos[i]['html']);
+                    $("#div_reporteFinDeDia").append(datos[i]['htmla']);
+                    $("#div_reporteFinDeDia").append(datos[i]['htmlb']);
+                    $("#div_reporteFinDeDia").append(datos[i]['htmlc']);
+                    $("#div_reporteFinDeDia").append(datos[i]['htmlf']);
+                    $("#ModalReporteFinDeDia").modal('show');
+                }
+            }
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+function fn_modificarValores(bandera) {
+    $.confirm({
+        title: "<span class='glyphicon glyphicon-user' aria-hidden='true'></span> Credenciales Administrador:",
+        keyboardEnabled: true,
+        content: "<input type='password' maxlength='10' placeholder='Ingrese credenciales' style='text-align:center;' class='form-control' id='usr_claveAdmin'/>",
+        confirmButton: 'Aceptar',
+        cancelButton: 'Cancelar',
+        confirmKeys: [13], // ENTER key
+        cancelKeys: [27], // ESC key
+        confirmButtonClass: 'btn-primary',
+        onOpen: function () {
+            $('#usr_claveAdmin').focus();
+        },
+        cancel: function () {
+
+        },
+        confirm: function () {
+            if ($("#usr_claveAdmin").val() === '') {
+                alertify.error("Ingrese credenciales.");
+                return false;
+            } else {
+                send = {"validarUsuarioAdministrador": 1};
+                send.usr_Admin = $("#usr_claveAdmin").val();
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                    data: send,
+                    success: function (datos) {
+                        if (datos.admini === 1) {
+                            $("#hid_usuario").val(datos.IDUsersPosAdmin);
+                            if (bandera === "modificar") {
+
+                                $('.modifi').attr('disabled', false);
+                                $('.modifi').append("&nbsp;&nbsp;&nbsp;&nbsp;<span class='glyphicon glyphicon-edit' aria-hidden='true'>");
+                            } else {
+                                fn_consultaFormaPagoNueva();
+                            }
+                        } else {
+                            alertify.error("Credenciales incorrectas.");
+                            return false;
+                        }
+                    }
+                });
+            }
+        }
+    });
+}
+
+function fn_modalModificarValor(fpm_id, fmp_descripcion, ctrc_id, usr_id, usr_usuario, prd_id, posCalculado, tpenv_id) {
+    $.confirm({
+        title: fmp_descripcion,
+        keyboardEnabled: true,
+        content: "<div class='row'><div class='col-xs-5'>POS Calculado:</div>\n\
+                    <div class='col-xs-7'>\n\
+                        <div class='form-group'>\n\
+                            <input type='text' readonly = 'readonly' style='text-align:center;' class='form-control' id='' value =" + posCalculado.toFixed(2) + " >\n\
+                        </div>\n\
+                    </div>\n\
+                  </div>\n\
+                  <div class='row'><div class='col-xs-5'>Monto Actual:</div>\n\
+                    <div class='col-xs-7'>\n\
+                        <div class='form-group'>\n\
+                            <input type='text' placeholder='Ingrese valor' maxlength='8' style='text-align:center;' class='form-control' id='valor'>\n\
+                        </div>\n\
+                    </div>\n\
+                  </div>",
+        confirmKeys: [13], // ENTER key
+        cancelKeys: [27], // ESC key
+        confirmButton: 'Guardar',
+        cancelButton: 'Cancelar',
+        confirmButtonClass: 'btn-primary',
+        onOpen: function () {
+            $("#valor").focus();
+            $('#valor').numeric('.'); // números con separador decimal
+        },
+        cancel: function () {
+            //$('#ModalFormasPagoInactivo').modal('show');
+        },
+        confirm: function () {
+            if ($("#valor").val() === '') {
+                alertify.error("Ingrese valor.");
+                return false;
+            } else {
+                send = {"actualizarValorDeclarado": 1};
+                send.accion = 'U';
+                send.fpm_id = fpm_id;
+                send.ctrc_id = ctrc_id;
+                send.valor = $("#valor").val();
+                send.usr_id_admin = $("#hid_usuario").val();
+                send.tpenv_id = tpenv_id;
+                $.ajax({
+                    async: false,
+                    type: "POST",
+                    dataType: "json",
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "../adminDesmontarCajero/config_adminDesmontarCajero.php",
+                    data: send,
+                    success: function (datos) {
+//                        if (datos.str > 0) {
+//                            for (i = 0; i < datos.str; i++) {
+//                            }
+//                        }
+                        alertify.success("Valores actualizados correctamente.");
+                        $('.modifi').attr('disabled', false);
+                        fn_formasPagoInactivo(usr_id, ctrc_id, usr_usuario, prd_id);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        alert(jqXHR);
+                        alert(textStatus);
+                        alert(errorThrown);
+                    }
+                });
+            }
+        }
+    });
+}

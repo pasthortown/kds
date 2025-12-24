@@ -1,0 +1,32 @@
+#cntBotonesLecturaAutomaticaCuponMultimarca{
+    display: flex;
+    justify-content: center;
+}
+#cntBotonesLecturaAutomaticaCuponMultimarca button{
+   flex-grow: 1;
+}
+#inputCodigoCuponMultimarcaAutomatico{
+    width:100%;
+}
+#cntInputCodigoCuponMultimarcaManual{
+    display: flex;
+    justify-content: center;
+}
+.cntInputCodigoCuponMultimarca{
+    width:100%;
+    display: flex;
+    font-size: 24px;
+    line-height: 1.5em;
+    margin: 0.5em 0; 
+}
+#cntInputCodigoCuponMultimarcaManual input{
+    width:22%; 
+}
+
+#inputCodigoCuponMultimarcaManual1,#inputCodigoCuponMultimarcaManual4{
+    width:40px;
+    flex-grow: 1;
+}
+#inputCodigoCuponMultimarcaManual2,#inputCodigoCuponMultimarcaManual3{
+    flex-grow: 10;
+}

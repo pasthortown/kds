@@ -1,0 +1,174 @@
+/* estilo para el div que se muestra una vez se abre la ventana modal */
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 99999;
+}
+/*
+.modal {
+	position: fixed;
+	top: 10px;
+	left: 35%;
+	width: 400px;
+	height: 740px;
+	background: #fff;
+	color: #333;
+	box-shadow: inset 0 0 0 0 #000, 0 0 10px #000;
+}*/
+
+#cabecerafactura {
+    height: 660px;
+    width: 400px;
+    margin: 0;
+    padding: 0;
+}
+
+#opcionesfactura {
+    width: 400px;
+    height: 60px;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+}
+
+#opcionesfactura input {
+    margin: 0 30px;
+    width: 140px;
+}
+
+.modalFormasPago {
+    position: fixed;
+    top: 10px;
+    left: 11%;
+    width: 800px;
+    height: 740px;
+    background: #fff;
+    color: #333;
+    box-shadow: inset 0 0 0 0 #000, 0 0 10px #000;
+}
+
+#lista_formaspago {
+    float: left;
+    left: 0;
+    width: 220px;
+    height: 660px;
+    overflow-y: auto;
+}
+
+.cntndr_pcns_trnsccns_frms_pg {
+    width: 800px;
+    height: 80px;
+}
+
+#trans_formaspago {
+    float: right;
+    right: 0;
+    height: 660px;
+    width: 578px;
+    overflow-y: auto;
+}
+
+.cnt_frms_pg_trnsccns {
+    width: 800px;
+    height: 660px;
+}
+
+#trans_formaspago table {
+    margin: 10px 0 0 14px;
+    width: 550px;
+    text-align: center;
+    padding: 0;
+    border: 1px solid #000000;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+#trans_formaspago th {
+    background: -o-linear-gradient(bottom, #666666 5%, #666666 100%);
+    background: -webkit-gradient( linear, left top, left bottom, color-stop(0.05, #666666), color-stop(1, #666666));
+    background: -moz-linear-gradient( center top, #666666 5%, #666666 100%);
+    background-color: #666666;
+    border: 0px solid #000000;
+    height: 28px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #FFF;
+}
+
+#trans_formaspago td {
+    height: 26px;
+    font-size: 13px;
+    text-align: center;
+}
+
+tr.seleccionado td {
+    background: #FFFF97;
+    color: #5b9dd0;
+}
+
+.titulo_formapago {
+    margin: 0;
+    padding: 0;
+    width: 220px;
+    height: 40px;
+    background: #CCC;
+    font-size: 18px;
+}
+
+.titulo_formapago h4 {
+    margin: 0;
+    padding: 10px;
+}
+
+.titulo_transacciones {
+    margin: 0;
+    padding: 0;
+    width: 578px;
+    height: 40px;
+    background: #CCC;
+    font-size: 18px;
+}
+
+.titulo_transacciones h4 {
+    margin: 0;
+    padding: 10px;
+}
+
+.facturacion {
+    margin-left: 15px;
+    font-family: Verdana;
+    font-size: 14px;
+}
+
+.promociones {
+    font-size: 11px;
+    font-family: Arial, Helvetica, sans-serif;
+    width: 240px;
+    margin-left: 2px;
+}
+
+#numero_general {
+    font-size: 12px;
+}
+
+#lectorTrama {
+    margin-top: -5000px;
+    position: absolute;
+}
+
+#imprimirFactura {
+    position: absolute;
+    float: left;
+    left: 0;
+}
+
+#salirVisor {
+    position: absolute;
+    float: right;
+    right: 0;
+}

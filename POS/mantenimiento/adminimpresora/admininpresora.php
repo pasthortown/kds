@@ -1,0 +1,323 @@
+<?php
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: CHRISTIAN PINTO///////////////////////////////////////////////////////////////
+///////////DESCRIPCION: CONFIGURACION IMPRESORA, CREAR MODIFICAR CONFIGURACION DE IMPRESORA ////////////
+////////////////TABLAS: Impresora, Tipo_impresora, Canal_Impresora_Estacion, Restaurante ///////////////
+////////FECHA CREACION: 22/06/2015//////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+session_start();
+include_once"../../system/conexion/clase_sql.php";
+include_once"../../clases/clase_seguridades.php";
+include_once"../../clases/clase_menu.php";
+include_once"../../seguridades/seguridad.inc";
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1" />
+<title>Impresora</title>
+	<!---------------------------------------------------
+                           ESTILOS
+    ----------------------------------------------------->
+<link rel="stylesheet" href="../../css/jquery-ui.css" type="text/css"/>
+<link rel="stylesheet" type="text/css" href="../../css/est_administracionPantalla.css" />
+<link rel="stylesheet" type="text/css" href="../../css/alertify.core.css"/>
+<link rel="stylesheet" type="text/css" href="../../css/alertify.default.css"/>
+<link rel="stylesheet" type="text/css" href="../../bootstrap/css/bootstrap.css" />
+<!--<link rel="stylesheet" type="text/css" href="../../bootstrap/css/select2.css" />-->
+<!--<link rel="stylesheet" type="text/css" href="../../css/select2.css" />-->
+<link rel="stylesheet" type="text/css" href="../../css/chosen.css" />
+		<!---------------------------------------------------
+                           JSQUERY
+    	----------------------------------------------------->
+<script src="../../js/jquery1.11.1.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../js/ajax_datatables.js"></script>
+<!--<script src="../../js/ajax_select2.js"></script>-->
+<script language="javascript1.1" type="text/javascript" src="../../bootstrap/js/bootstrap.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../bootstrap/js/bootstrap-dataTables.js"></script>
+<script language="javascript1.1"  src="../../js/alertify.js"></script>
+<script type="text/javascript" src="../../js/ajax_adminimpresora.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../js/js_validaciones.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../js/chosen.jquery.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../js/chosen.jquery.min.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../js/chosen.proto.js"></script>
+<script language="javascript1.1" type="text/javascript" src="../../js/chosen.proto.min.js"></script>
+
+
+</head>
+
+<body>
+<input inputmode="none"  id="idUser" type="hidden" value="<?php echo $_SESSION['usuarioId']; ?>"/>
+<div class="superior">
+  <div class="menu" style="width: 500px;" align="center">
+    <ul>
+      <li>
+        <input inputmode="none"  id="btn_agregar" type="button"  onclick="fn_accionar('Nuevo')" class="botonhabilitado" value="Agregar"/>
+      </li>
+     <!-- <li>
+        <input inputmode="none"  id="btn_cancelar" type="button" onclick="fn_cancelar()" class="botonhabilitado" value="Cancelar"/>
+      </li>-->
+    </ul>
+  </div>
+  <div class="tituloPantalla">
+    <h1>IMPRESORA</h1>
+  </div>
+</div>
+</br>
+
+
+<div class="contenedor">
+        
+        <div class="inferior">
+            
+            <div class="panel panel-default text-left">
+              <div class="panel-body">
+                    <tr>
+                        <td width="150">Seleccionar Restaurante: </td>
+                        <td>
+                            <select id="selrest" class="form-control" ></select>
+                            
+                        </td>
+                    </tr>    
+              </div>
+            </div>
+            
+            </br>
+    
+            <div class="panel panel-default" id="botonesTodos">
+				<div class="panel-heading">
+                    <div class="row">
+                    		<div class="col-sm-8"><h5>Lista de Configuraciones de Impresora</h5>
+                            	<div id="opciones_estados" class="btn-group" data-toggle="buttons">
+                                                                       
+                                    <label class="btn btn-default btn-sm active" onclick="fn_OpcionSeleccionada('Activos');"><input inputmode="none"  id="opt_Activos" type="radio" value="Activos" checked="checked" autocomplete="off" name="estados">Activos</label>
+                                    
+                                    <label class="btn btn-default btn-sm" onclick="fn_OpcionSeleccionada('Inactivos');"><input inputmode="none"  id="opt_Inactivos" type="radio" value="Inactivos" autocomplete="off" name="estados">Inactivos</label>
+                                    
+                                     <label class="btn btn-default btn-sm" onclick="fn_OpcionSeleccionada('Todos');"><input inputmode="none"  id="opt_Todos" type="radio" value="Todos" autocomplete="off" name="estados">Todos</label>
+                            	</div>
+                            </div>
+                            
+                        </div>
+                    </div>                         
+            </div>
+           
+         	<div id="impresora">
+            	<table class="table table-bordered table-hover" id="tabla_impresora" border="1" cellpadding="1" cellspacing="0">
+      			</table>
+            </div>
+               
+        <!-- Fin Contenedor Inferior -->
+       </div>
+    
+    <!-- Fin Contenedor -->
+ 	</div>
+
+<!-------------------------------------INICIO MODAL NUEVO BOOTSTRAP---------------------------------------------->
+<div class="modal fade" id="ModalNuevo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header panel-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button> 
+        <h4 class="modal-title" id="titulomodalNuevo">Nueva Impresora: </b></h4>
+      </div>
+       </br>
+      <div align="right" class="col-xs-12 col-x"> Est&aacute; Activo?
+                <input inputmode="none"  type="checkbox" id="option" checked="checked">
+              </div>
+              </br>
+              </br>
+      <div class="modal-body">       
+        
+              <!--<div class="row">-->
+              	
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Restaurante:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">   
+                        <input inputmode="none"  style="text-align:center;" class="form-control" maxlength="100" id="txt_rest" disabled="disabled"/>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Ingrese Nombre:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">   
+                        <input inputmode="none"  style="text-align:center;" class="form-control" maxlength="100" id="txt_nombre"/>                    	
+                        <input inputmode="none"  id="txt_idcadena" type="hidden"/> 
+                        <input inputmode="none"  type="hidden" name="mod_magid" id="mod_magid"/>
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Ingrese Descripci&oacute;n:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1"> 
+                        <input inputmode="none"  style="text-align:center;" class="form-control" maxlength="100" id="txt_descripcion"/>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Seleccione Tipo de Impresora:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">    
+                        <select id="sel_tipoimpresora" class="form-control" ></select>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Seleccione Estaci&oacute;n a la que se conecta:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">    
+                        <select id="sel_estacion" class="form-control" ></select> 
+                                           	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                
+                
+           <!-- </div>-->
+      </div>
+      <div class="modal-footer panel-footer">
+      <button type="button" class="btn btn-primary" onclick="fn_accionar('Grabar')" >Aceptar</button>
+       <button type="button" class="btn btn-default" onclick="" data-dismiss="modal">Cancelar</button>
+        
+      </div>
+    </div>
+  </div> 
+</div> 
+  
+<!-------------------------------------FIN MODAL MODIFICAR BOOTSTRAP---------------------------------------------->
+
+<div class="modal fade" id="ModalMod" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header panel-footer">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="titulomodalMod"> </b></h4>
+      </div>
+       </br>
+      <div align="right" class="col-xs-12 col-x"> Est&aacute; Activo?
+                <input inputmode="none"  type="checkbox" id="optionmod" >
+              </div>
+              </br>
+              </br>
+      <div class="modal-body">       
+        
+             <!--<div class="row">-->
+              	
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Restaurante:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">      
+                        <input inputmode="none"  style="text-align:center;" class="form-control" maxlength="100" id="txt_restMod" disabled="disabled"/>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Nombre:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">   
+                        <input inputmode="none"  style="text-align:center;" class="form-control" maxlength="100" id="txt_nombreMod"/>                    	
+                        <input inputmode="none"  id="txt_idcadena" type="hidden"/> 
+                        <input inputmode="none"  type="hidden" name="mod_magid" id="mod_magid"/>
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Descripci&oacute;n:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1"> 
+                        <input inputmode="none"  style="text-align:center;" class="form-control" maxlength="100" id="txt_descripcionMod"/>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Tipo de Impresora:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">    
+                        <select id="sel_tipoimpresoraMod" class="form-control" ></select>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                
+                 <div class="row">
+                  <div class="col-xs-1"></div>
+                  <div class="col-xs-4">
+                    <h5>Estaci&oacute;n a la que se conecta:</h5>
+                  </div>
+                  <div class="col-xs-6">
+                    <div class="form-group" class="col-xs-1">    
+                        <select id="sel_estacionMod" class="form-control" ></select>                    	
+                    </div>
+                  </div>
+                  <div class="col-xs-1"></div>
+                </div>
+                                
+            <!--</div>-->
+
+      </div>
+      <div class="modal-footer panel-footer">
+      <button type="button" class="btn btn-primary" onclick="fn_accionar('Grabar')" >Aceptar</button>
+       <button type="button" class="btn btn-default" onclick="" data-dismiss="modal">Cancelar</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
+<!-------------------------------------FIN MODAL MODIFICAR BOOTSTRAP---------------------------------------------->
+
+<input inputmode="none"  type="hidden" id="txt_idimpresora"/>
+<input inputmode="none"  type="hidden" id="txt_idrestaurante"/>
+<input inputmode="none"  type="hidden" id="txt_filarestaurante"/>
+<input inputmode="none"  type="hidden" id="txt_cadenahid"/>
+<input inputmode="none"  type="hidden" id="txt_idtipoimpresora"/>
+
+</body>
+</html>

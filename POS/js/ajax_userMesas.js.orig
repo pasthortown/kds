@@ -1,0 +1,1851 @@
+/* global alertify */
+
+//////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: Worman Andrade//////////////////////
+////////DESCRIPCION: Clase para validaci�n de combos//////////
+//////////////////////////////////////////////////////////////
+///////FECHA CREACION: 20-Enero-2014//////////////////////////
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////// 
+
+var cod_piso = 0;
+var cod_area = 0;
+var sw_numPersonas = 0;
+var categoria = -1;
+var mesa = 0;
+var vistaInfo = false;
+var perfilAcceso = false;
+var unionMesa = false; // bandera para controlar si la union de mesa esta activa para que el usuario seleccione las mesa.
+var vistaInfoTran = false;
+var modalPersonas = "";
+var perfil_Usuario = "";
+var HabilitarRPM = false;
+var TiempoRPM = false;
+var tiempoEspera;
+var listaPermisos = new Array();
+var tipoUser;
+var img = "";
+var img_E = "";
+
+$(document).ready(function() {
+    $("#modalTransferirMesas").hide();
+    $("#aumentarContador").hide();
+    $("#mdl_rdn_pdd_crgnd").hide();
+    fn_LoadAccess($("#txtUsuarioLogin").val(), $("#txtPantalla").val());
+    fn_Loaduser($("#txtUsuarioLogin").val());
+    fn_ResfrescarPanelMesas(); // funcion que actualiza el panel de mesa, esto se puede desactivar por colecccion.
+    fn_PedidoRapidoEnEspera();
+    modalPersonas = fn_modalPersonas();
+    fn_popupCantidad();
+
+    cargarPiso();
+    perfilAcceso = existe("Acceso a mesas ocupadas", listaPermisos);
+
+    document.oncontextmenu = function() { return false; };
+    $('#mccs').shortscroll({
+        scrollSpeed: 200
+    });
+
+    if (typeof GetURLParameter('IDPisos') !== "undefined" && typeof GetURLParameter('IDAreaPiso') !== "undefined") {
+        var IDPisos = GetURLParameter('IDPisos');
+        var IDAreaPiso = GetURLParameter('IDAreaPiso');
+        CargarArea(IDPisos);
+        var imagen = $('#' + GetURLParameter('IDAreaPiso')).val();
+        cargarDatos(IDPisos, imagen);
+        fn_cargaMesas($("#txtRest").val(), IDPisos, IDAreaPiso);
+
+        cod_area = IDAreaPiso;
+        cod_piso = IDPisos;
+    }
+    if (cod_area && IDPisos){
+
+
+    }
+
+    /*lECTURA VITALITY
+    $("#txtCodigoVitality").on("change", function() {
+        var codigoV = $("#txtCodigoVitality").val();
+        $("#txtCodigoVitality").val(codigoV);
+        cargarTokenSeguridadVitality(codigoV);
+    });
+    */
+});
+
+/* VITALITY
+function cargarTokenSeguridadVitality(codigoQRVitality) {
+    console.log('entro 1');
+    //fn_cargando(1);
+    var send = {};
+    send.metodo = "cargarTokenSeguridadVitality";
+    $.ajax({
+        async: true,
+        type: "POST",
+        dataType: "json",
+        "Accept": "application/json, text/javascript2",
+        contentType: "application/x-www-form-urlencoded; charset=utf-8; application/json",
+        url: "config_VitalityWS.php",
+        data: send,
+        success: function(datos) {
+            console.log('entro 2');
+            if (datos.access_token != '') {
+                var TokenSeguridadVitality = datos.token_type + ' ' + datos.access_token;
+                validarCodigoQRVitality(codigoQRVitality, TokenSeguridadVitality);
+                //ventaVitality(codigoQRVitality, TokenSeguridadVitality);
+
+            } else {
+                console.log('entro 3');
+                //fn_cargando(0);
+                $("#txtCodigoVitality").focus();
+                alertify.error('Error:' + datos.mensajes).delay(10);
+                $("#txtCodigoVitality").val('');
+
+            }
+        },
+        error: function (err){
+            console.log(err);
+        }
+    });
+};
+
+function flujo_seguimiento(show, hide, limpiar) {
+    if (recarga !== "") {
+        $("#tqtIngresoCR").html('LEA CODIGO DE SEGURIDAD<p style="font-size: 0.6em;" class="mensajePequeno">Para acumular puntos es necesario lectura de código de seguridad.</p>');
+    }
+    if (limpiar) {
+        $("#txtNumeroCedulaBusqueda").val("");
+        $("#txtNumeroDocumento").val("");
+        $("#txtNombresApellidos").val("");
+        $("#txtTelefono").val("");
+        $("#txtDireccion").val("");
+        $("#txtCorreo").val("");
+        $("#btnCRUD").val("Registrar");
+    }
+    if (show == "pre1") {
+        recarga = "";
+    } else if (show == "registroCliente") {
+        deshabilitarCamposCliente(true);
+    }
+    $("#" + hide).hide(200);
+    $("#" + show).show(200);
+    ocultarTeclado();
+    //Foco en Entrada de Codigo
+    darFocoEntradaQR();
+}
+
+function ocultarTeclado() {
+    fn_cerrarModalCuponesSistemaGerente();
+    $("#keyboardCliente").hide();
+    $("#keyboardCliente").empty();
+    $("#dominio1").empty();
+    $("#dominio2").empty();
+    $("#numPadCliente").empty();
+}
+
+function fn_cerrarModalCuponesSistemaGerente() {
+    $("#keyboard").hide();
+    $("#keyboard").empty();
+}
+
+var darFocoEntradaQR = function() {
+    $("#inLectorCodigos").focus();
+};
+
+
+function validarCodigoQRVitality(codigoQRVitality, TokenSeguridadVitality) {
+    var send = {};
+    send.metodo = "ValidarVoucherVitality";
+    send.codigoQRVitality = codigoQRVitality;
+    send.TokenSeguridadVitality = TokenSeguridadVitality;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        "Accept": "application/json, text/javascript2",
+        contentType: "application/x-www-form-urlencoded; charset=utf-8; application/json",
+        url: "config_VitalityWS.php",
+        data: send,
+        success: function(datos) {
+            var info = datos.data;
+            if (datos.errores == "") {
+                var telf = filtrarNumeros(info.phoneNumber);
+                if (parseFloat(info.currentBalance) > 0.00) {
+                    var cliente = obtenerIdClienteExterno(0, info.legalName, "", "RUC", info.documentNumber, telf, info.address, "", "");
+                    if (cliente != null) {
+                        $("#txtCodigoVitality").val("");
+                        $("#txtCodigoVitality").focus();
+                        fn_cargando(0);
+                        ir_tomaPedido();
+                    } else {
+                        fn_cargando(0);
+                        $("#txtCodigoVitality").val("");
+                        alertify.error("Error con Datos de Cupón").delay(10);
+                        $("#txtCodigoVitality").focus();
+                    }
+                } else {
+                    fn_cargando(0);
+                    $("#txtCodigoVitality").val('');
+                    alertify.error('Error: Cupón Canjeado o Expirado').delay(10);
+                    $("#txtCodigoVitality").focus();
+                }
+            } else {
+                fn_cargando(0);
+                $("#txtCodigoVitality").val("");
+                alertify.error("Existe problemas con el Cupón. Por favor intente más tarde.").delay(10);
+                $("#txtCodigoVitality").focus();
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.log(jqXHR, textStatus, errorThrown);
+            fn_cargando(0);
+            $("#txtCodigoVitality").val("");
+            alertify.error("Servicio no disponible, por favor intentalo más tarde.").delay(10);
+            $("#txtCodigoVitality").focus();
+        }
+    });
+}
+
+//Devolver solo números
+function filtrarNumeros(numero) {
+    return numero.replace(/\D/g, "");
+}
+
+function obtenerIdClienteExterno(idCiudad, nombre, apellido, tipoDocumento, documento, telefono, direccion, email, tipoCliente) {
+    var idCliente = null;
+    var send = { "metodo": "obtenerIdClienteExterno" };
+    send.idCiudad = idCiudad;
+    send.nombre = nombre;
+    send.apellido = apellido;
+    send.tipoDocumento = tipoDocumento;
+    send.documento = documento;
+    send.telefono = telefono;
+    send.direccion = direccion;
+    send.email = email;
+    send.tipoCliente = tipoCliente;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_VitalityWS.php",
+        data: send,
+        success: function(datos) {
+            if (datos !== null) {
+                idCliente = datos.idCliente;
+            }
+        }
+    });
+
+    return idCliente;
+}
+
+function ir_tomaPedido() {
+    var IDMesa = $("#hide_mesa_id").val();
+    if (recarga == "Recargas") {
+        if (obtenerLimitesRecarga()) {
+            $("#cntRecargas").show();
+            $("#ingresoCedula").hide();
+            fn_numericoFDZN("#inValorRecarga");
+        } else {
+            alertify.error("Error al obtener parámetros de recargas.");
+        }
+    } else {
+        window.location.replace("tomaPedido.php?numMesa=" + IDMesa);
+    }
+}
+
+function fn_cargando(std) {
+    if (std > 0) {
+        $("#mdl_rdn_pdd_crgnd").show();
+    } else {
+        $("#mdl_rdn_pdd_crgnd").hide();
+    }
+}
+   FIN VITALITY*/
+function CambioElEstadoDeMesa(idMesa_prm, estado_prm) {
+
+
+    var result = "Iguales";
+    $("#mesas div").each(function() {
+        var idMesa = $(this).attr("id");
+        var estado = $(this).children('a').children('img').attr('src');
+        estado = estado.substring(estado.lastIndexOf("/") + 1, estado.lastIndexOf("."));
+
+        if (idMesa.trim() === idMesa_prm.trim()) {
+            if (estado.trim() !== estado_prm.trim()) {
+                result = "No iguales";
+            } else {
+                result = "Iguales";
+            }
+        }
+    });
+    return result;
+}
+
+function refresh() {
+
+    if (cod_area !== "" && cod_piso !== "") {
+        //   fn_actualizaEstadosMesa( $("#txtRest").val(), cod_piso, cod_area);
+        var estado = 0;
+        send = { "CargarMesa": 1 };
+        send.rest = $("#txtRest").val();
+        send.piso = cod_piso;
+        send.area = cod_area;
+        send.est_id = $('#est_id').val();
+        send.user_pos = $('#txtUsuarioLogin').val();
+        send.idPeriodo = $('#idPeriodo').val();
+        $.ajax({
+            async: false,
+            type: "GET",
+            dataType: "json",
+            contentType: "application/x-www-form-urlencoded",
+            url: "config_UserMesas.php",
+            data: send,
+            success: function(datos) {
+
+
+                for (i = 0; i < datos.str; i++) {
+                    var IdMesaSQL = datos[i]['mesa_id'];
+                    var StatusMesaSQl = datos[i]['std_descripcion'];
+                    var respuesta = CambioElEstadoDeMesa(IdMesaSQL, StatusMesaSQl);
+                    if (respuesta === 'No iguales' || datos[i]['mi_mesa']) {
+
+                        var IdDiv = $("#" + IdMesaSQL);
+
+                        IdDiv.removeClass(IdDiv.attr('class'));
+                        IdDiv.addClass('mesa');
+                        IdDiv.addClass(datos[i]['mi_mesa']);
+
+                        $('#' + IdMesaSQL).children("a").children('img').attr("src", (datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png"));
+                        $('#' + IdMesaSQL).children("a").attr('onMouseOver', "MM_swapImage('mesa" + IdMesaSQL + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + "_E.png" + "',1)");
+                        $('#' + IdMesaSQL).children("a").attr('onMouseOut', "MM_swapImage('mesa" + IdMesaSQL + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png" + "',1)");
+                        //                        
+                    }
+                    // $('#mesas').append("<div  onclick=\"fn_irOrdenPedido('" + datos[i]['mesa_id'] + "',1,'" + datos[i]['std_descripcion'] + "')\"  estacion='" + datos[i]['Estacion_asociada'] + "' class='mesa " + datos[i]['mi_mesa'] + "' align='center' id='" + datos[i]['mesa_id'] + "' style='width:" + dimension[0] + "px;height:" + dimension[1] + "px;left:" + datos[i]['mesa_coordenadax'] + "px; top:" + datos[i]['mesa_coordenaday'] + "px; position:absolute;'><a onMouseOver=\"MM_swapImage('mesa" + datos[i]['mesa_id'] + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + "_E.png',1)\" onMouseOut='MM_swapImgRestore()' href='#' ><img  style=\"width:100%; height:100%\" name='mesa" + datos[i]['mesa_id'] + "' src='" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png' border='0' ><br/><label style='position:absolute; font-size: 9px; color: white;top:50%;left:50%;transform: translate(-50%, -50%);'>" + datos[i]['mesa_descripcion'] + "</label></a></div>");
+                }
+            }
+        });
+
+    }
+    parar();
+}
+
+var HabilitarRPM = false;
+
+function SetHabilitadoRPM(dato) {
+    HabilitarRPM = dato;
+}
+
+function GetHabilitadoRPM() {
+    return HabilitarRPM;
+}
+
+var TiempoRPM = false;
+
+function SetTiempoRPM(dato) {
+    TiempoRPM = dato;
+}
+
+function GetTiempoRPM() {
+    return TiempoRPM;
+}
+
+
+function fn_ResfrescarPanelMesas() {
+    var send = {"ResfrescarPanelMesas": 1};
+    send.rst_id = $("#txtRest").val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                SetHabilitadoRPM(datos[0]['habilitado']);
+                SetTiempoRPM(datos[0]['tiempo']);
+            } else {
+                SetHabilitadoRPM(false);
+                SetTiempoRPM(0);
+            }
+        }
+    });
+}
+
+
+
+var tiempoEspera;
+
+function ini() {
+    if (GetHabilitadoRPM() === 'Si') {
+        tiempoEspera = setTimeout(refresh, GetTiempoRPM());
+    }
+}
+
+function parar() {
+    if (GetHabilitadoRPM() === 'Si') {
+        clearTimeout(tiempoEspera);
+        tiempoEspera = setTimeout(refresh, GetTiempoRPM());
+    }
+}
+
+function fn_PedidoRapidoEnEspera() {
+
+   var send = { "pedidoRapidoEnEspera": 1 };
+    send.rst_id = $('#txtRest').val();
+    send.est_id = $('#est_id').val();
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                $('#PedidoRapido').attr('style', datos[0]['style']);
+                $('#PedidoRapido').attr('title', datos[0]['title']);
+                if (datos[0]['mensaje'] === 'Si') {
+                    $('#PedidoRapido').focus();
+                    alertify.success(datos[0]['mens_alerta']);
+                }
+            }
+        }
+    });
+}
+
+
+var listaPermisos = new Array();
+
+function fn_LoadAccess(usuario_id, pantalla) {
+    send = { "cargarPermisos": 1 };
+    send.usuario_id = usuario_id;
+    send.pantalla = pantalla;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "../seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                for (var i = 0; i < datos.str; i++) {
+                    if (document.getElementsByName(datos[i]['descripcion'])[0] !== undefined) {
+                        var IDBoton = document.getElementsByName(datos[i]['descripcion'])[0].id;
+                        $('#' + IDBoton).removeAttr('disabled');
+                        $('#' + IDBoton).removeClass('boton_Accion_Disable1');
+                        $('#' + IDBoton).addClass('boton_Accion1');
+                    }
+
+                    listaPermisos[i] = datos[i]['descripcion'];
+                }
+            } else {
+                alertify.error('No cuenta con ningún permiso sobre ésta pantalla.');
+            }
+        }
+    });
+}
+
+
+var tipoUser;
+
+function setTipoUser(tipo) {
+    tipoUser = tipo;
+}
+
+function GetTipoUser() {
+    return tipoUser;
+}
+
+function fn_Loaduser(usuario_id) {
+    $('#infoUsuario').html('');
+    send = { "cargarUsuario": 1 };
+    send.usuario_id = usuario_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "../seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                setTipoUser(datos[0]['perfil']);
+                $('#infoUsuario').html("<strong>" + datos[0]['perfil'] + ": </strong> " + datos[0]['usuario']);
+                perfil_Usuario = datos[0]['perfil'];
+            }
+        }
+    });
+}
+
+
+
+//Cargar combo de la cadena
+function cargarPiso() {
+
+    var codRestaurante = $("#txtRest").val();
+    var send = {"cargarPiso": 1};
+    send.codigo = codRestaurante;
+    send.est_id = $("#est_id").val();
+    send.cnd_id = $("#txtCadena").val();
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                sw_numPersonas = datos[0]['rst_num_personas'];
+                $("#piso").html("");
+                for (i = 0; i < datos.str; i++) {
+                    $("#piso").append("<button   class=\"" + datos[i]['classCss'] + "\" onclick=\"CargarArea('" + datos[i]['pis_id'] + "')\">" + datos[i]['pis_numero'] + "</button>");
+                }
+                if ($('#cargoPisoArea').val() === 'No') {
+                    CargarArea(datos[0]['pisoDefecto']);
+                }
+            }
+        }
+    });
+}
+
+function CargarArea(codigopiso) {
+    $('#mesas').attr('style', '');
+    $('#mesas').html("");
+    $("#area").html("");
+    setPiso(codigopiso);
+    var send = { "CargarArea": 1 };
+    send.codigo = codigopiso;
+    send.est_id = $("#est_id").val();
+    send.cnd_id = $("#txtCadena").val();
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                $("#area").html("");
+                for (i = 0; i < datos.str; i++) {
+                    //$("#area").append("<input type='button' class='area_button' onclick=\"cargarDatos()\"  value='"+datos[i]['arp_descripcion'].substr(0,1)+"\' ></input>");
+                    $("#area").append("<input type='button' style=\"width: 100%\" class='area_button " + datos[i]['classCss'] + "' onclick=\"cargarDatos('" + datos[i]['arp_id'] + "','" + datos[i]['arp_imagen'] + "')\"  value='" + ((datos[i]['arp_descripcion'] === "") ? "Nombre no disponible" : datos[i]['arp_descripcion']) + "\' ></input>");
+                    $("#area").append("<input type='hidden' id=" + datos[i]['arp_id'] + " value=" + datos[i]['arp_imagen'] + "></input>");
+                }
+
+                if ($('#cargoPisoArea').val() === 'No') {
+                    for (i = 0; i < datos.str; i++) {
+                        if (datos[i]['classCss'] === 'boton_Accion_EE1') {
+                            cargarDatos(datos[i]['AreaPisoDefecto'], datos[i]['arp_imagen']);
+                            break;
+                        }
+
+                    }
+                }
+
+
+
+            }
+
+        }
+    });
+}
+
+
+function cargarDatos(area, imagen) {
+    $("#mesas").show();
+    $("#detalle_plu").hide();
+
+    setArea(area);
+    //$(".mesa").empty();
+    $("#contenedorRetomarOrden").show();
+    var codRestaurante = $("#txtRest").val();
+
+
+    var codCadena = $("#txtCadena").val();
+    codPiso = $("#piso").val();
+    codArea = $("#area").val();
+    //     cod_piso=codPiso;
+    //    cod_area=area;
+
+    var cadena = codCadena + "_" + codRestaurante + "_" + codPiso + "_" + codArea;
+    var objeto = document.getElementById('mesas');
+    objeto.style.backgroundImage = 'url(data:image/png;base64,' + imagen + ')';
+    objeto.style.backgroundRepeat = 'no-repeat';
+    objeto.style.width = '100%';
+    objeto.style.height = '100%';
+    //    objeto.style.width = (screen.width - (screen.width * 0.3)) + 'px';
+    //    objeto.style.height = (screen.height - (screen.height * 0.1)) + 'px';
+
+
+    $("#mesas").css("background-repeat", "no-repeat");
+    $("#mesas").css("background-size", "100% 100%");
+    $("#mesas").css("height", "625px");
+
+    fn_cargaMesas(codRestaurante, getPiso(), getArea());
+
+}
+/////////////////////////////CARGAR LA IMAGEN////////////////////////////////////////////
+
+/////////////////////////////CARGA LAS MESAS DE ACUERDO A LA BASE DE DATOS//////////////		
+function fn_cargaMesas(codRestaurante, codPiso, codArea) {
+
+
+    var send;
+    var estado = 0;
+    var send = {"CargarMesa": 1};
+    send.rest = codRestaurante;
+    send.piso = codPiso;
+    send.area = codArea;
+    send.est_id = $('#est_id').val();
+    send.user_pos = $('#txtUsuarioLogin').val();
+    send.idPeriodo = $('#idPeriodo').val();
+
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                $('#mesas').html("");
+                var nombreCliente = "";
+                var texto = "";
+
+                if ($('#switch').val() == 1) {
+                    for (var i = 0; i < datos.str; i++) {
+                        var dimension = datos[i]['mesa_dimension'].split("|");
+                        nombreCliente = datos[i]['nombreCliente'];
+                        texto = "<label style='position: absolute; font-weight: bold;!important font-size: 12px; color: white; top: 55%; left: 50%; transform: translate(-50%, -50%);'>" + nombreCliente + "</label>";
+
+                        if (nombreCliente != '') {
+                            $('#mesas').append("<button  onclick=\"fn_irOrdenPedido('" + datos[i]['mesa_id'] + "',1,'" + datos[i]['std_descripcion'] + "')\"  estacion='" + datos[i]['Estacion_asociada'] + "' class='mesa " + datos[i]['mi_mesa'] + "' align='center' id='" + datos[i]['mesa_id'] + "' style='width:" + dimension[0] + "px;height:" + dimension[1] + "px;left:" + datos[i]['mesa_coordenadax'] + "px; top:" + datos[i]['mesa_coordenaday'] + "px; position:absolute;background-color: Transparent; background-repeat:no-repeat;cursor:pointer;overflow: hidden;'><a onMouseOver=\"MM_swapImage('mesa" + datos[i]['mesa_id'] + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + "_E.png',1)\" onMouseOut='MM_swapImgRestore()' href='#' ><img  style=\"width:100%; height:100%\" name='mesa" + datos[i]['mesa_id'] + "' src='" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png' border='0' ><br/><label style='position:absolute; font-size: 19px; color: white;top:30%;left:50%;transform: translate(-50%, -50%);'>" + datos[i]['mesa_descripcion'] + "</label>" + texto + "</a></button>");
+                        } else {
+                            $('#mesas').append("<button  onclick=\"fn_irOrdenPedido('" + datos[i]['mesa_id'] + "',1,'" + datos[i]['std_descripcion'] + "')\"  estacion='" + datos[i]['Estacion_asociada'] + "' class='mesa " + datos[i]['mi_mesa'] + "' align='center' id='" + datos[i]['mesa_id'] + "' style='width:" + dimension[0] + "px;height:" + dimension[1] + "px;left:" + datos[i]['mesa_coordenadax'] + "px; top:" + datos[i]['mesa_coordenaday'] + "px; position:absolute;background-color: Transparent; background-repeat:no-repeat;cursor:pointer;overflow: hidden;'><a onMouseOver=\"MM_swapImage('mesa" + datos[i]['mesa_id'] + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + "_E.png',1)\" onMouseOut='MM_swapImgRestore()' href='#' ><img  style=\"width:100%; height:100%\" name='mesa" + datos[i]['mesa_id'] + "' src='" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png' border='0' ><br/><label style='position:absolute; font-size: 19px; color: white;top:50%;left:50%;transform: translate(-50%, -50%);'>" + datos[i]['mesa_descripcion'] + "</label></a></button>");
+                        }
+                    }
+                } else {
+                    for (var i = 0; i < datos.str; i++) {
+                        var dimension1 = datos[i]['mesa_dimension'].split("|");
+                        nombreCliente = datos[i]['nombreCliente'];
+                        texto = "<label style='position: absolute; font-weight: bold;!important font-size: 12px; color: white; top: 55%; left: 50%; transform: translate(-50%, -50%);'>" + nombreCliente + "</label>";
+
+                        if (nombreCliente != '') {
+                            $('#mesas').append("<button  onclick=\"fn_irOrdenPedido('" + datos[i]['mesa_id'] + "',1,'" + datos[i]['std_descripcion'] + "')\" estacion='" + datos[i]['Estacion_asociada'] + "'  class='mesa " + datos[i]['mi_mesa'] + "' align='center' id='" + datos[i]['mesa_id'] + "' style='width:" + dimension1[0] + "px;height:" + dimension1[1] + "px;left:" + datos[i]['mesa_coordenadax'] + "%; top:" + datos[i]['mesa_coordenaday'] + "%; position:absolute;background-color: Transparent; background-repeat:no-repeat;cursor:pointer;overflow: hidden;'><a onMouseOver=\"MM_swapImage('mesa" + datos[i]['mesa_id'] + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + "_E.png',1)\" onMouseOut='MM_swapImgRestore()' href='#'><img  style=\"width:100%; height:100%\" name='mesa" + datos[i]['mesa_id'] + "' src='" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png' border='0' ><br/><label style='position:absolute; font-size: 19px; color: white;top:30%;left:50%;transform: translate(-50%, -50%);'>" + datos[i]['mesa_descripcion'] + "</label>" + texto + "</a></button>");
+                        } else {
+                            $('#mesas').append("<button  onclick=\"fn_irOrdenPedido('" + datos[i]['mesa_id'] + "',1,'" + datos[i]['std_descripcion'] + "')\" estacion='" + datos[i]['Estacion_asociada'] + "'  class='mesa " + datos[i]['mi_mesa'] + "' align='center' id='" + datos[i]['mesa_id'] + "' style='width:" + dimension1[0] + "px;height:" + dimension1[1] + "px;left:" + datos[i]['mesa_coordenadax'] + "%; top:" + datos[i]['mesa_coordenaday'] + "%; position:absolute;background-color: Transparent; background-repeat:no-repeat;cursor:pointer;overflow: hidden;'><a onMouseOver=\"MM_swapImage('mesa" + datos[i]['mesa_id'] + "','','" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + "_E.png',1)\" onMouseOut='MM_swapImgRestore()' href='#'><img  style=\"width:100%; height:100%\" name='mesa" + datos[i]['mesa_id'] + "' src='" + datos[i]['tmes_ruta_imagen'] + datos[i]['std_descripcion'] + ".png' border='0' ><br/><label style='position:absolute; font-size: 19px; color: white;top:50%;left:50%;transform: translate(-50%, -50%);'>" + datos[i]['mesa_descripcion'] + "</label></a></button>");
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+}
+
+function fn_activarEirOrdenPedido(mesa_id, estado, std_id) {
+    vistaInfo = false;
+    fn_irOrdenPedido(mesa_id, estado, std_id);
+}
+
+function fn_transferirMesas(mesa_id, estado, std_id) {
+    std_id = fn_estadoMesa(mesa_id);
+    if (std_id !== 'Disponible' && (perfil_Usuario !== 'Mesero' || perfil_Usuario !== 'MESERO')) {
+        $("#tituloModalTransferir").html("<h4>Cambiar productos de la Mesa <strong>' " + $('div#' + mesa_id + " > a > label").text() + "'</strong><br> a la Mesa:</h4>");
+        $("#modalInfoMesas").modal("toggle");
+        $("#modalTransferirMesas").show();
+
+        $("#modalTransferirMesas").dialog({
+            modal: true,
+            position: {
+                my: 'left',
+                at: 'left'
+            },
+            width: 500,
+            heigth: 500,
+            resize: false,
+            opacity: 0,
+            show: "none",
+            hide: "none",
+            duration: 500,
+            open: function(event, ui) {
+                $('.ui-dialog-titlebar').hide();
+                $('#input_transferirMesa').val('');
+                fn_alfaNumericov2('#input_transferirMesa', mesa_id, std_id);
+            }
+        });
+    } else {
+        alertify.alert("La mesa no tiene productos para transferir");
+    }
+}
+
+
+function fn_okTransferirMesas(mesa_id, std_id) {
+    var value = $("#input_transferirMesa").val();
+    std_id = fn_estadoMesa(mesa_id);
+    if (std_id !== 'Disponible' && (perfil_Usuario !== 'Mesero' || perfil_Usuario !== 'MESERO')) {
+
+
+        if (value.length > 0) {
+            send = { "transferirMesas": 1 };
+            send.mesa_id_origen = mesa_id;
+            send.nombre_mesa_destino = value;
+            send.IDPeriodo = $("#idPeriodo").val();
+            $.getJSON("config_ordenPedido.php", send, function(datos) {
+                if (datos.str > 0) {
+                    //alert(datos[0]['mensaje']);
+                    alertify.alert(datos[0]['mensaje']);
+                    fn_modalTransferirMesas();
+                    refresh();
+                } else {
+                    alert("Error al transferir la mesa, comuníquense con soporte");
+                }
+            });
+            //alertify.success('La transferencia a la mesa ' + value + ' se realizó exitosamente')
+        } else {
+            alertify.error('No ha digitado ninguna mesa ')
+        }
+
+    } else {
+        alertify.alert("La mesa no tiene productos para transferir");
+    }
+}
+
+function fn_modalTransferirMesas() {
+    $("#keyboard").hide();
+    $("#keyboard").empty();
+    $("#modalTransferirMesas").hide();
+    $("#modalTransferirMesas").dialog("close");
+}
+
+var img = "";
+var img_E = "";
+
+function existe(elemento, arreglo) {
+    for (var i = 0; i < arreglo.length; i++) {
+        if (arreglo[i] === elemento) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function fn_irOrdenPedido(mesa_id, estado, std_id) {
+    var acceso = perfilAcceso;
+    //var fac_pendiente = fn_hayfacturaPendiente(mesa_id);
+    var fac_pendiente = 0;
+    var datosMensaje = "";
+    var cat_id = "";
+    var odp_id = "";
+    var rst_id = $("#txtRest").val();
+    // obtener el estado de mesa atual.
+    var send = { "VerificarMisMesa": 1 };
+    send.mesa_id = mesa_id;
+    send.periodo_id = $('#idPeriodo').val();
+    send.estacion_id = $('#est_id').val();
+    send.user_login = $('#txtUsuarioLogin').val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datosIMG) {
+            fac_pendiente = datosIMG[0]['facturaPendiente'];
+            datosMensaje = datosIMG[0]['mensaje'];
+            cat_id = datosIMG[0]['cat_id'];
+            odp_id = datosIMG[0]['odp_id'];
+            std_id = encodeURI(datosIMG[0]['estado_mesa']);
+            if (datosIMG.str > 0) {
+                img = datosIMG[0]['ruta'];
+                img_E = datosIMG[0]['ruta_E'];
+                if (datosMensaje === 'Si') {
+                    if ((fac_pendiente === false || datosMensaje === 'Si') && (acceso || datosMensaje === 'Si')) {
+                        if (!fn_retomaFacturaPendiente(mesa_id)) {
+                            setMesa(mesa_id);
+                            mesa = mesa_id;
+                            if (vistaInfo) {
+                                $("#mdl_rdn_pdd_crgnd").show();
+                                informacion_Mesa(mesa_id);
+                                $("#mdl_rdn_pdd_crgnd").hide();
+                            } else {
+                                //                                if (estado) {
+                                switch (std_id) {
+                                    case encodeURI("En Uso"):
+                                    case encodeURI("Cuenta"):
+                                        window.location.href = "tomaPedido.php?numMesa=" + mesa_id + "&estadoMesa=" + std_id + "&cat_id=" + cat_id + "&rst_id=" + rst_id;
+                                        break;
+                                    case encodeURI("Disponible"):
+                                    case encodeURI("Activo"):
+                                        if (modalPersonas === 'Si') {
+                                            $("#aumentarContador").show();
+                                            $("#aumentarContador").dialog("open");
+                                        } else {
+                                            window.location.href = "tomaPedido.php?numMesa=" + mesa_id + "&cat_id=" + cat_id + "&rst_id=" + rst_id + "&numPers=" + (1);
+                                        }
+                                        break;
+                                    case encodeURI("Division de Cuentas"):
+                                    case encodeURI("Cuenta Dividida"):
+                                        window.location.href = ".." + fn_url(mesa_id, odp_id);
+                                        break;
+                                    case 31:
+                                        fn_retomarCuentaAbierta(mesa);
+                                        break;
+                                    default:
+                                        window.location.href = "tomaPedido.php?numMesa=" + mesa_id;
+                                }
+
+                                //                                    if (std_id === 'En Uso' || std_id === 'Cuenta') {
+                                //                                        window.location.href = "tomaPedido.php?numMesa=" + mesa_id + "&estadoMesa=" + std_id + "&cat_id=" + cat_id + "&rst_id=" + rst_id;
+                                //                                    } else if (std_id === 'Disponible' || std_id === 'Activo') {
+                                //                                        if (modalPersonas === 'Si') {
+                                //                                            $("#aumentarContador").show();
+                                //                                            $("#aumentarContador").dialog("open");
+                                //                                        } else {
+                                //                                            window.location.href = "tomaPedido.php?numMesa=" + mesa_id + "&cat_id=" + cat_id + "&rst_id=" + rst_id + "&numPers=" + (1);
+                                //                                        }
+                                //                                    } else if (std_id === 'Division de Cuentas' || std_id === 'Cuenta Dividida') {
+                                //                                        window.location.href = ".." + fn_url(mesa_id, odp_id);
+                                //                                    } else if (std_id === 31) {
+                                //                                        fn_retomarCuentaAbierta(mesa);
+                                //                                    }
+                                //                                } else {
+                                //                                    alertify.alert('No puede acceder a ésta mesa porque está siendo atendida por otro mesero.');
+                                //                                }
+                            }
+                        } else {
+                            document.forms["cobro"].submit();
+                        }
+                    } else {
+                        alertify.alert('La mesa está siendo atendida por el usuario: ' + datosIMG[0]['usr_usuario']);
+                    }
+                } else {
+                    $('#' + mesa_id).children("a").children('img').attr("src", datosIMG[0]['ruta']);
+                    $('#' + mesa_id).children("a").attr('onMouseOver', "MM_swapImage('mesa" + mesa_id + "','','" + datosIMG[0]['ruta_E'] + "',1)");
+                    $('#' + mesa_id).children("a").attr('onMouseOut', "MM_swapImage('mesa" + mesa_id + "','','" + datosIMG[0]['ruta'] + "',1)");
+                    var mensaje = (GetTipoUser() === 'MESERO') ? "La mesa está siendo atendida por el usuario: " + datosIMG[0]['usr_usuario'] : "La mesa está siendo atendida por el usuario: " + datosIMG[0]['usr_usuario'];
+                    alertify.alert(mensaje);
+                }
+            }
+        }
+    });
+}
+
+function fn_retomaFacturaPendiente(mesa_id) {
+    var retomaFac;
+    send = { "retomaFacturaPendiente": 1 };
+    send.mesa_id = mesa_id;
+    send.opcion = 1;
+    $.ajax({
+        async: false,
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/x-www-form-urlencoded',
+        url: 'config_UserMesas.php',
+        data: send,
+        success: function(data) {
+            if (data.str > 0) {
+                $("#formsEnvio").html('<form action="../facturacion/factura.php" name="cobro" method="post" style="display:none;"><input type="text" name="odp_id" value="' + data[0]['IDCabeceraOrdenPedido'] + '" /><input type="text" id="dop_cuenta" name="dop_cuenta" value="' + data[0]['dop_cuenta'] + '" /><input type="text" name="mesa_id" value="' + mesa_id + '" /></form>');
+                retomaFac = true;
+            } else {
+                retomaFac = false;
+            }
+        }
+    });
+    return retomaFac;
+}
+
+function fn_hayfacturaPendiente(mesa_id) {
+
+
+    var retomaFac;
+    send = { "retomaFacturaPendiente": 1 };
+    send.mesa_id = mesa_id;
+    send.opcion = 2;
+    $.ajax({
+        async: false,
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/x-www-form-urlencoded',
+        url: 'config_UserMesas.php',
+        data: send,
+        success: function(data) {
+            if (data.str > 0) {
+                //    $("#formsEnvio").html('<form action="../facturacion/factura.php" name="cobro" method="post" style="display:none;"><input type="text" name="odp_id" value="' + data[0]['IDCabeceraOrdenPedido'] + '" /><input type="text" id="dop_cuenta" name="dop_cuenta" value="' + data[0]['dop_cuenta'] + '" /><input type="text" name="mesa_id" value="' + mesa_id + '" /></form>');
+
+
+                retomaFac = true;
+            } else {
+                retomaFac = false;
+            }
+        }
+    });
+    return retomaFac;
+}
+
+function fn_estadoMesa(mesa_id) {
+    var retomaFac;
+    var rutaMesa = "";
+    var rutaMesa_E = "";
+    send = { "estadoMesa": 1 };
+    send.IDMesa = mesa_id;
+    $.ajax({
+        async: false,
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/x-www-form-urlencoded',
+        url: 'config_UserMesas.php',
+        data: send,
+        success: function(data) {
+            if (data.str > 0) {
+                retomaFac = data[0]['estado_mesa'];
+                rutaMesa = data[0]['ruta'];
+                rutaMesa_E = data[0]['ruta_E'];
+            } else {
+                retomaFac = data[0]['estado_mesa'];
+                rutaMesa = data[0]['ruta'];
+                rutaMesa_E = data[0]['ruta_E'];
+            }
+        }
+    });
+    $('#' + mesa_id).children("a").children('img').attr("src", rutaMesa);
+    $('#' + mesa_id).children("a").attr('onMouseOver', "MM_swapImage('mesa" + mesa_id + "','','" + rutaMesa_E + "',1)");
+    $('#' + mesa_id).children("a").attr('onMouseOut', "MM_swapImage('mesa" + mesa_id + "','','" + rutaMesa + "',1)");
+    return retomaFac;
+}
+
+
+
+function fn_salir() {
+    window.location.href = "../index.php";
+
+}
+
+function fn_url(mesa_id, odp_id) {
+    var url;
+    send = { "obtiene_url": 1 };
+    send.mesa_id = mesa_id;
+    send.odp_id = odp_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                url = datos[0]['url_cuenta'];
+            } else {
+                alertify.error('La estación no tiene configurada una mesa.');
+            }
+        }
+    });
+    return url;
+}
+
+/*----------------------------------------------------------------------------------------------------
+ Funci�n retoma una cuenta abierta
+ -----------------------------------------------------------------------------------------------------*/
+function fn_retomarCuentaAbierta(num_mesa) {
+    var odp_id = 0;
+    var cfac_id = '';
+    var dop_cuenta = 0;
+    var mesa_iden = num_mesa;
+    send = { "retomarCuentaAbierta": 1 };
+    send.mesa_id = mesa_iden;
+    send.rest_id = $('#txtRest').val();
+    $.getJSON("config_UserMesas.php", send, function(datos) {
+        if (datos.str > 0) {
+            odp_id = datos[0]['odp_id'];
+            cfac_id = datos[0]['cfac_id'];
+            /*			alertify.alert("odp_id: "+odp_id+", factura: "+cfac_id);
+             return false;*/
+            $('#contenedorRetomarOrden').html('<form action="../facturacion/factura.php" name="cobro" method="post" style="display:none;"><input type="text" name="odp_id" value="' + odp_id + '" /><input type="text" name="dop_cuenta" value="' + dop_cuenta + '" /><input type="text" name="mesa_id" value="' + mesa_iden + '" /></form>');
+            document.forms['cobro'].submit();
+        }
+    });
+}
+
+function fn_guardarNumeroPersonas() {
+
+}
+
+function setCategoria(cat) {
+    categoria = cat;
+}
+
+function GetCategoria() {
+    return categoria;
+}
+
+function setMesa(prmmesa) {
+    mesa = prmmesa;
+}
+
+function GetMesa() {
+    return mesa;
+}
+
+function setArea(area) {
+    cod_area = area;
+}
+
+function getArea() {
+    return cod_area;
+}
+
+function setPiso(piso) {
+    cod_piso = piso;
+}
+
+function getPiso() {
+    return cod_piso;
+}
+
+function fn_alertaPermisosPerfil(mns) {
+    alertify.alert(mns);
+}
+
+function fn_irReservas() {
+    window.location.href = "reservas/reservas.php";
+}
+
+function fn_irCorteCaja() {
+    window.location.href = "../corteCaja/corteCaja.php";
+}
+
+function fn_irFuncionesGerente() {
+    window.location.href = "../funciones/funciones_gerente.php";
+}
+
+function fn_salirSistema() {
+    window.location.href = "../index.php";
+}
+
+function fn_agregarNumero(valor) {
+    lc_cantidad = document.getElementById("cantidad").value;
+    if (lc_cantidad == 0 && valor == ".") {
+        document.getElementById("cantidad").value = "0.";
+        coma = 1;
+    } else {
+        if (valor == "." && coma == 0) {
+            lc_cantidad = lc_cantidad + valor;
+            document.getElementById("cantidad").value = lc_cantidad;
+            coma = 1;
+        } else if (valor == "." && coma == 1) {
+
+        } else {
+            $("#cantidad").val('');
+            lc_cantidad = lc_cantidad + valor;
+            document.getElementById("cantidad").value = lc_cantidad;
+        }
+    }
+}
+
+/*----------------------------------------------------------------------------------------------------
+ Funci�n para eliminar un n�mero
+ -----------------------------------------------------------------------------------------------------*/
+function fn_eliminarCantidad() {
+    var lc_cantidad = document.getElementById("cantidad").value.substring(0, document.getElementById("cantidad").value.length - 1);
+    if (lc_cantidad == "") {
+        lc_cantidad = "";
+        coma = 0;
+    }
+    if (lc_cantidad == ".") {
+        coma = 0;
+    }
+    document.getElementById("cantidad").value = lc_cantidad;
+}
+
+function pedidoRapido() {
+    send = { "pedidoRapido": 1 };
+    send.est_id = $('#est_id').val();
+    send.cdn_id = $('#txtCadena').val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "../ordenpedido/config_UserMesas.php",
+        data: send,
+        //    $.ajax({async: false, type: "POST", dataType: 'json', contentType: "application/x-www-form-urlencoded", url: "config_UserMesas.php", data: send,
+        success: function(datos) {
+
+            if (datos.str > 0) {
+                window.location.href = "tomaPedido.php?numMesa=" + datos[0]['IDMesa']; //+ "&estadoMesa=.&cat_id=" + categoria + "&rst_id=" + rst_id + "&numPers=1"  ;
+            } else {
+                alertify.error('La estación no tiene configurada una mesa.');
+            }
+        }
+    });
+}
+
+function fn_unionMesa() {
+    //        if ($('#buttonUnion').attr("class") === "boton_Accion info_unionMesa") {
+    // 
+    //        $('#buttonUnion').removeClass();
+    //        $('#buttonUnion').addClass("boton_Accion info_unionMesa_E");
+    //        alertify.success('Seleccione las mesas');
+    //        unionMesa = true;
+    //    } else {
+    //        $('#buttonUnion').removeClass();
+    //        $('#buttonUnion').addClass("boton_Accion info_unionMesa");
+    //        unionMesa = false;
+    //    }
+    //
+    //        $('#buttonInfo').removeClass();
+    //        $('#buttonInfo').addClass("boton_Accion info_mesa_btn");
+    //        vistaInfo = false;
+}
+
+
+/*----------------------------------------------------------------------------------------------------
+ Funciones de popup para cambiar la Cantidad de los productos
+ -----------------------------------------------------------------------------------------------------*/
+function fn_popupCantidad() {
+    $("#cantidad").val("");
+    $("#aumentarContador").dialog({
+        modal: true,
+        autoOpen: false,
+        resizable: false,
+        show: {
+            effect: "blind",
+            duration: 500
+        },
+        hide: {
+            effect: "explode",
+            duration: 500
+        },
+        width: "auto",
+        buttons: {
+
+            Continuar: function() {
+
+
+                send = { "configuracionOrdenPedido": 1 };
+                send.mesa_id = GetMesa();
+                send.num_Pers = $('#cantidad').val();
+                send.vistaInfo = 0;
+                $.getJSON("config_ordenPedido.php", send, function(datos) {
+                    var rst_id = $("#txtRest").val();
+                    setCategoria(datos[0]['cat_id']);
+                });
+                var can = $("#cantidad").val();
+                if (can.length > 0 && can <= 50) {
+
+                    var mesa = GetMesa();
+                    var categoria = GetCategoria();
+                    var rst_id = $("#txtRest").val();
+                    window.location.href = "tomaPedido.php?numMesa=" + mesa + "&cat_id=" + categoria + "&rst_id=" + rst_id + "&numPers=" + (can);
+                    // window.location.href = "tomaPedido.php?numMesa=" + mesa + "&numPers=" + (can);
+
+                } else {
+                    alertify.alert("El número personas ingresado no es válido");
+                }
+            },
+            Cancelar: function() {
+
+                $("#cantidad").val('');
+                $(this).dialog("close");
+                $("#keyboard").hide();
+            }
+        },
+        open: function(event, ui) {
+            $(".ui-dialog-titlebar").hide();
+        }
+    });
+}
+
+
+function informacion_Mesa(idMesa) {
+    $('#nombre_mesa').html(($('#' + idMesa).children('a').children('label').html()));
+    var estado = ($('#' + idMesa).attr("onclick"));
+    estado = estado.substring(estado.lastIndexOf(",") + 2);
+    estado = estado.substring(0, estado.indexOf("'"));
+    $('#contenedor_info_mesa').html('');
+    estado = fn_estadoMesa(idMesa);
+    var bandera = true;
+    if (estado === 'Disponible'){
+        bandera = false;
+    }
+    if (estado === "Activo") {
+        bandera = false;
+    }
+    if (bandera) {
+
+
+        var orden_p = '';
+        var send = { "configuracionOrdenPedido": 1 };
+        send.mesa_id = idMesa;
+        send.num_Pers = 1;
+        send.vistaInfo = 1;
+        send.estado = 1;
+        $.getJSON("config_ordenPedido.php", send, function(datos) {
+
+
+            var send1 = { "informacionMesa": 1 };
+            orden_p = datos[0]['odp_id'];
+            send1.odp_id = datos[0]['odp_id'];
+            send1.est_ip = '';
+            send1.IDMesa = idMesa;
+            $.getJSON("config_ordenPedido.php", send1, function(datos) {
+
+                $('#num_splits').html(datos[0]['cantidad_splits']);
+                $('#num_cliente').html(datos[0]['numero_personas']);
+                $('#capacidad_mesa').html(datos[0]['tipo_mesa']);
+                $('#mi_mesa').html(datos[0]['mi_mesa']);
+                $('#estado').html(datos[0]['estado']);
+                var send2 = { "informacionMesaAll": 1 };
+                send2.odp_id = orden_p;
+                $.getJSON("config_ordenPedido.php", send2, function(datos) {
+                    var html = "";
+                    for (i = 0; i < datos.str; i++) {
+
+                        html = html + "<center style=\"margin-top: 5%\">\n" +
+                            "                                                <section>\n" +
+                            "                                                    <article>\n" +
+                            "                                                        <div><strong>Transacci&oacute;n N°: </strong> " + datos[i]['numero_transaccion'] + "</div>\n" +
+                            "                                                        <div><strong>Informaci&oacute;n transacci&oacute;n: </strong> <span>" + datos[i]['transaccion_info'] + "</span></div>\n" +
+                            "                                                        <div><strong>Última Orden: </strong> <span>" + datos[i]['last_order'] + "</span></div>\n" +
+                            "                                                        <br />\n" +
+                            "                                                          <div><strong>Observaciones </strong></div>\n" +
+                            "                                                           <div><span style=\"margin: 0; padding: 0\"> " + datos[i]['observacion'] + " </span></div>\n" +
+                            "                                                          <div><strong>Total final </strong></div>\n" +
+                            "                                                           <div><h2 style=\"margin: 0; padding: 0\">$ " + datos[i]['final_total'] + " </h2></div>\n" +
+                            "                                                           <hr />\n" +
+                            "                                                    </article>\n" +
+                            "                                                </section>\n" +
+                            "                                            </center>";
+                    }
+                    $('#contenedor_info_mesa').html(html);
+                });
+            });
+        });
+    } else {
+
+        var send1 = { "informacionMesa": 1 };
+        send1.odp_id = '';
+        send1.est_ip = '';
+        send1.IDMesa = idMesa;
+        $.getJSON("config_ordenPedido.php", send1, function(datos) {
+            $('#num_splits').html(datos[0]['cantidad_splits']);
+            $('#num_cliente').html(datos[0]['numero_personas']);
+            $('#capacidad_mesa').html(datos[0]['tipo_mesa']);
+            $('#mi_mesa').html(datos[0]['mi_mesa']);
+            $('#estado').html(datos[0]['estado']);
+        });
+    }
+
+    var evento = ($('#' + idMesa).attr("onclick"));
+    evento = evento.substring(evento.indexOf("("), evento.length);
+    var btn = document.getElementById('btn_modal');
+    btn.click();
+    var html =
+        "<button type=\"button\" data-dismiss=\"modal\" class=\"btn btn-danger btn-lg\"> <span class=\"glyphicon glyphicon-arrow-left\" aria-hidden=\"true\"></span> Cancelar</button>\n" +
+        "<button id=\"transferirMesas\" type=\"button\" onclick=\"fn_transferirMesas" + evento + "\" class=\"btn btn-info btn-lg\"> <span class=\"glyphicon glyphicon-retweet\" aria-hidden=\"true\"></span> Cambiar<br>Mesa</button>\n" +
+        "<button type=\"button\" onclick=\"fn_activarEirOrdenPedido" + evento + "\"   id=\"btn_ir_orden_pedido\"  class=\"btn btn-primary btn-lg\"> <span class=\"glyphicon glyphicon-ok\" aria-hidden=\"true\"> </span> Retomar</button>\n";
+    $('#footerButton').html(html);
+    html2canvas($("#" + idMesa), {
+        onrendered(canvas) {
+            var link = document.getElementById('download');
+            var image = canvas.toDataURL();
+            document.getElementById("img_fondo").src = canvas.toDataURL();
+        }
+    });
+}
+
+
+function fn_opcion_informacion() {
+    if ($('#informacionPorMesa').attr("class") === "info_mesa_E_btn boton_Accion1") {
+        $('#informacionPorMesa').removeClass();
+        $('#informacionPorMesa').addClass("boton_Accion1 info_mesa_btn");
+        alertify.success('Seleccione una mesa');
+        vistaInfo = true;
+        // otro boton cambiar estado
+        $('#informacionTotalMesas').removeClass();
+        $('#informacionTotalMesas').addClass("view_btn boton_Accion1");
+        vistaInfoTran = false;
+    } else {
+        $('#informacionPorMesa').removeClass();
+        $('#informacionPorMesa').addClass("info_mesa_E_btn boton_Accion1");
+        vistaInfo = false;
+    }
+    fn_opcion_transaccion();
+    //       $('#buttonUnion').removeClass();
+    //        $('#buttonUnion').addClass("boton_Accion info_unionMesa");
+    //        unionMesa = false;
+
+}
+
+
+function obtenerUsuarios() {
+    send = { "obtenerUsuarios": 1 };
+    send.opcion = 2;
+    send.IDUsersPos = $('#txtUsuarioLogin').val();
+    $.ajax({
+        type: 'GET',
+        data: send,
+        url: 'config_UserMesas.php',
+        dataType: "json",
+        success: renderListaUsuarios
+    });
+}
+
+function renderListaUsuarios(data) {
+    $('.listarUsuario option').remove();
+    if (data.str < 1) {
+        alert("NINGÚN RESULTADO");
+    } else {
+
+        $('.listarUsuario').append('<option value="0">Seleccionar Usuario...</option>');
+        for (i = 0; i < data.str; i++) {
+
+            $('.listarUsuario').append('<option style="height:20px" id=' + data[i]['IDEstacion'] + '  value=' + data[i]['IDUsersPos'] + '>' + data[i]['est_nombre'] + '</option>');
+        }
+        $('.listarUsuario').focus();
+    }
+}
+
+function fn_botonlistarUsuario() {
+    if ($('#transferir_cuenta').attr("class") === "transferirCuenta boton_Accion1") {
+        $('#transferir_cuenta').removeClass();
+        $('#transferir_cuenta').addClass("boton_Accion1 info_mesa_btn");
+        vistaInfoTran = true;
+        $('#informacionPorMesa').removeClass();
+        $('#informacionPorMesa').addClass("info_mesa_E_btn boton_Accion1");
+        vistaInfo = false;
+    } else {
+        $('#transferir_cuenta').removeClass();
+        $('#transferir_cuenta').addClass("transferirCuenta boton_Accion1");
+        vistaInfoTran = false;
+    }
+    fn_transferir_cuentas();
+}
+
+function fn_listausuarios() {
+    $("#listado_cuentas").empty();
+    var html = "";
+    var estado = 0;
+    send = { "TransferenciaCuentas": 1 };
+    send.opcion = 1;
+    send.IDEstacion = $('#est_id').val();
+    send.IDUsersPos = $('#txtUsuarioLogin').val(); //$('#txtUsr_Id').val();
+    send.IDPeriodo = $('#idPeriodo').val();
+    send.cdn_id = $('#txtCadena').val();
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            $("#mesas").hide();
+            $("#transferencia_cuenta").show();
+            if (datos.str > 0) {
+                $("#listado_cuentas").empty();
+                for (i = 0; i < datos.str; i++) {
+                    html += '<tr style="height:60px;"> <td>' + datos[i]['mesa_descripcion'] + '</td><td>' + datos[i]['usr_descripcion'] + '</td><td>' + "Transferir cuenta a" + '</td><td>' + '<select id=' + datos[i]['IDCabeceraOrdenPedido'] + ' class="form-control listarUsuario" style="height:40px;width:200px"></select>' + '</td></tr>';
+                }
+                $("#listado_cuentas").append(html);
+            }
+        }
+    });
+}
+
+function fn_listausuariosMesero() {
+    $("#listado_cuentas").empty();
+    var html = "";
+    var estado = 0;
+    send = { "TransferenciaCuentas": 1 };
+    send.opcion = 1;
+    send.IDEstacion = $('#est_id').val();
+    send.IDUsersPos = $('#txtUsuarioLogin').val(); //$('#txtUsr_Id').val();
+    send.IDPeriodo = $('#idPeriodo').val();
+    send.cdn_id = $('#txtCadena').val();
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            $("#mesas").hide();
+            $("#transferencia_cuenta").show();
+            if (datos.str > 0) {
+                $("#listado_cuentas").empty();
+                for (i = 0; i < datos.str; i++) {
+                    html += '<tr style="height:60px;"> <td>' + datos[i]['mesa_descripcion'] + '</td><td>' + datos[i]['usr_descripcion'] + '</td><td>' + "Transferir cuenta a" + '</td><td>' + '<input type="password" id=' + datos[i]['IDCabeceraOrdenPedido'] + ' class="form-control listarPass" style="height:40px;width:200px"></input>' + '</td></tr>';
+                }
+                $("#listado_cuentas").append(html);
+            }
+        }
+    });
+}
+
+function fn_valida_cajero() {
+    fn_listausuarios();
+    obtenerUsuarios();
+    $('.listarUsuario').change(function() {
+        //alert("Seleccionaste IDUsersPos: " + $(this).val() + " ID select :" + $(this).closest('select').attr('id') + " Option ID:" + $(this).children(":selected").attr("id"));
+        var IDUsersPos = $(this).val();
+        var IDEstacion = $(this).children(":selected").attr("id");
+        var IDCabeceraOrdenPedido = $(this).closest('select').attr('id');
+        fn_actualiza_cuentas(1, IDUsersPos, IDEstacion, IDCabeceraOrdenPedido);
+    });
+}
+
+function fn_transferir_cuentas() {
+    if (vistaInfoTran) {
+        switch (perfil_Usuario.toUpperCase()) {
+            case "CAJERO":
+                fn_validarUsuarioAdministrador1();
+                //                if(estado_divide){
+                //                fn_listausuarios();
+                //                obtenerUsuarios();
+                //                $('.listarUsuario').change(function () {
+                //                    //alert("Seleccionaste IDUsersPos: " + $(this).val() + " ID select :" + $(this).closest('select').attr('id') + " Option ID:" + $(this).children(":selected").attr("id"));
+                //                    var IDUsersPos = $(this).val();
+                //                    var IDEstacion = $(this).children(":selected").attr("id");
+                //                    var IDCabeceraOrdenPedido = $(this).closest('select').attr('id');
+                //                    fn_actualiza_cuentas(1, IDUsersPos, IDEstacion, IDCabeceraOrdenPedido);
+                //
+                //                });
+                //                }
+                break;
+            case "ADMINISTRADOR LOCAL":
+            case "ADMINISTRADOR":
+                fn_validarUsuarioAdministrador1();
+                break;
+            case "MESERO":
+                fn_listausuariosMesero();
+                $('.listarPass').click(function() {
+                    var IDUsersPos = $("#" + $(this).attr('id')).val();
+                    var IDCabeceraOrdenPedido = $(this).attr('id');
+                    alert("IDU" + IDUsersPos + " IDCabeceraOrdenPedido:" + IDCabeceraOrdenPedido);
+                    fn_actualiza_cuentas(2, IDUsersPos, '', IDCabeceraOrdenPedido);
+                });
+                break;
+        }
+
+    } else {
+        $("#mesas").show();
+        $("#transferencia_cuenta").hide();
+    }
+}
+
+function fn_actualiza_cuentas(Opcion, IDUsersPos, IDEstacion, IDCabeceraOrdenPedido) {
+    send = { "ActualizaTransferenciaCuentas": 1 };
+    send.opcion = Opcion;
+    send.IDUsersPos = IDUsersPos; //$('#txtUsr_Id').val();
+    send.IDEstacion = IDEstacion;
+    send.IDCabeceraOrdenPedido = IDCabeceraOrdenPedido;
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+
+            if (datos.str > 0) {
+                alertify.log(datos[0]['mensaje']);
+            } else {
+
+                alertify.error('No se actualizaron los registros');
+            }
+            //fn_transferir_cuentas();
+            fn_valida_cajero();
+        }
+    });
+}
+
+function fn_transaction_view() {
+    if ($('#informacionTotalMesas').attr("class") === "view_btn boton_Accion1") {
+        $('#informacionTotalMesas').removeClass();
+        $('#informacionTotalMesas').addClass("boton_Accion1 info_mesa_btn");
+        vistaInfoTran = true;
+        $('#informacionPorMesa').removeClass();
+        $('#informacionPorMesa').addClass("info_mesa_E_btn boton_Accion1");
+        vistaInfo = false;
+    } else {
+        $('#informacionTotalMesas').removeClass();
+        $('#informacionTotalMesas').addClass("view_btn boton_Accion1");
+        vistaInfoTran = false;
+    }
+    fn_opcion_transaccion();
+}
+
+//visualizar trasnsacciones
+function fn_opcion_transaccion() {
+
+    if (vistaInfoTran) {
+        $("#mesas").hide();
+        $("#transferencia_cuenta").hide();
+        if (cod_area === 0 || cod_piso === 0) {
+            alert("Sin datos");
+        } else {
+
+            $("#detalle_plu").show();
+            var html = "";
+            send = {
+                "consultaMesaFS": 1,
+                "cod_piso": cod_piso,
+                "cod_area": cod_area
+            };
+            $.ajax({
+                async: false,
+                type: "GET",
+                dataType: "json",
+                contentType: "application/x-www-form-urlencoded",
+                url: "../corteCaja/config_corteCaja.php",
+                data: send,
+                success: function(datos) {
+                    if (datos.str > 0) {
+                        $("#listado_mesas").empty();
+                        for (i = 0; i < datos.str; i++) {
+                            espacio = '&nbsp;';
+                            guion2 = '-';
+                            total = ' Total:';
+                            servicio = $("#hide_tipo_servicio").val();
+                            if (servicio == 1) {
+                                if ((datos[i]['total'] == 0)) {
+                                    html = "<td>" + datos[i]['nombre_estacion'] + "</td><td>" + datos[i]['total'].toFixed(2) + "</td>";
+                                } else {
+                                    descripcion = datos[i]['std_descripcion'];
+                                    html = '<tr style="height:60px;" onclick=fn_modalMesas("' + datos[i]['odp_id'] + '","' + datos[i]['mesa_descripcion'] + '","' + datos[i]['est_id'] + '","' + datos[i]['IDMesa'] + '","' + datos[i]['std_descripcion'].toString() + '")><td>' + datos[i]['mesa_descripcion'] + '</td><td>' + datos[i]['nombre_estacion'] + '</td><td>' + datos[i]['total'].toFixed(2) + '</td><td>' + datos[i]["odp_fecha_creacion"] + '</td></tr>';
+                                }
+                            } else if (servicio == 2) {
+                                if ((datos[i]['total'] == 0)) {
+                                    html = '<tr style="height:60px;" onclick=fn_modalMesas("' + datos[i]['odp_id'] + '","' + datos[i]['mesa_descripcion'] + '","' + datos[i]['est_id'] + '","' + datos[i]['IDMesa'] + '","' + encodeURIComponent(datos[i]['std_descripcion']) + '")><td>' + datos[i]['mesa_descripcion'] + '</td><td>' + datos[i]['nombre_estacion'] + '</td><td>' + datos[i]['total'].toFixed(2) + '</td><td>' + datos[i]["odp_fecha_creacion"] + '</td></tr>';
+                                } else {
+                                    html = '<tr style="height:60px;" onclick=fn_modalMesas("' + datos[i]['odp_id'] + '","' + datos[i]['mesa_descripcion'] + '","' + datos[i]['est_id'] + '","' + datos[i]['IDMesa'] + '","' + encodeURIComponent(datos[i]['std_descripcion']) + '")><td>' + datos[i]['mesa_descripcion'] + '</td><td>' + datos[i]['nombre_estacion'] + '</td><td>' + datos[i]['total'].toFixed(2) + '</td><td>' + datos[i]["odp_fecha_creacion"] + '</td></tr>';
+                                }
+                            }
+
+                            $("#listado_mesas").append(html);
+                        }
+                    }
+                    $('#detalle_plu').shortscroll();
+                }
+            });
+        }
+    } else {
+        $("#mesas").show();
+        $("#detalle_plu").hide();
+    }
+}
+//carga mesas y retoma valores
+function fn_modalMesas(codigo_orden, codigo_mesa, estacionId, mesa_id, std_descripcion) {
+    $("#hid_codigoorden").val(codigo_orden);
+    if ($("#est_id").val() == estacionId) {
+		 $('#btn_tomar_mesa').show();//attr('visible', true);
+	}
+	else{
+		 $('#btn_tomar_mesa').hide();//attr('visible', false);
+	}
+        var html = "<tr class='active'><th style='text-align:center'>Cantidad</th><th style='text-align:center'>Descripci&oacute;n</th><th style='text-align:center;'>Precio</th></tr>";
+        send = { "consultadetalleMesa": 1 };
+        send.codigoOrden = codigo_orden;
+        $.ajax({
+            async: false,
+            type: "GET",
+            dataType: "json",
+            contentType: "application/x-www-form-urlencoded",
+            url: "../corteCaja/config_corteCaja.php",
+            data: send,
+            success: function(datos) {
+                if (datos.str > 0) {
+                    // $("#detalleMesa").empty();
+                    for (i = 0; i < datos.str; i++) {
+                        if ((datos[i]['dop_cantidad'] == 0 || datos[i]['subtotal'] == 0)) {} else {
+							html += "<tr><td>" + datos[i]['dop_cantidad'] + "</td>";
+                            html += "<td>" + datos[i]['plu_descripcion'] + "</td>";
+                            html += "<td>" + datos[i]['subtotal'] + "</td></tr>";
+                        }
+                        $("#detalleMesa").html(html);
+                    }
+
+                    send = { "consultatotalesMesa": 1 };
+                    send.codigoOrden = codigo_orden;
+                    $.ajax({
+                        async: false,
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        url: "../corteCaja/config_corteCaja.php",
+                        data: send,
+                        success: function(datos) {
+                            if (datos.str > 0) {
+                                $("#txt_txt_totalNeto").val('$' + datos.precioNeto.toFixed(2));
+                                $("#txt_iva").val('$' + datos.IVA.toFixed(2));
+                                $("#txt_totalDetalle").val('$' + datos.total.toFixed(2));
+                                $("#txt_codigoMesa").val(codigo_orden);
+                                $("#txt_mesa_descripcion").val(codigo_mesa);
+                                $("#txt_observacion").val(datos.odp_observacion);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+        $("#content").dialog({
+            title: "Cuentas Abiertas",
+            width: 950,
+            autoOpen: false,
+            resizable: false,
+            show: {},
+            hide: {},
+            modal: true,
+            position: "center top",
+            closeOnEscape: false
+        });
+        $("#content").dialog("open");
+        $("#btn_okDetalle").click(function() {
+            $("#content").dialog("close");
+        });
+<<<<<<< HEAD
+    /*
+=======
+    
+	/*
+>>>>>>> origin/MXP_Version_1.9.10.6
+	} else {
+        alertify.error("<b>Atenci&oacute;n..!!</b>  La mesa a la que intenta acceder no fue atendida en esta estaci&oacute;n.");
+    }
+	*/
+<<<<<<< HEAD
+=======
+
+>>>>>>> origin/MXP_Version_1.9.10.6
+    $('#btn_tomar_mesa').attr('onclick', 'fn_irOrdenPedido("' + mesa_id + '",1,"' + decodeURIComponent(std_descripcion) + '")');
+}
+
+function fn_mesas_recargar(codMesa) {
+    send = { "ActualizaMesa": 1 };
+    send.codMesa = codMesa;
+    $.ajax({
+        async: false,
+        type: "GET",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "../corteCaja/config_corteCaja.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+
+            } else {
+                setTimeout('fn_mesas_recargar()', 1000);
+            }
+        }
+    });
+}
+
+
+function GetURLParameter(sParam) {
+    var sPageURL = window.location.search.substring(1);
+    var sURLVariables = sPageURL.split('&');
+    for (var i = 0; i < sURLVariables.length; i++) {
+        var sParameterName = sURLVariables[i].split('=');
+        if (sParameterName[0] == sParam) {
+            return sParameterName[1];
+        }
+    }
+}
+
+function fn_modalPersonas() {
+    var resultado = "";
+    send = { "verificaSeleccionNumeroMesa": 1 };
+    send.rst_id = $('#txtRest').val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "config_UserMesas.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                resultado = datos[0]['resultado'];
+            } else {
+                resultado = "No";
+            }
+        }
+    });
+    return resultado;
+}
+
+function fn_cerrarDialogoAnulacion() {
+    $('#usr_clave').val('');
+    $('#motivoObservacion').val('');
+    $("#anulacionesMotivo .anulacionesSubmit").empty();
+    $("#numPad").hide();
+    $("#keyboard").hide();
+    $('#anularOrden').prop("disabled", false);
+    $('#anulacionesContenedor').dialog('close');
+    $('#transferir_cuenta').removeClass();
+    $('#transferir_cuenta').addClass("transferirCuenta boton_Accion1");
+    vistaInfoTran = false;
+}
+
+function fn_validarUsuarioAdministrador1() {
+    $("#anulacionesContenedor").show();
+    $("#anulacionesContenedor").dialog({
+        modal: true,
+        width: 500,
+        heigth: 500,
+        resize: false,
+        opacity: 0,
+        show: "none",
+        hide: "none",
+        duration: 500,
+        open: function(event, ui) {
+            $('.ui-dialog-titlebar').hide();
+            fn_numerico('#usr_clave');
+            $('#usr_clave').val('');
+            $('#usr_clave').attr('onchange', 'fn_validarCredencialesAdministrador1()');
+        }
+    });
+}
+
+function fn_validarCredencialesAdministrador1() {
+    var usr_clave = $("#usr_clave").val();
+    if (usr_clave.indexOf('%') >= 0) {
+        var old_usr_clave = usr_clave.split('?;')[0];
+        var new_usr_clave = old_usr_clave.replace(new RegExp("%", 'g'), "");
+        var usr_tarjeta = new_usr_clave;
+        usr_clave = 'noclave';
+    } else {
+        var usr_tarjeta = 0;
+    }
+    if (usr_clave != "") {
+        send = { "validarUsuario": 1 };
+        send.usr_clave = usr_clave;
+        send.usr_tarjeta = usr_tarjeta;
+        $.getJSON("config_ordenPedido.php", send, function(datos) {
+            if (datos.str > 0) {
+                $("#anulacionesContenedor").dialog("close");
+                $("#usr_clave").val("");
+                //estado_divide = true;
+                fn_valida_cajero();
+            } else {
+                fn_numerico("#usr_clave");
+                alertify.confirm("La clave ingresada no tiene permisos de Administrador.", function(e) {
+                    if (e) {
+                        alertify.set({ buttonFocus: "none" });
+                        $("#usr_clave").focus();
+                    }
+                });
+                $("#usr_clave").val("");
+            }
+        });
+    } else {
+        fn_nubtnVirtualOKpqmerico("#usr_clave");
+        alertify.confirm("Ingrese clave de Administrador", function(e) {
+            if (e) {
+                alertify.set({ buttonFocus: "none" });
+                $("#usr_clave").focus();
+            }
+        });
+        $("#usr_clave").val("");
+    }
+}
+
+//**********VITALITY 
+
+
+
+function mostrarPanel() {
+    $("#rdn_pdd_brr_ccns").show();
+}
+
+var opcionSetVitality = function(opcion) {
+    vitality = opcion;
+    recarga = "";
+    $("#cntRecargas").hide();
+    $("#registroCliente").hide();
+    $("#pre2").hide();
+    $("#ingresoCedula").hide();
+    flujo_seguimiento("ingresoVitality", "pre1", true);
+    $("#tqtIngresoVT").html('Vitality<p style="font-size: 0.6em;" class="mensajePequeno">Lea código de seguridad.</p>');
+    $("#txtCodigoVitality").focus();
+};
+
+function fn_alfaNumericov2(e, mesa_id, std_id) {
+    if (!$(e.target).closest("#keyboard").length) {
+        toggleDiv('keyboard');
+    }
+
+    $("#keyboard").empty();
+    var posicion = $(e).position();
+    var leftPos = 155;
+    var topPos = 300;
+    leftPos: posicion.left;
+    topPos: posicion.top;
+    var num0 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",0)'>0</button>";
+    var num1 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",1)'>1</button>";
+    var num2 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",2)'>2</button>";
+    var num3 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",3)'>3</button>";
+    var num4 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",4)'>4</button>";
+    var num5 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",5)'>5</button>";
+    var num6 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",6)'>6</button>";
+    var num7 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",7)'>7</button>";
+    var num8 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",8)'>8</button>";
+    var num9 = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",9)'>9</button>";
+    var cadQ = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"Q\")'>Q</button>";
+    var cadW = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"W\")'>W</button>";
+    var cadE = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"E\")'>E</button>";
+    var cadR = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"R\")'>R</button>";
+    var cadT = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"T\")'>T</button>";
+    var cadY = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"Y\")'>Y</button>";
+    var cadU = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"U\")'>U</button>";
+    var cadI = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"I\")'>I</button>";
+    var cadO = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"O\")'>O</button>";
+    var cadP = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"P\")'>P</button>";
+    var cadA = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"A\")'>A</button>";
+    var cadS = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"S\")'>S</button>";
+    var cadD = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"D\")'>D</button>";
+    var cadF = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"F\")'>F</button>";
+    var cadG = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"G\")'>G</button>";
+    var cadH = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"H\")'>H</button>";
+    var cadJ = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"J\")'>J</button>";
+    var cadK = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"K\")'>K</button>";
+    var cadL = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"L\")'>L</button>";
+    var cadZ = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"Z\")'>Z</button>";
+    var cadX = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"X\")'>X</button>";
+    var cadC = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"C\")'>C</button>";
+    var cadV = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"V\")'>V</button>";
+    var cadB = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"B\")'>B</button>";
+    var cadN = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"N\")'>N</button>";
+    var cadM = "<button class='btnVirtualUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"M\")'>M</button>";
+    var arroba = "<button class='btnVirtualBorrarUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"@\")'>@</button>";
+    var guion = "<button class='btnVirtualBorrarUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"-\")'>-</button>";
+    var barraBaja = "<button class='btnVirtualBorrarUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"_\")'>_</button>";
+    var numeral = "<button class='btnVirtualBorrarUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\"#\")'>#</button>";
+    var espacio = "<button class='btnEspaciadoraUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\" \")'>Espacio</button>";
+    var coma = "<button class='btnVirtualBorrarUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\",\")'>,</button>";
+    var punto = "<button class='btnVirtualBorrarUM' onclick='fn_agregarCaracter(" + $(e).attr("id") + ",\".\")'>.</button>";
+    var borrarCaracter = "<button class='btnVirtualBorrarUM' onclick='fn_eliminarNumero(" + $(e).attr("id") + ")'>&larr;</button>";
+    var borrarTodo = "<button class='btnVirtualBorrarUM' onclick='fn_eliminarTodo(" + $(e).attr("id") + ")'>&lArr;</button>";
+    var btnOk = "<button id='btn_ok_teclado' class='btnVirtualOKUM' id='btn_ok_pad' onclick='fn_okTransferirMesas(\"" + mesa_id + "\",\"" + std_id + "\")' >OK</button>";
+    var btnCancelar = "<button id='btn_cancelar_teclado' class='btnVirtualCancelarUM' onclick='fn_modalTransferirMesas()'>Cancelar</button>";
+    $("#keyboard").css({
+        display: "block",
+        position: "absolute",
+        left: '1px'
+
+    });
+    $("#keyboard").append(num1 + num2 + num3 + num4 + num5 + num6 + num7 + num8 + num9 + num0 + borrarCaracter + "<br/>" + cadQ + cadW + cadE + cadR + cadT + cadY + cadU + cadI + cadO + cadP + borrarTodo + "<br/>" + arroba + cadA + cadS + cadD + cadF + cadG + cadH + cadJ + cadK + cadL + guion + "<br/>" + numeral + barraBaja + cadZ + cadX + cadC + cadV + cadB + cadN + cadM + coma + punto + "<br/>" + btnCancelar + espacio + btnOk);
+}

@@ -1,0 +1,295 @@
+body {
+	/*background-image: url(../imagenes/fondo/images.png); */
+	background-image: url(../imagenes/fondo/fondo.png);
+	background-attachment: fixed;
+	background-position: left top;	
+}
+
+#contenedor {
+	background: white;
+	width: 690px;
+	height: 460px;
+		/*margin: 120px auto 0 auto; */
+	box-shadow: inset 0 0 0 0 #27496d,0 0 20px #32373E;
+	position: absolute;
+	top: 40%;
+	left: 50%;
+	margin-top: -180px;
+	margin-left: -350px;
+}
+
+#superior{
+	margin: 0;
+	padding: 0;
+	height: 90px;
+	border-bottom: 2px solid #444;
+}
+
+#tituloPantalla h1 {
+	color: #3D7499;
+	text-align: center;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 66px;
+	letter-spacing: 4px;
+	word-spacing: 11.8px;
+	margin: 0 auto 0 auto;
+	text-shadow: 0 10px 10px rgba(0, 0, 0, 0.30);
+}
+
+#tituloPantalla h6{
+	color: #444;
+	text-align: center;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 12px;
+	letter-spacing: 1px;
+	word-spacing: 6px;
+	margin: -30px auto 0 auto;
+}
+
+#centro {
+	margin: 30px 0 16px 0;
+	height: 140px;
+}
+
+#inferior {
+	margin: 120px 0 16px 0;
+	height: 50px;
+}
+
+#inferior table {
+	width: 690px;
+	text-align: center;
+}
+
+.btnInicio {
+	height: 50px;
+	width: 120px;
+	color: #fff;
+	background: #666;
+	background-image: -webkit-linear-gradient(top, #666, #32373E);
+	background-image: -moz-linear-gradient(top, #666, #32373E);
+	background-image: -ms-linear-gradient(top, #666, #32373E);
+	background-image: -o-linear-gradient(top, #666, #32373E);
+	background-image: linear-gradient(to bottom, #666, #32373E);
+	border: none;
+	border-radius: 4px;
+	margin: 8px auto 8px auto;
+	padding: auto;
+	border: 0;
+	text-align: center;
+	font-size: 14px;
+	font-family: Helvetica, Arial, sans-serif;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.btnInicio:hover {
+	box-shadow: inset 0 0 0 0 #27496d,0 0 10px #222;
+}
+
+.btnInicio:active {
+	box-shadow: inset 0 0 0 0 #27496d,inset 0 0 10px #222;
+}
+
+#entradas {
+	float: left;
+	margin: 0px;
+	padding: 0px;
+	width: 400px;
+	height: 140px;/*140px;*/
+	/*border-right: 1px solid #444;*/
+	
+}
+
+#TecladoNumerico {
+	width: 290px;
+	height: 140px;/*140px;*/
+	margin: 0;
+	padding: 0;
+	float: left;
+}
+
+#informacion {
+	width: 400px;
+	height: 140px;
+	margin: 0;
+	padding: 0;
+	float: left;
+}
+
+#entradas table {
+	margin: 0 auto;
+	width: 300px;
+	margin: 20px auto 40px auto;
+}
+
+#entradas th {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	text-align: left;
+	background: #3D7499;
+	color: #FFF;
+	height: 32px;
+	border-radius: 3px;
+	padding: 4px 0 4px 10px;
+}
+
+#entradas td {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-weight: normal;
+	font-size: 13px;
+	text-align: left;
+	height: 50px;
+}
+
+#usuarioLog h5 {
+	color: #444;
+	text-align: center;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 32px;
+	letter-spacing: 2px;
+	word-spacing: 11.8px;
+	margin: 0 auto 0 auto;
+}
+
+#usuarioLog h4 {
+	color: #777;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 13px;
+	margin: 0px 0 10px 50px;
+}
+
+/*
+
+#contenedor {
+	width: 760px;
+	margin: 80px auto 0 auto
+}
+
+#superior{
+	height: 120px;
+}
+
+#centro{
+	height: 250px;
+}
+
+#inferior{
+	height: 80px;
+}
+
+#imagen {
+	float: left;
+	width: 260px;
+	height: 270px;
+}
+
+#imagen img {
+	margin: 60px 0 0 100px;
+	width: 140px;
+	height: 130px;
+}
+
+#entradas {
+	float: left;
+	margin: 0px;
+	padding: 0px;
+	width: 480px;
+}
+
+#entradas table {
+	width: 380px;
+	margin: 50px 0 40px 10px;
+	border: 1px solid #666;
+	border-radius: 4px;
+}
+
+#entradas th {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-weight: normal;
+	font-size: 15px;
+	text-align: left;
+	background: #3D7499;
+	color: #FFF;
+	height: 34px;
+	border-radius: 4px;
+	padding: 4px 0 4px 10px;
+}
+
+#entradas td {
+	font-family: Verdana, Arial, Helvetica, sans-serif;
+	font-weight: normal;
+	font-size: 14px;
+	text-align: left;
+	height: 50px;
+}
+
+.btnInicio {
+	height: 40px;
+	width: 100px;
+	color: #fff;
+	background-color: #666666;
+	border: none;
+	border-radius: 4px;
+	margin: 8px auto 8px auto;
+	padding: auto;
+	border: 0;
+	text-align: center;
+	font-size: 14px;
+	font-family: Helvetica, Arial, sans-serif;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.btnInicio:hover {
+	box-shadow: inset 0 0 0 0 #27496d,0 4px 10px #444444;
+}
+
+.btnInicio:active {
+	box-shadow: inset 0 0 0 0 #27496d,inset 0 3px 10px #444444;
+}
+
+#tituloPantalla h1 {
+	color: #3D7499;
+	text-align: center;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 74px;
+	letter-spacing: 4px;
+	word-spacing: 11.8px;
+	margin: 10px auto 0 auto;
+	text-shadow: 0 10px 14px rgba(0, 0, 0, 0.30);
+}
+
+#tituloPantalla h6{
+	color: #444;
+	text-align: center;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 16px;
+	letter-spacing: 2px;
+	word-spacing: 11.8px;
+	margin: -24px auto 0 auto;
+}
+
+#usuarioLog h5{
+	color: #444;
+	text-align: center;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 36px;
+	letter-spacing: 2px;
+	word-spacing: 11.8px;
+	margin: -24px auto 0 auto;
+}
+
+#usuarioLog{
+	width: 180px;
+	margin: 0 auto 0 auto;
+}
+
+#usuarioLog h4{
+	color: #777;
+	font-family: 'lucida sans unicode', 'lucida grande', sans-serif;
+	font-size: 12px;
+	margin: 0 0 20px 0;
+}
+
+*/

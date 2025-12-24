@@ -1,0 +1,790 @@
+@charset "utf-8";
+/* CSS Document */
+/*
+Style Admnin menu Plu,Style Admin toma Pedido, estilo bonones Jose
+*****************************************************************
+Style Admnin menu Plu
+*****************************************************************/
+#titulo
+{
+	font-size: 26px;
+    text-align: center;
+}
+/*-------------------------
+div de seleccion de cadena
+---------------------------*/
+#selectCadena
+{
+	/*border: 1px solid #0061AB;*/
+    padding: 10px;
+    position: relative;
+    top: 23px;
+}
+
+/*--------------------
+div genar de pantalla
+----------------------*/
+#formulario
+{
+	border: 1px solid #0061AB;
+    height: 450px;
+    left: 50%;
+    margin-left: -450px;
+    padding: 20px;
+    position: fixed;
+    top: 70px;
+    width: 900px;
+}
+#descripcion
+{
+	border: 1px solid #0061AB;
+    left: 307px;
+    padding: 10px;
+    position: absolute;
+    top: 117px;
+}
+/*------------------------------
+Diseño de letra y fondo de boton
+------------------------------*/
+
+#diseno
+{
+	border: 1px solid #0061AB;
+    height: auto;
+    padding: 10px;
+    position: absolute;
+    top: 190px;
+}
+#fondoEjemplo
+{
+	border: 2px solid #0061AB;
+    height: 65px;
+    left: 655px;
+    position: absolute;
+    text-align: center;
+    top: 35px;
+    width: 120px;
+    
+}
+
+#btn_Inicio
+{
+	background:url(../imagenes/botones/btnInicio.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Atras
+{
+	background:url(../imagenes/botones/btnAtras.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Siguiente
+{
+	background:url(../imagenes/botones/btnSiguiente.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Fin
+{
+	background:url(../imagenes/botones/btn_Final.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Buscar
+{
+	background:url(../imagenes/botones/btnBuscar.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Duplicar
+{
+	background:url(../imagenes/botones/btnDuplicar.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Agregar
+{
+	background:url(../imagenes/botones/btnAgregar.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Modificar
+{
+	background:url(../imagenes/botones/btnModificar.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Guardar
+{
+	background:url(../imagenes/botones/btnGuardar.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+#btn_Eliminar
+{
+	background:url(../imagenes/botones/btnEliminar.png) no-repeat;
+	height: 66px;
+    width: 74px;
+}
+
+.btnCierreCaja {
+  	background: #15A8E1;
+	border: 0;
+	/*
+ 	background-image: -webkit-linear-gradient(top, #48bcc2, #66A0FF);
+ 	background-image: -moz-linear-gradient(top, #48bcc2, #66A0FF);
+  	background-image: -ms-linear-gradient(top, #48bcc2, #66A0FF);
+  	background-image: -o-linear-gradient(top, #48bcc2, #66A0FF);
+  	background-image: linear-gradient(to bottom, #48bcc2, #66A0FF);
+	*/
+	margin: 6px auto 0 auto;
+  	-webkit-border-radius: 14;
+  	-moz-border-radius: 14;
+	padding: 2px 10px 2px 10px;
+	width: 300px;
+	height: 80px;
+	font-family: Arial;
+  	color: #ffffff;
+	font-size: 14px;
+	text-align:center;
+	display: table-cell;
+}
+
+.btnCierreCaja:hover {
+  	background: #1A71FF;
+	/*
+  	background-image: -webkit-linear-gradient(top, #06ccc2, #155ACC);
+  	background-image: -moz-linear-gradient(top, #06ccc2, #155ACC);
+  	background-image: -ms-linear-gradient(top, #06ccc2, #155ACC);
+  	background-image: -o-linear-gradient(top, #06ccc2, #155ACC);
+  	background-image: linear-gradient(to bottom, #06ccc2, #155ACC);
+	*/
+  	text-decoration: none;
+}
+
+/*---------------------------------
+Paleta de Colores
+--------------------------------*/
+#The_colorPicker{
+	position:absolute;
+	width:224px;
+	padding-bottom:1px;
+	background-color:#FFF;
+	border:1px solid #317082;
+}
+/*******************************************************************
+Style Admin toma Pedido
+****************************************************************************/
+button
+{
+	height:60px;
+	width: 120px;
+}
+
+#grillaPlu td
+{
+	height:60px;
+	width: 120px;
+}
+#grillaCategoria td
+{
+	height:60px;
+	width: 120px;
+	
+}
+#menuPrincipal
+{
+	position: absolute;
+	top:  0px; 
+    left: 0px;
+	height:60px;
+	width:1200px;
+	border: 1px solid #AAAAAA;
+}
+#menuProducto
+{
+	position: absolute;
+	top:  65px;
+	left: 215px;
+	height:328px;
+	width:985px;
+	display:block;
+	overflow:auto;
+	border: 1px solid #AAAAAA;
+}
+#menuCategoria
+{
+	position: absolute;
+	top:  425px;
+	left: 215px;
+	height:263px;
+	width:985px;
+	display:block;
+	overflow:auto;
+	border: 1px solid #AAAAAA;
+}
+#lista
+{
+	position:absolute;
+	top: 99px;
+	left: 2px;
+	height: 586px;
+	width: 200px;
+	margin: 1px;
+	background:#FFFFFF;
+	frameborder:1px; 
+	align:middle;
+	font-family:Tahoma, Geneva, sans-serif;
+	font-size:9px;
+}
+#comboCadena
+{
+	position:absolute;
+	border: 1px solid #AAAAAA;
+	frameborder:1px;
+	width: 203px;
+	left: 2px;
+	top: 65px;
+	font-family: Tahoma,Geneva,sans-serif;
+    font-size: 9px;
+}
+#cadena
+{
+	font-family:Tahoma, Geneva, sans-serif;
+	font-size:14px;
+}
+/*******************************************************************
+								Estilos Usuarios
+********************************************************************
+Style toma Pedido,
+********************************************************************/
+
+/*div y botones de la lista de toma de pedido*/
+/*div y botones de la lista de toma de pedido*/
+#botonesLista
+{
+	background: none repeat scroll 0 0 #0066FF;
+    height: 69px;
+    padding: 10px;
+    position: absolute;
+    top: 403px;
+    width: 390px;
+	border-radius: 10px;
+}
+#btn_eliminarElemnto
+{
+	/*background:url(../imagenes/botones/btnEliminar.png) no-repeat;*/
+	height: 66px;
+    width: 74px;
+}
+#btn_bajarElemnto
+{
+	/*background:url(../imagenes/botones/btnEliminar.png) no-repeat;*/
+	height: 66px;
+    width: 74px;
+}
+#btn_subirElemnto
+{
+	/*background:url(../imagenes/botones/btnEliminar.png) no-repeat;*/
+	height: 66px;
+    width: 74px;
+}
+
+/*div del calculos*/
+#calculosLista
+{
+    height: 69px;
+    padding: 10px;
+    position: absolute;
+    top: 500px;
+    width: 390px;
+}
+
+
+/*frame de la lista de toma de pedidos*/ 
+#listaPedido
+{
+	position: absolute;
+	top:  0px; 
+    left: 0px;
+	background:  #ffffff;
+	width:410px; 
+	height: 620px;
+    border: aqua;
+    border-radius: 10px;
+}
+
+/*frame de los productos del establecimiento*/
+#barraCategoria
+{
+	position: absolute;
+	top:  372px; 
+    left: 420px;
+	width:800px; 
+	height: 250px;
+}
+
+/*frame de las categorías del establecimiento*/
+#barraProducto
+{
+	position: absolute;
+	top:  0px; 
+    left: 420px;
+	width:800px; 
+	height: 250px;
+}
+#listado
+{
+	height:402px;
+}
+
+/*frame de la barra principal del sistema*/
+#barraPrincipal
+{
+	position: absolute;
+	top: 410px;
+	left: 0px;
+}
+
+#barraFacturacion
+{
+	position: absolute;
+	top: 600px;
+	left: 0px;
+}
+
+#btn_regresar
+{
+	position: absolute;
+	top: 600px;
+	left: 900px;
+}
+
+/*Seleccionar elemnto de la lista*/
+#listadoPedido .ui-selecting 
+{
+    background: #ccc;
+}
+#listadoPedido .ui-selected 
+{
+    background: #999;
+}
+/**********************************************************************************************
+Estilo Jose
+**********************************************************************************************/
+
+.btn {
+  	background: #48bcc2;
+ 	 background-image: -webkit-linear-gradient(top, #48bcc2, #48bcc2);
+ 	 background-image: -moz-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: -ms-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: -o-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: linear-gradient(to bottom, #48bcc2, #48bcc2);
+  	-webkit-border-radius: 14;
+  	-moz-border-radius: 14;
+ 	 border-radius: 14px;
+  	font-family: Arial;
+  	color: #ffffff;
+  	font-size: 20px;
+  	padding: 33px 40px 40px 40px;
+  	text-decoration: none;
+  	width:280px;
+  	height:100px;
+  	text-align:center;
+ 
+}
+
+.btn:hover {
+  	background: #06ccc2;
+  	background-image: -webkit-linear-gradient(top, #06ccc2, #06ccc2);
+  	background-image: -moz-linear-gradient(top, #06ccc2, #06ccc2);
+  	background-image: -ms-linear-gradient(top, #06ccc2, #06ccc2);
+  	background-image: -o-linear-gradient(top, #06ccc2, #06ccc2);
+  	background-image: linear-gradient(to bottom, #06ccc2, #06ccc2);
+  	text-decoration: none;
+}
+
+
+
+
+
+.btn2 {
+  	background: #48bcc2;
+  	background-image: -webkit-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: -moz-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: -ms-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: -o-linear-gradient(top, #48bcc2, #48bcc2);
+  	background-image: linear-gradient(to bottom, #48bcc2, #48bcc2);
+  	-webkit-border-radius: 14;
+  	-moz-border-radius: 14;
+  	border-radius: 14px;
+  	font-family: Arial;
+  	color: #ffffff;
+  	font-size: 20px;
+  	padding: 33px 40px 40px 40px;
+  	text-decoration: none;
+  	width:240px;
+  	height:70px;
+  	text-align:center;
+ 
+}
+
+.btn2:hover {
+ 	background: #06ccc2;/*99ccff*/
+ 	background-image: -webkit-linear-gradient(top, #06ccc2, #06ccc2);
+ 	background-image: -moz-linear-gradient(top, #06ccc2, #06ccc2);
+  	background-image: -ms-linear-gradient(top, #06ccc2, #06ccc2);
+ 	background-image: -o-linear-gradient(top, #06ccc2, #06ccc2);
+ 	background-image: linear-gradient(to bottom, #06ccc2, #06ccc2);
+  	text-decoration: none;
+}
+
+.botonimagen{
+  	background-image:url(../imagenes/aceptar.png);
+  	background-repeat:no-repeat;
+  	height:160px;
+  	width:137px;
+ 	background-position:center;
+}
+.botonnormal{
+ 	background: #99ccff;/*99ccff*/
+  	height:50px;/*altura*/
+  	width:120px;/*ancho*/
+}
+li{
+	list-style: none;	
+}
+
+#wrapper{
+	margin: 0px auto;
+	text-align: left;
+	width: 960px;
+}
+
+#paging_container1{
+	height: 320px;	
+}
+
+#paging_container2{
+	height: 356px;	
+}
+
+#paging_container3{
+	height: 190px;
+}
+
+#paging_container4{
+	height: 307px;	
+	overflow: hidden;
+}
+
+#paging_container8 .no_more{
+    background-color: white;
+    color: gray;
+    cursor: default;
+}
+
+.ellipse{
+	float: left;
+}
+
+.container{
+	width: 260px;
+	float: left;
+	margin: 50px 10px 10px;
+	padding: 20px;
+	background-color: white;
+}
+
+.page_navigation , .alt_page_navigation{
+	padding-bottom: 10px;
+}
+
+.page_navigation a, .alt_page_navigation a{
+	padding:3px 5px;
+	margin:2px;
+	color:white;
+	text-decoration:none;
+	float: left;
+	font-family: Tahoma;
+	font-size: 12px;
+	background-color:#DB5C04;
+}
+.active_page{
+	background-color:white !important;
+	color:black !important;
+}	
+
+.content, .alt_content{
+	color: black;
+}
+
+.content li, .alt_content li, .content > p{
+	padding: 5px
+}
+/*************************************************************/
+.boton2{
+	font-family: "Arial Black", Gadget, sans-serif; font-size: 14px;	
+	background:-moz-linear-gradient(#fc0 0%,#F60 100%);
+	background:-ms-linear-gradient(#fc0 0%,#F60 100%);
+	background:-o-linear-gradient(#fc0 0%,#F60 100%);
+	background:-webkit-linear-gradient(#fc0 0%,#F60 100%);
+	background:linear-gradient(#fc0 0%,#F60 100%);
+	border:solid 1px #DEDEDE;
+	border-radius:5px;
+	text-align:center;
+	padding:5px;
+	color:#fff;
+  	width:75px;
+}
+.boton2:hover{
+	font-family: "Arial Black", Gadget, sans-serif; font-size: 14px;
+	background:-moz-linear-gradient(#fff 0%,#DEDEDE 100%);
+	color:#999;
+} 
+
+#botonA {
+	-moz-box-shadow:inset 0px -1px 6px 5px #cae3fc;
+	-webkit-box-shadow:inset 0px -1px 6px 5px #cae3fc;
+	box-shadow:inset 0px -1px 6px 5px #cae3fc;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #79bbff), color-stop(1, #4197ee) );
+	background:-moz-linear-gradient( center top, #79bbff 5%, #4197ee 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#79bbff', endColorstr='#4197ee');
+	background-color:#79bbff;
+	-webkit-border-top-left-radius:20px;
+	-moz-border-radius-topleft:20px;
+	border-top-left-radius:20px;
+	-webkit-border-top-right-radius:20px;
+	-moz-border-radius-topright:20px;
+	border-top-right-radius:20px;
+	-webkit-border-bottom-right-radius:20px;
+	-moz-border-radius-bottomright:20px;
+	border-bottom-right-radius:20px;
+	-webkit-border-bottom-left-radius:20px;
+	-moz-border-radius-bottomleft:20px;
+	border-bottom-left-radius:20px;
+	text-indent:0;
+	border:1px solid #469df5;
+	display:inline-block;
+	color:#ffffff;
+	font-family:Arial;
+	font-size:18px;
+	font-weight:bold;
+	font-style:normal;
+	height:38px;
+	line-height:38px;
+	width:115px;
+	text-decoration:none;
+	text-align:center;
+	text-shadow:1px 1px 0px #287ace;
+}
+.botonA:hover {
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #4197ee), color-stop(1, #79bbff) );
+	background:-moz-linear-gradient( center top, #4197ee 5%, #79bbff 100% );
+	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#4197ee', endColorstr='#79bbff');
+	background-color:#4197ee;
+}.botonA:active {
+	position:relative;
+	top:1px;
+}
+
+
+
+.btnDinero
+{
+ height:60px;
+ width: 120px;
+ font-size:16px;
+}
+.btnTarjetas
+{
+ height:58px;
+ width: 100px;
+ margin-bottom:0px;
+ margin-top:opx;
+ margin-left:0px;
+ margin-right:0px;
+}
+
+
+.botonAutorizar{
+    background:#0D98FB; 
+    background-image: -webkit-linear-gradient(top,#0D98FB,#1A5DB3);
+    background-image: -moz-linear-gradient(top,#0D98FB,#1A5DB3);
+    background-image: -o-linear-gradient(top,#0D98FB,#1A5DB3);  
+    background-image: linear-gradient(to bottom,#0D98FB,#1A5DB3);   
+    border: 1px solid #125CB5;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -o-border-radius: 5px;  
+    border-radius: 5px;
+    -moz-box-shadow: 0 1px 1px #71C0FD inset;
+    -webkit-box-shadow: 0 1px 1px #71C0FD inset;
+    -o-box-shadow: 0 1px 1px #71C0FD inset; 
+    box-shadow: 0 1px 1px #71C0FD inset;
+    padding: .8em 1.8em;
+    color: white;
+    font-weight:normal;
+    text-decoration:none;
+	
+}
+/*.boton:hover {
+    background: #1A5DB3;
+    background-image: -webkit-linear-gradient(bottom,#0D98FB,#1A5DB3);
+    background-image: -moz-linear-gradient(bottom,#0D98FB,#1A5DB3);
+    background-image: -o-linear-gradient(bottom,#0D98FB,#1A5DB3);   
+    background-image: linear-gradient(to top,#0D98FB,#1A5DB3);
+    cursor: pointer;
+}*/
+
+.boton {
+text-decoration: none;
+ color: #fff;
+ font-weight: bold;
+ padding: 12px 20px;
+ font-size: 24px;
+ border-radius: 10px;
+ background-color: #666666;
+ box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 9px rgba(255,255,255,0.2), inset 0 -2px 9px rgba(0,0,0,0.2);
+ position: relative;
+ border-bottom: 1px solid rgba(255,255,255,0.2);
+ display: inline-block;
+ font-family: Arial, Helvetica, sans;
+ text-shadow: 0px -1px 0px rgba(0,0,0,0.2);
+}
+
+.boton:hover {
+ box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 15px rgba(255,255,255,0.4), inset 0 -2px 9px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+
+.boton:active {
+ top: 7px;
+ box-shadow: 0 2px 0 #393939, 0px 4px 4px rgba(0,0,0,0.4), inset 0px 2px 5px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+
+.formaBoton {
+ border-radius: 5px;
+ padding-left: 25px;
+ padding-right: 25px;
+}
+
+.colorRojo{
+ background-color: #c34747;
+ box-shadow: 0 5px 5px #853232, 0 9px 0 #5e2525, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 9px rgba(255,255,255,0.2), inset 0 -2px 9px rgba(0,0,0,0.2);
+}
+
+.colorRojo:hover {
+ box-shadow: 0 5px 5px #853232, 0 9px 0 #5e2525, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 15px rgba(255,255,255,0.4), inset 0 -2px 9px rgba(0,0,0,0.2);
+}
+
+.colorRojon:active {
+ box-shadow: 0 2px 0 #5e2525, 0px 4px 4px rgba(0,0,0,0.4), inset 0px 2px 5px rgba(0,0,0,0.2);
+}
+
+.flecha_izquierda{
+  width: 0;
+  height: 0;
+  border-top: 50px solid transparent;
+  border-bottom: 50px solid transparent; 
+  border-right:50px solid blue;
+  /*box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 9px rgba(255,255,255,0.2), inset 0 -2px 9px rgba(0,0,0,0.2);  */
+  display: inline-block;
+}
+.flecha_izquierda:hover {
+ box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 15px rgba(255,255,255,0.4), inset 0 -2px 9px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+.flecha_izquierda:active {
+ top: 7px;
+ box-shadow: 0 2px 0 #393939, 0px 4px 4px rgba(0,0,0,0.4), inset 0px 2px 5px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+
+
+.flecha_derecha{
+  width: 0;
+  height: 0;
+  border-top: 50px solid transparent;
+  border-bottom: 50px solid transparent;
+  border-left: 50px solid blue;
+  /*box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 9px rgba(255,255,255,0.2), inset 0 -2px 9px rgba(0,0,0,0.2);  */
+  display: inline-block;
+}
+
+.flecha_derecha:hover {
+ box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 15px rgba(255,255,255,0.4), inset 0 -2px 9px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+.flecha_derecha:active {
+ top: 7px;
+ box-shadow: 0 2px 0 #393939, 0px 4px 4px rgba(0,0,0,0.4), inset 0px 2px 5px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+
+
+/*
+.flecha_izquierda{
+  width: 0;
+  height: 0;
+  border-top: 50px solid transparent;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  border-right:50px solid #25aa00;
+  box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 9px rgba(255,255,255,0.2), inset 0 -2px 9px rgba(0,0,0,0.2);
+  display: inline-block;
+}
+.flecha_izquierda:hover {
+ box-shadow: 0 5px 5px #313131, 0 9px 0 #393939, 0px 9px 10px rgba(0,0,0,0.4), inset 0px 2px 15px rgba(255,255,255,0.4), inset 0 -2px 9px rgba(0,0,0,0.2);
+ color: #fff !important;
+}
+*/
+
+#btn_Cancelar
+{
+ background:url(../imagenes/botones/btnCancelar.png) no-repeat;
+ height: 66px;
+    width: 74px;
+}
+
+#administracion {
+ position: absolute;
+ border: 1px solid #0061AB;
+ padding:8px;
+ top: 395px;
+ margin-left: auto;
+ margin-right: auto;
+ left: 0;
+ right: 0;
+ background-color:#F0F8FF;
+}
+
+
+.btn_clientesAx{
+  background: #5eb3eb;
+  background-image: -webkit-linear-gradient(top, #5eb3eb, #71afd6);
+  background-image: -moz-linear-gradient(top, #5eb3eb, #71afd6);
+  background-image: -ms-linear-gradient(top, #5eb3eb, #71afd6);
+  background-image: -o-linear-gradient(top, #5eb3eb, #71afd6);
+  background-image: linear-gradient(to bottom, #5eb3eb, #71afd6);
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0px;
+  font-family: Arial;
+  color: #ffffff;
+  font-size: 16px;
+  padding: 8px 15px 8px 15px;
+  text-decoration: none;
+  width:450px;
+}
+
+.btn_clientesAx:hover {
+  background: #3cb0fd;
+  background-image: -webkit-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -moz-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -ms-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: -o-linear-gradient(top, #3cb0fd, #3498db);
+  background-image: linear-gradient(to bottom, #3cb0fd, #3498db);
+  text-decoration: none;
+}

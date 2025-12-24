@@ -1,0 +1,149 @@
+@charset "UTF-8";
+
+ul.MenuBarHorizontal
+{
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+	font-size: 100%;
+	cursor: default;
+	width: auto;
+}
+
+ul.MenuBarActive
+{
+	z-index: 1000;
+}
+
+ul.MenuBarHorizontal li
+{
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+	font-size: 100%;
+	position: relative;
+	text-align: left;
+	cursor: pointer;
+	width: 120px;
+	float: left;
+}
+
+ul.MenuBarHorizontal ul
+{
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+	font-size: 100%;
+	z-index: 1020;
+	cursor: default;
+	width: 8.2em;
+	position: absolute;
+	left: -1000em;
+}
+
+ul.MenuBarHorizontal ul.MenuBarSubmenuVisible
+{
+	left: auto;
+}
+
+ul.MenuBarHorizontal ul li
+{
+	width: 8.2em;
+}
+ul.MenuBarHorizontal ul ul
+{
+	position: absolute;
+	margin: -5% 0 0 95%;
+}
+
+ul.MenuBarHorizontal ul.MenuBarSubmenuVisible ul.MenuBarSubmenuVisible
+{
+	left: auto;
+	top: 0;
+}
+
+/*******************************************************************************
+
+ DESIGN INFORMATION: describes color scheme, borders, fonts
+
+ *******************************************************************************/
+
+ul.MenuBarHorizontal ul
+{
+	border: 1px solid #CCC;
+}
+ul.MenuBarHorizontal a
+{
+	display: block;
+	cursor: pointer;
+	background-color: #003;
+	padding: 5px 5px;
+	color: #CCC;
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 15px;
+	text-decoration: none;
+}
+ul.MenuBarHorizontal a:hover, ul.MenuBarHorizontal a:focus
+{
+	background-color: #33C;
+	color: #FFF;
+}
+ul.MenuBarHorizontal a.MenuBarItemHover, ul.MenuBarHorizontal a.MenuBarItemSubmenuHover, ul.MenuBarHorizontal a.MenuBarSubmenuVisible
+{
+	background-color: #CCC;
+	color: #003;
+}
+
+/*******************************************************************************
+
+ SUBMENU INDICATION: styles if there is a submenu under a given menu item
+
+ *******************************************************************************/
+
+
+ul.MenuBarHorizontal a.MenuBarItemSubmenu
+{
+	background-image: url(../imagenes/menuAdmin/SpryMenuBarDown.gif);
+	background-repeat: no-repeat;
+	background-position: 95% 50%;
+}
+ul.MenuBarHorizontal ul a.MenuBarItemSubmenu
+{
+	background-image: url(../imagenes/menuAdmin/SpryMenuBarRight.gif);
+	background-repeat: no-repeat;
+	background-position: 95% 50%;
+}
+ul.MenuBarHorizontal a.MenuBarItemSubmenuHover
+{
+	background-image: url(SpryMenuBarDownHover.gif);
+	background-repeat: no-repeat;
+	background-position: 95% 50%;
+}
+ul.MenuBarHorizontal ul a.MenuBarItemSubmenuHover
+{
+	background-image: url(SpryMenuBarRightHover.gif);
+	background-repeat: no-repeat;
+	background-position: 95% 50%;
+}
+
+/*******************************************************************************
+
+ BROWSER HACKS: the hacks below should not be changed unless you are an expert
+
+ *******************************************************************************/
+
+ul.MenuBarHorizontal iframe
+{
+	position: absolute;
+	z-index: 1010;
+	filter:alpha(opacity:0.1);
+}
+@media screen, projection
+{
+	ul.MenuBarHorizontal li.MenuBarItemIE
+	{
+		display: inline;
+		f\loat: left;
+		background: #FFF;
+	}
+}

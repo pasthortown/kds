@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<factura>
+<infoTributaria>
+<ambiente>1</ambiente>
+<tipoEmision>1</tipoEmision>
+<razonSocial>EMBUTSER S.A.</razonSocial>
+<razonComercial>EMBUTSER S.A.</razonComercial>
+<ruc>1792351057001</ruc>
+<claveAcceso>2207201401179235105700110020010000000044126153314</claveAcceso>
+<codDoc>01</codDoc>
+<estab>002</estab>
+<ptoEmi>001</ptoEmi>
+<secuencial>000000004</secuencial>
+<dirMatriz>COREA 126 Y AV AMAZONAS</dirMatriz>
+</infoTributaria>
+<infoFactura>
+<fechaEmision>22/07/2014</fechaEmision>
+<dirEstablecimiento>DE LOS CIPRESES N61-69 Y DE LOS HELECHOS</dirEstablecimiento>
+<obligadoContabilidad>NO</obligadoContabilidad>
+<tipoIdentificacionComprador>05</tipoIdentificacionComprador>
+<razonSocialComprador>MORA BORJA DARWIN HENRY</razonSocialComprador>
+<identificacionComprador>1720758364</identificacionComprador>
+<totalSinImpuestos>4.46</totalSinImpuestos>
+<totalDescuento>0.00</totalDescuento>
+<totalConImpuestos>
+<codigo>2</codigo>
+<codigoPorcentaje>2</codigoPorcentaje>
+<baseImponible>4.4642858505249</baseImponible>
+<valor>0.54</valor>
+</totalConImpuestos>
+</infoFactura>
+<detalles>
+<detalle>
+<codigoPrincipal>4</codigoPrincipal>
+<codigoAuxiliar>4</codigoAuxiliar>
+<descripcion>LOMO CHANCHO RELLENO</descripcion>
+<cantidad>1.00</cantidad>
+<precioUnitario>4.46</precioUnitario>
+<precioTotalSinImpuesto>0.00</precioTotalSinImpuesto>
+<precioTotalSInImpuesto>4.46</precioTotalSInImpuesto>
+<impuestos>
+<impuesto>
+<codigo>2</codigo>
+<impuestoCodigoPorcentaje>1</impuestoCodigoPorcentaje>
+<impTarifa>1</impTarifa>
+<impBaseImponible>1.00</impBaseImponible>
+<impValor>1.00</impValor>
+</impuesto>
+</impuestos>
+</detalle>
+</detalles>
+<propina>0.00</propina>
+<importeTotal>5.00</importeTotal>
+<moneda>DOLAR</moneda>
+<infoAdicional>
+<campoAdicional Nombre="Direcci&#243;n">2964584</campoAdicional>
+<campoAdicional Nombre="Tel&#233;fono">SANTA ANITA</campoAdicional>
+<campoAdicional Nombre="Email">darwin.mora@kfc.com.ec</campoAdicional>
+</infoAdicional>
+<Signature />
+</factura>

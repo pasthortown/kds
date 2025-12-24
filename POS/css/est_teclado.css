@@ -1,0 +1,202 @@
+/* CSS Document */
+/***********************************************
+jquery.keypad.alt & jquery.keypad
+************************************************/
+/* Main style sheet for jQuery Keypad v1.5.1. */
+button.keypad-trigger {
+	width: 5px;
+	padding: 0px;
+}
+img.keypad-trigger {
+	margin: 2px;
+	vertical-align: middle;
+}
+.keypad-popup, .keypad-inline, .keypad-key{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 30px;
+	color: #FFF;
+	font-weight: bold;	
+}
+
+.keypad-popup {
+	display: none;
+	z-index: 99999;
+	margin: 0;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	padding-left: 0px;
+	padding-top: 10px;
+}
+.keypad-keyentry {
+	display: none;	
+}
+.keypad-inline {
+	background-color: #fff;
+	border: 1px solid #888;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+}
+.keypad-disabled {
+	position: absolute;
+	z-index: 100;
+	background-color: white;
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+}
+.keypad-rtl {
+	direction: rtl;
+}
+.keypad-prompt {
+	clear: both;
+	text-align: center;
+}
+.keypad-prompt.ui-widget-header {
+	margin: 4px;
+}
+.keypad-row {
+	width: 100%;
+}
+.keypad-space {
+	display: inline-block;
+	margin: 4px;
+	width: 35px;
+}
+.keypad-half-space {
+	display: inline-block;
+	margin: 4px 2px;
+	width: 16px;
+}
+.keypad-key {
+    font-family: Arial;
+    font-size: 34px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #77b55a;
+    width: 65px;
+    height: 65px;
+    margin: 5px;
+    padding: 5px;
+    vertical-align: middle;
+    border: 1px solid #4b8f29;
+    -moz-box-shadow: 0px 0px 0px 0px #3e7327;
+    -webkit-box-shadow: 0px 0px 0px 0px #3e7327;
+    box-shadow: 0px 0px 0px 0px #3e7327;
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #77b55a), color-stop(1, #72b352));
+    background:-moz-linear-gradient(top, #77b55a 5%, #72b352 100%);
+    background:-webkit-linear-gradient(top, #77b55a 5%, #72b352 100%);
+    background:-o-linear-gradient(top, #77b55a 5%, #72b352 100%);
+    background:-ms-linear-gradient(top, #77b55a 5%, #72b352 100%);
+    background:linear-gradient(to bottom, #77b55a 5%, #72b352 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#77b55a', endColorstr='#72b352',GradientType=0);
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    display: inline-block;
+    cursor: pointer;
+}
+.keypad-special {
+    font-family:Arial;
+    font-size: 34px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #3d768a;
+    border: medium outset #cccccc;
+    width: 65px;
+    height: 65px;
+    margin: 5px;
+    padding: 5px;
+    vertical-align: middle;
+    -moz-box-shadow: 0px 0px 0px 0px #276873;
+    -webkit-box-shadow: 0px 0px 0px 0px #276873;
+    box-shadow: 0px 0px 0px 0px #276873;
+    background:-webkit-gradient(linear, left top, left bottom, color-stop(0.05, #599bb3), color-stop(1, #408c99));
+    background:-moz-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-webkit-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-o-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:-ms-linear-gradient(top, #599bb3 5%, #408c99 100%);
+    background:linear-gradient(to bottom, #599bb3 5%, #408c99 100%);
+    filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#599bb3', endColorstr='#408c99',GradientType=0);
+    background-color:#599bb3;
+    -moz-border-radius:6px;
+    -webkit-border-radius:6px;
+    border-radius:6px;
+    border:1px solid #29668f;
+    display:inline-block;
+    cursor:pointer;
+    color:#ffffff;
+    text-decoration:none;
+    text-shadow:0px 0px 50px #3d768a;
+}
+.keypad-key[disabled] {
+	border: 4px outset;
+}
+.keypad-key-down {
+}
+.keypad-special {
+	width: 105px;
+}
+.keypad-spacebar {
+	width: 320px;
+}
+.keypad-tab {
+	width: 30px;
+}
+.keypad-shift{
+	width: 58px;
+	}
+.keypad-close {
+	width: 60px;
+}
+.keypad-enter {
+	width: 100px;
+}
+.keypad-enter2 {
+	width:218px;
+}
+.keypad-back {
+	width: 100px;
+}.keypad-backNum {
+	width: 83px;
+}
+.keypad-clear {
+	width: 144px;        
+}
+.keypad-vacioNx {
+	width: 40px;
+	}
+.keypad-vaciox {
+width: 30px;
+}
+.keypad-vacioxx {
+width: 70px;
+}
+
+.keypad-clear, .keypad-back, .keypad-close, .keypad-shift {
+	color: #000;
+}
+.keypad-clear {
+	background-color: #CB8728;
+}
+.keypad-back {
+	background-color: #CB8728;
+}
+.keypad-close {
+	background-color:#CB8728;
+}
+.keypad-shift {
+	background-color: #0aa;
+}
+.keypad-enter, .keypad-enter2 {
+	background-color: #090;
+}
+.keypad-vacioNx, .keypad-vaciox,.keypad-vacioxx {
+
+background:none;
+border-bottom-color:none;
+border-bottom-style:none;
+border-left-style:none;
+border-right-style:none;
+border-top-style:none;
+}

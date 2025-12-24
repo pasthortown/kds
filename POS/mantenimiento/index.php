@@ -1,0 +1,86 @@
+<?php
+/////////////////////////////////////////////////////////////////////
+///////DESARROLLADO POR: Javier Cerda ///////////////////////////////
+///////DESCRIPCION: Pantalla de inicio (login) //////////////////////
+///////TABLAS INVOLUCRADAS: Users_Pos ///////////////////////////////
+///////FECHA CREACION: 25-11-2013////////////////////////////////////
+///////USUARIO QUE MODIFICO: Daniel Llerena /////////////////////////
+///////FECHA MODIFICACION: 21-05-2015 ///////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO: Quitar el teclado dimámico /////////
+//////////// al momento de ingresar Usuario y Contraseña ////////////
+/////////////////////////////////////////////////////////////////////
+///////USUARIO QUE MODIFICO: Darwin Mora ////////////////////////////
+///////FECHA MODIFICACION: 11-06-2015 ///////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO: Aplicar estilos bootstrap /////////
+/////////////////////////////////////////////////////////////////////
+//Clases
+require_once'../system/conexion/clase_sql.php';
+include_once'../clases/clase_seguridades.php';
+require_once'../system/conexion/clase_sqlMultiple.php';
+
+if (session_status() !== PHP_SESSION_NONE) {
+    session_destroy();
+}
+   
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Max Point</title>
+
+        <link rel="stylesheet" href="../bootstrap/css/bootstrap.css" type="text/css"/>
+        <link rel="stylesheet" href="../css/jquery-ui.css" type="text/css"/>
+        <link rel="stylesheet" type="text/css" href="../css/alertify.core.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/alertify.default.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/style_home_seleccion.css">
+
+        <script src="../js/jquery1.11.1.js" type="text/javascript"></script>
+        <script src="../bootstrap/js/bootstrap.js" type="text/javascript"></script>
+        <script src="../js/jquery-ui.js" type="text/javascript"></script>
+        <script src="../js/alertify.js" type="text/javascript"></script>
+        <script src="../js/ajax_ingreso_admin.js" type="text/javascript"></script>
+
+    </head>
+
+    <body class="fondobarra">
+        <div>
+            <div>
+				<p class="nombremax" style="text-align:center">Max<span class="nombrepoint">Point</span></p>
+            </div>
+        </div>
+        <br/>
+		<strong>
+			<div class="panel panel-default col-xs-4 col-xs-offset-4 centered">
+				<div class="panel-body">
+					<form name="frmAccesoAdm" action="../seguridades/valida_usuarioAdm.php" id="acceso" method="post">
+						<div class="form-group">
+							<div class="input-group">
+
+								<label class="text-info">VERSION 1.22.1</label>
+
+
+
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="input-group">
+								<input type="text" class="form-control input-lg" id='txtUsuario' name="txtUsuario" placeholder="Usuario" autocomplete="off" />
+								<label for="uLogin" class="input-group-addon glyphicon glyphicon-user"></label>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="input-group">
+								<input type="password" class="form-control input-lg" id="txtClave" name="txtClave" placeholder="Contraseña" autocomplete="off" />
+								<label for="uPassword" class="input-group-addon glyphicon glyphicon-lock"></label>
+							</div>
+						</div>
+						<div style="text-align: center">
+							<input type="button" class="btn btn-primary btn-lg" name="Ingresar" value="Ingresar" onclick="valida_envia()" />
+						</div>
+					</form>
+				</div>
+			</div>
+		</strong>
+    </body>
+</html>

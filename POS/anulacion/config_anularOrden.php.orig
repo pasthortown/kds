@@ -1,0 +1,551 @@
+<?php
+
+@session_start();
+
+$cadena = $_SESSION['cadenaId'];
+$restaurante = $_SESSION['rstId'];
+$tipo_servicio = $_SESSION['TipoServicio'];
+$usuario = $_SESSION['usuarioId'];
+$ip = $_SESSION['direccionIp'];
+$estacion_id = $_SESSION['estacionId'];
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////DESARROLLADO POR: Cristhian Castro ///////////////////////////////////////////////////////////////
+///////DESCRIPCION: /////////////////////////////////////////////////////////////////////////////////////
+///////TABLAS INVOLUCRADAS: Menu_Agrupacion, ////////////////////////////////////////////////////////////
+////////////////Menu_Agrupacionproducto//////////////////////////////////////////////////////////////////
+////////////////Detalle_Orden_Pedido/////////////////////////////////////////////////////////////////////
+///////////////////Plus, Precio_Plu, Mesas///////////////////////////////////////////////////////////////
+///////FECHA CREACION: 24-03-2014////////////////////////////////////////////////////////////////////////
+///////FECHA ULTIMA MODIFICACION: 07-05-2014/////////////////////////////////////////////////////////////
+///////USUARIO QUE MODIFICO:  Cristhian Castro///////////////////////////////////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO: Documentación y validación en Internet Explorer 9+//////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+///////FECHA ULTIMA MODIFICACION: 07-07-2014/////////////////////////////////////////////////////////////
+///////USUARIO QUE MODIFICO: Jose Fernandez//////////////////////////////////////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO: se agrego el if "obtienencreid" Y facturacion electronica///////////////
+///////FECHA ULTIMA MODIFICACION: 16/01/2015/////////////////////////////////////////////////////////////
+///////USUARIO QUE MODIFICO: Jose Fernandez//////////////////////////////////////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO:facturacion tipo Plan Market/////////////////////////////////////////////
+///////FECHA ULTIMA MODIFICACION: 05/05/2015/////////////////////////////////////////////////////////////
+///////USUARIO QUE MODIFICO: Jorge Tinoco ///////////////////////////////////////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO: Muestra ordenes de pedido en pantalla de cuentas abiertas //////////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+include_once "../system/conexion/clase_sql.php";
+include_once "../clases/clase_anularOrden.php";
+include_once "../clases/clase_webservice.php";
+include_once "../xml/generar_xml.php";
+
+require_once('../resources/module/fidelizacion/Token.php');
+
+$lc_config = new menuPedido();
+$servicioWebObj = new webservice();
+
+// ******* V2 FIDELIZACION *******
+//$tokenLoyalty = new TokenLoyalty();
+// *******
+
+if (isset($_GET["impresionFacturaError"])) {
+    $lc_condiciones[0] = $_GET["idFactura"];
+    print $lc_config->fn_consultar("impresionFacturaError", $lc_condiciones);
+}
+
+if (isset($_GET["impresion_factura"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("impresion_factura", $lc_condiciones);
+
+} else if (isset($_GET["impresion_voucher"])) {
+    $lc_condiciones[0] = $_GET["rqaut"];
+    print $lc_config->fn_consultar("impresion_voucher", $lc_condiciones);
+
+} else if (isset($_GET["txTarjetas"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_SESSION['IDPeriodo'];
+    $lc_condiciones[2] = $estacion_id;
+    print $lc_config->fn_consultar("txTarjetas", $lc_condiciones);
+
+} else if (isset($_GET["grabaCanalImpresionAnulacionPreimpresa"])) {
+    $lc_condiciones[0] = $_GET["idfacturaPre"];
+    $lc_condiciones[1] = $_GET["charNota"];
+    $lc_condiciones[2] = $ip;
+    $lc_condiciones[3] = $usuario;
+    print $lc_config->fn_consultar("grabaCanalImpresionAnulacionPreimpresa", $lc_condiciones);
+
+} else if (isset($_GET["reimpresion_factura"])) {
+    $lc_condiciones[0] = $_GET["canal"];
+    $lc_condiciones[1] = $_GET["usuarioAdminR"];
+    //$lc_condiciones[2] = $_GET["usr_id"];
+    print $lc_config->fn_consultar("reimpresion_factura", $lc_condiciones);
+
+} else if (isset($_POST["validaCajeroActivoParaAnulacion"])) {
+    $lc_condiciones[0] = $_POST["facturaId"];
+    print $lc_config->fn_validaCajeroActivoParaAnulacion($lc_condiciones);
+
+} else if (isset($_GET["cargarConfiguracionRestaurante"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $tipo_servicio;
+    $lc_condiciones[2] = $_SESSION['estacionId'];
+    $lc_condiciones[3] = $_SESSION['cadenaId'];
+    print $lc_config->fn_consultar("cargarConfiguracionRestaurante", $lc_condiciones);
+
+} else if (isset($_GET["cargarAccesosPerfil"])) {
+    $lc_condiciones[0] = $usuario;
+    print $lc_config->fn_consultar("cargarAccesosPerfil", $lc_condiciones);
+
+} else if (isset($_GET["generarNotaCreditoOtros"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["cfac_id"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $ip;
+    $lc_condiciones[4] = $_GET["motivo"];
+    $lc_condiciones[5] = $_GET["mtv_id"];
+    $lc_condiciones[6] = $_SESSION['estacionId'];
+    print $lc_config->fn_consultar("generarNotaCreditoOtros", $lc_condiciones);
+
+} else if (isset($_GET["actualizarMotivoAnulacion"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    $lc_condiciones[1] = $_GET["motivo"];
+    $lc_condiciones[2] = $_GET["mtv_id"];
+    print $lc_config->fn_consultar("actualizarMotivoAnulacion", $lc_condiciones);
+
+} else if (isset($_GET["cargarTipoEnvioFacturaFormaPago"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("cargarTipoEnvioFacturaFormaPago", $lc_condiciones);
+
+} else if (isset($_GET["impresionFactura"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    $lc_condiciones[1] = $_GET["est_ip"];
+    $lc_condiciones[2] = $_GET["usr_id"];
+    print $lc_config->fn_consultar("impresionFactura", $lc_condiciones);
+
+} else if (isset($_GET["impresionVaucher"])) {
+    $lc_condiciones[0] = $_GET["rsaut_id"];
+    $lc_condiciones[1] = $_GET["est_ip"];
+    $lc_condiciones[2] = $_GET["usr_id"];
+    $lc_condiciones[3] = $_GET["rst_id"];
+    print $lc_config->fn_consultar("impresionVaucher", $lc_condiciones);
+
+} else if (isset($_GET["consultar_transaccionformaPagoFactura"])) {
+    $lc_condiciones[0] = $_GET["rsaut_movimiento"];
+    $lc_condiciones[1] = $_GET["fpf_id"];
+    print $lc_config->fn_consultar("consultar_transaccionformaPagoFactura", $lc_condiciones);
+
+} else if (isset($_GET["consultar_formasPagoFactura"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("consultar_formasPagoFactura", $lc_condiciones);
+
+} else if (isset($_GET["impresionNotaCredito"])) {
+    $lc_condiciones[0] = $_GET["ncre_id"];
+    $lc_condiciones[1] = $_GET["est_ip"];
+    $lc_condiciones[2] = $_GET["usr_id"];
+    print $lc_config->fn_consultar("impresionNotaCredito", $lc_condiciones);
+
+} else if (isset($_GET["consultarMesaOrden"])) {
+    $lc_condiciones[0] = $_GET["odp_id"];
+    print $lc_config->fn_consultar("consultarMesaOrden", $lc_condiciones);
+
+} else if (isset($_GET["visorCabeceraFactura"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("visorCabeceraFactura", $lc_condiciones);
+<<<<<<< HEAD
+
+} else if (isset($_GET["visorDetalleFactura"])) {
+=======
+}
+
+if (isset($_GET["visorDetalleFactura"])) {
+>>>>>>> origin/MXP_Version_1.9.10.6
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("visorDetalleFactura", $lc_condiciones);
+
+} else if (isset($_GET["visorDetalleNotaCredito"])) {
+    $lc_condiciones[0] = $_GET["ncre_id"];
+    print $lc_config->fn_consultar("visorDetalleNotaCredito", $lc_condiciones);
+
+} else if (isset($_GET["totalDetalleFactura"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("totalDetalleFactura", $lc_condiciones);
+
+} else if (isset($_GET["totalDetalleNotaCredito"])) {
+    $lc_condiciones[0] = $_GET["ncre_id"];
+    print $lc_config->fn_consultar("totalDetalleNotaCredito", $lc_condiciones);
+
+} else if (isset($_GET["formasPagoDetalleFactura"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("formasPagoDetalleFactura", $lc_condiciones);
+
+} else if (isset($_GET["formasPagoDetalleNotaCredito"])) {
+    $lc_condiciones[0] = $_GET["ncre_id"];
+    print $lc_config->fn_consultar("formasPagoDetalleNotaCredito", $lc_condiciones);
+
+} else if (isset($_GET["muestraTipoCuenta"])) {
+    print $lc_config->fn_consultar("muestraTipoCuenta", '');
+
+} else if (isset($_GET["grabacanalmovimientoVoucher"])) {
+    $lc_condiciones[0] = $ip;
+    $lc_condiciones[1] = $usuario;
+    $lc_condiciones[2] = $_GET["respuesta"];
+    $lc_condiciones[3] = $restaurante;
+    $lc_condiciones[4] = $estacion_id;
+    print $lc_config->fn_consultar("grabacanalmovimientoVoucher", $lc_condiciones);
+
+} else if (isset($_GET["cancelaTarjetaForma"])) {
+    $lc_condiciones[0] = $_GET["cancela_codFact"];
+    $lc_condiciones[1] = $_GET["cancela_idPago"];
+    $lc_condiciones[2] = $_GET["can_respuesta"];
+    $lc_condiciones[3] = $ip;
+    $lc_condiciones[4] = $usuario;
+    print $lc_config->fn_consultar("cancelaTarjetaForma", $lc_condiciones);
+
+} else if (isset($_GET["armaTramaSWTbanda"])) {
+    $lc_condiciones[0] = $_GET['tipoTransaccion'];
+    $lc_condiciones[1] = $_GET['numMovimiento'];
+    $lc_condiciones[2] = $_GET['formaIdPagoFact'];
+    $lc_condiciones[3] = $_SESSION['estacionId'];
+    $lc_condiciones[4] = $_SESSION['usuarioId'];
+    $lc_condiciones[5] = $_SESSION['rstId'];
+    $lc_condiciones[6] = $_GET['tipoTarjeta'];
+    $lc_condiciones[7] = $_GET['trackTarjeta'];
+    $lc_condiciones[8] = $_GET['cvvtarjeta'];
+    $lc_condiciones[9] = $_GET['anuFormaPagoId'];
+    $lc_condiciones[10] = 0;
+    $lc_condiciones[11] = 0;
+    print $lc_config->fn_consultar("armaTramaSWTbanda", $lc_condiciones);
+
+} else if (isset($_GET["esperaRespuestaRequerimientoAutorizacion"])) {
+    $lc_condiciones[0] = $_GET["cfac"];
+    print $lc_config->fn_consultar("esperaRespuestaRequerimientoAutorizacion", $lc_condiciones);
+
+} else if (isset($_GET["claveAcceso"])) {
+    $lc_condiciones[0] = $_GET['factt'];
+    $lc_condiciones[1] = $_GET['char'];
+    $lc_condiciones[2] = $ip;
+    $lc_condiciones[3] = $usuario;
+    $lc_condiciones[4] = $restaurante;
+    print $lc_config->fn_consultar("claveAcceso", $lc_condiciones);
+
+} else if (isset($_GET["anu_consultaTipoEnvio"])) {
+    $lc_condiciones[0] = $_GET['cfac_idTipoEnvio'];
+    print $lc_config->fn_consultar("anu_consultaTipoEnvio", $lc_condiciones);
+
+} else if (isset($_GET["anu_insertarRequerimientoAutorizacion"])) {
+    $lc_condiciones[0] = '03'; //$_GET["tipoTransac"];
+    $lc_condiciones[1] = $_GET["anucfac"];
+    $lc_condiciones[2] = $_GET["anuformaPagoID"];
+    $lc_condiciones[3] = $estacion_id;
+    $lc_condiciones[4] = $usuario;
+    $lc_condiciones[5] = $restaurante;
+    $lc_condiciones[6] = $_GET["envio"];
+    print $lc_config->fn_consultar("anu_insertarRequerimientoAutorizacion", $lc_condiciones);
+
+} else if (htmlspecialchars(isset($_POST["anu_insertarRequerimientoAutorizacionUnired"]))) {
+    $lc_condiciones[0] = '03'; //$_GET["tipoTransac"];
+    $lc_condiciones[1] = htmlspecialchars($_POST["anucfacP"]);
+    $lc_condiciones[2] = htmlspecialchars($_POST["anuformaPagoIDP"]);
+    $lc_condiciones[3] = $estacion_id;
+    $lc_condiciones[4] = $usuario;
+    $lc_condiciones[5] = $restaurante;
+    print $lc_config->fn_insertarRequerimientoAutorizacionUnired($lc_condiciones);
+
+} else if (isset($_GET["cuentasAbiertas"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $usuario;
+    $lc_condiciones[2] = $estacion_id;
+    print $lc_config->fn_consultar("cuentasAbiertas", $lc_condiciones);
+
+} else if (isset($_GET["busquedaCuentasAbiertas"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["parametro"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $estacion_id;
+    print $lc_config->fn_consultar("busquedaCuentasAbiertas", $lc_condiciones);
+
+} else if (isset($_GET["cuentasCerradas"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $usuario;
+    $lc_condiciones[2] = $estacion_id;
+    print $lc_config->fn_consultar("cuentasCerradas", $lc_condiciones);
+
+} else if (isset($_GET["busquedaCuentasCerradas"])) {
+    $lc_condiciones[0] = $_GET["rst_id"];
+    $lc_condiciones[1] = $_GET["parametro"];
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $estacion_id;
+    print $lc_config->fn_consultar("busquedaCuentasCerradas", $lc_condiciones);
+
+} else if (isset($_GET["insertaNotaDeCredito"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["cfac_idA"];
+    $lc_condiciones[2] = $_GET["userAdmin"]; //$usuario;
+    $lc_condiciones[3] = $_GET["mtv_idA"];
+    $lc_condiciones[4] = $_GET["motivoA"];
+    $lc_condiciones[5] = $_GET["cliente"];
+    print $lc_config->fn_consultar("insertaNotaDeCredito", $lc_condiciones);
+
+} else if (isset($_GET["motivoAnulacion"])) {
+    $lc_condiciones[0] = $cadena;
+    print $lc_config->fn_consultar("motivoAnulacion", $lc_condiciones);
+
+} else if (isset($_GET["anularOrden"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    $lc_condiciones[1] = $_GET["mtv_id"];
+    $lc_condiciones[2] = $_GET["cfac_observacion"];
+    $lc_condiciones[3] = $usuario;
+    $lc_condiciones[4] = $_GET["idFormaP"];
+    print $lc_config->fn_consultar("anularOrden", $lc_condiciones);
+
+} else if (isset($_GET["validarUsuario"])) {
+    $lc_condiciones[0] = $_GET["rst_id"];
+    $lc_condiciones[1] = $_GET["usr_clave"];
+    $lc_condiciones[2] = $_GET["usr_tarjeta"];
+    print $lc_config->fn_consultar("validarUsuario", $lc_condiciones);
+
+} else if (isset($_GET["validarCreencialesUsuario"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_GET["usr_clave"];
+    $lc_condiciones[2] = $_GET["usr_tarjeta"];
+    $lc_condiciones[3] = $usuario;
+    $lc_condiciones[4] = $_GET["movimiento"];
+    $lc_condiciones[5] = $estacion_id;
+    print $lc_config->fn_consultar("validarCreencialesUsuario", $lc_condiciones);
+
+} else if (isset($_GET["generarNotaCredito"])) {
+    $lc_condiciones[0] = $_GET["std_id"];
+    $lc_condiciones[1] = $_GET["usr_id"];
+    $lc_condiciones[2] = $_GET["est_id"];
+    $lc_condiciones[3] = $_GET["rst_id"];
+    $lc_condiciones[4] = $_GET["cli_id"];
+    $lc_condiciones[5] = $_GET["mtv_id"];
+    $lc_condiciones[6] = $_GET["ncre_numero_factura"];
+    $lc_condiciones[7] = $_GET["ncre_subtotal"];
+    $lc_condiciones[8] = $_GET["ncre_base_iva"];
+    $lc_condiciones[9] = $_GET["ncre_base_cero"];
+    $lc_condiciones[10] = $_GET["ncre_iva"];
+    $lc_condiciones[11] = $_GET["ncre_total"];
+    $lc_condiciones[12] = $_GET["tcp_id"];
+    $lc_condiciones[13] = $_GET["ncre_claveAcceso"];
+    $lc_condiciones[14] = $_GET["prd_id"];
+    $lc_condiciones[15] = $_GET["ctrc_id"];
+    $lc_condiciones[16] = $_GET["cfac_id"];
+    $lc_condiciones[17] = $_GET["fpf_id"];
+    $lc_condiciones[18] = $_GET["cfac_observacion"];
+    print $lc_config->fn_consultar("generarNotaCredito", $lc_condiciones);
+
+} else if (isset($_GET["formasPago"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("formasPago", $lc_condiciones);
+
+} else if (isset($_GET["grabacanalmovimientoImpresionAnulacionElectronica"])) {
+    $lc_condiciones[0] = $_GET["idfactura"];
+    $lc_condiciones[1] = $ip;
+    $lc_condiciones[2] = $usuario;
+    $lc_condiciones[3] = $restaurante;
+    print $lc_config->fn_consultar("grabacanalmovimientoImpresionAnulacionElectronica", $lc_condiciones);
+
+} else if (isset($_GET["enviarSWT"])) {
+    $lc_condiciones[0] = $_GET["tipo_trans"];
+    $lc_condiciones[1] = $_GET["cfac_id"];
+    $lc_condiciones[2] = $_GET["est_id"];
+    $lc_condiciones[3] = $_GET["rst_id"];
+    $lc_condiciones[4] = $_GET["usr_id"];
+    $lc_condiciones[5] = $_GET["fmp_id"];
+    print $lc_config->fn_consultar("enviarSWT", $lc_condiciones);
+
+} else if (isset($_GET["recibirSWT"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("recibirSWT", $lc_condiciones);
+
+} else if (isset($_GET["actualizarEstadoFormaEliminada"])) {
+    $lc_condiciones[0] = $_GET["cfac_idEliminada"];
+    $lc_condiciones[1] = $_GET["formaEliminada"];
+    print $lc_config->fn_consultar("actualizarEstadoFormaEliminada", $lc_condiciones);
+
+} else if (isset($_GET["obtienencreid"])) {
+    $lc_condiciones[0] = $_GET["cfactura_id"];
+    print $lc_config->fn_consultar("obtienencreid", $lc_condiciones);
+
+} else if (isset($_GET["retomarCuentaAbierta"])) {
+    $lc_condiciones[0] = $_GET["cfac_id"];
+    print $lc_config->fn_consultar("retomarCuentaAbierta", $lc_condiciones);
+
+} else if (isset($_POST["esMiMesaEnFacturacion"])) {
+    $lc_condiciones[0] = $_POST["est_id"];
+    $lc_condiciones[1] = $_POST["odp_id"];
+    print $lc_config->fn_consultar("esMiMesaEnFacturacion", $lc_condiciones);
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//*************************FACTURACION ELECTRONICA**************************************************////////
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+} else if (isset($_GET["anulaFacturaSinFacturacionElectronica"])) {
+    $lc_condiciones[0] = $_GET["cfactura_idD"];
+    print $lc_config->fn_consultar("anulaFacturaSinFacturacionElectronica", $lc_condiciones);
+
+} else if (isset($_GET["lee_canalXMLfirmado"])) {
+    $lc_condiciones[0] = $_GET["cfacturas_id"];
+    print $lc_config->fn_consultar("lee_canalXMLfirmado", $lc_condiciones);
+
+} else if (isset($_GET["logErrores"])) {
+    $lc_condiciones[0] = $_GET["rst_id"];
+    print $lc_config->fn_consultar("logErrores", $lc_condiciones);
+
+} else if (isset($_GET["ws_autorizacion"])) {
+    $numeroAutorizacion = 'NULL';
+    $claveacceso = $_GET["claveAcceso"];
+    $wsAutorizacion = 'https://celcer.sri.gob.ec/comprobantes-electronicos-ws/AutorizacionComprobantes?wsdl';
+    $clientAutorizacion = new soapclient($wsAutorizacion);
+    $response = $clientAutorizacion->autorizacionComprobante(array('claveAccesoComprobante' => $claveacceso));
+    $estadoAutorizacion = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->estado;
+    $ambiente = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->ambiente;
+    $fechaAutorizacion = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->fechaAutorizacion;
+    if ($estadoAutorizacion == 'AUTORIZADO') {
+        $numeroAutorizacion = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->numeroAutorizacion;
+        $Autorizacion = $numeroAutorizacion;
+        //$fechaAutorizacion = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->fechaAutorizacion;
+        //$ambiente = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->ambiente;
+        $comprobante = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->comprobante;
+
+        $lc_xml = new XML("RespuestaAutorizacionComprobante", TRUE);
+
+        $autorizaciones = $lc_xml->createNode("autorizaciones");
+        $autorizacion = $autorizaciones->createNode("autorizacion");
+
+        $estado = $autorizacion->createNode("estado");
+        $estado->setData((string) $estadoAutorizacion); //numeroAutorizacion
+        $Atorizacion = $autorizacion->createNode("numeroAutorizacion");
+        $Atorizacion->setData($Autorizacion);
+        $fechadeAutorizacion = $autorizacion->createNode("fechaAutorizacion");
+        $fechadeAutorizacion->setData((string) $fechaAutorizacion);
+        $ammbiente = $autorizacion->createNode("ambiente");
+        $ammbiente->setData((string) $ambiente);
+        $commprobante = $autorizaciones->createNode("comprobante");
+        $comprobante = substr($comprobante, 38);
+        $commprobante->setData(htmlspecialchars((string) $comprobante));
+        $nombre = $numeroAutorizacion . '.xml';
+        $archivo = basename($nombre);
+        $ruta = "C:/comprobantes/Autordizados/" . $nombre;
+        $lc_xml->guardarXML($ruta);
+    }
+    if ($estadoAutorizacion == 'NO AUTORIZADO') {
+        $mensajeError = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->mensajes->mensaje;
+        $mensajeError = $mensajeError[0]->mensaje;
+        $lc_condiciones[9] = $claveacceso;
+        $lc_condiciones[10] = $estadoAutorizacion;
+        $lc_condiciones[11] = $mensajeError;
+        $lc_condiciones[12] = $restaurante;
+        $lc_config->fn_consultar("ws_logAutorizacion", $lc_condiciones);
+    }
+
+
+    //$numeroAutorizacion = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->numeroAutorizacion;
+    /* $Autorizacion = $numeroAutorizacion;
+      $fechaAutorizacion = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->fechaAutorizacion;
+      $ambiente = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->ambiente;
+      $comprobante = $response->RespuestaAutorizacionComprobante->autorizaciones->autorizacion->comprobante;
+
+      $lc_xml= new XML("RespuestaAutorizacionComprobante",TRUE);
+
+      $autorizaciones = $lc_xml->createNode("autorizaciones");
+      $autorizacion= $autorizaciones->createNode("autorizacion");
+      $estado= $autorizacion->createNode("estado");
+      $estado->setData((string)$estadoAutorizacion);//numeroAutorizacion
+      $Atorizacion= $autorizacion->createNode("numeroAutorizacion");
+      $Atorizacion->setData($Autorizacion);
+      $fechadeAutorizacion= $autorizacion->createNode("fechaAutorizacion");
+      $fechadeAutorizacion->setData((string)$fechaAutorizacion);
+      $ammbiente= $autorizacion->createNode("ambiente");
+      $ammbiente->setData((string)$ambiente);
+      $commprobante= $autorizaciones->createNode("comprobante");
+      $comprobante=substr($comprobante,38);
+      $commprobante->setData(htmlspecialchars((string)$comprobante));
+      $nombre= $numeroAutorizacion.'.xml';
+      $archivo = basename($nombre);
+      $ruta="C:/comprobantes/Autorizados/".$nombre;
+      $lc_xml->guardarXML($ruta); */
+
+    $lc_condiciones[0] = $claveacceso;
+    $lc_condiciones[1] = $estadoAutorizacion;
+    $lc_condiciones[2] = $numeroAutorizacion;
+    $lc_condiciones[3] = $ambiente;
+    $lc_condiciones[4] = $fechaAutorizacion;
+    $lc_condiciones[5] = $_GET["IdFactura"];
+    print $lc_config->fn_consultar("ws_autorizacion", $lc_condiciones);
+
+} else if (isset($_GET["obtenerMesa"])) {
+    $lc_condiciones[0] = $restaurante;
+    $lc_condiciones[1] = $_SESSION['estacionId'];
+    $lc_condiciones[2] = $_SESSION['usuarioId'];
+    print $lc_config->fn_consultar("obtenerMesa", $lc_condiciones);
+
+} else if (isset($_POST["esFacturaPlanAmigos"])) {
+    $lc_condiciones[0] = $_POST["cfac_id"];
+    print $lc_config->fn_consultar("esFacturaPlanAmigos", $lc_condiciones);
+<<<<<<< HEAD
+
+} else if (isset($_POST["recargas"])) {
+    $idPeriodo = $_SESSION["IDPeriodo"];
+    print $lc_config->fn_consultarRecargas($idPeriodo);
+
+} else if (isset($_POST["realizarReverso"])) {
+    $postBody = $_POST["postBody"];
+    $obj = json_decode($postBody);
+    
+    $urlWS = $servicioWebObj->retorna_rutaWS($restaurante, "RECARGAS", "REVERSO");
+    $urlWS = $urlWSRetornaPrecios["urlwebservice"];
+
+    print $urlWSRetornaPrecios;
+    $curl = curl_init();
+    curl_setopt_array($curl, array(
+        CURLOPT_URL => $urlWS,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => "",
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => "POST",
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_AUTOREFERER => true,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_POSTFIELDS => $postBody,
+        CURLOPT_HTTPHEADER => array(
+            "authorization: " . $_SESSION["claveConexion"],
+            "content-type: application/json"
+        )
+    ));
+
+    // Respuesta
+    $response = curl_exec($curl);
+    // print "Response: " . $response . "<br/>";
+    $err = curl_error($curl);
+    // print "Error: " . $err . "<br/>";
+    $http_status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+    // print "Status: " . $http_status . "<br/>";
+    $timeoutError = curl_errno($curl);
+    // print "Timeout Error: " . curl_errno($curl);
+    curl_close($curl);
+    
+    if ($timeoutError == 0) {
+        print $response;
+        if ($http_status == 200) {
+            $vectorDatos = json_decode($response);
+            $lc_facturas->logProcesosFidelizacion("Reverso de recarga exitoso.", $accion, $restaurante, $cadena, $usuario, $response);
+            print ($response);
+        } else {
+            
+        }
+    } else {
+        $trama = "{ \"balanceRedemptionCode\": \"$obj->balanceRedemptionCode\" }";//{ "cliente":  "' . $cliente . '", "clienteDocumento": "' . $clienteDocumento . '"}';
+        $accion = "REVERSO DE RECARGAS";
+        $mensajeredemptionCode = "TIMEOUT";
+        $lc_facturas->logProcesosFidelizacion($mensajeredemptionCode, $accion, $restaurante, $cadena, $usuario, $trama);
+        print('{ "message": "TIMEOUT", "codigo": "28", "balanceRedemptionCode": "' . $obj->balanceRedemptionCode . '"}');
+    }
+}
+=======
+}
+if (isset($_POST["payphoneObtieneTransaccionID"])) {
+    $lc_condiciones[0] = $_POST["cfac_id"];
+    print $lc_config->fn_consultar("payphoneObtieneTransaccionID", $lc_condiciones);
+}
+?>
+>>>>>>> origin/MXP_Version_1.9.10.6

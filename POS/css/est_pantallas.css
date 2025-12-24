@@ -1,0 +1,422 @@
+@charset "utf-8";
+/* CSS Document */
+/*************************************************
+ style Admin American Deli, Kfc, Estilo Pantallas
+*************************************************/
+body{
+	background-image: url(../imagenes/fondo/fondo.png);
+	background-attachment: fixed;
+	background-position: left top;
+	}
+
+.fondokfc{
+    background-image: url(../imagenes/fondo/bodyKfc.jpg);
+	background-attachment: fixed;
+	background-position: left top;
+}
+
+.fondoDeli{
+    background-image: url(../imagenes/fondo/bodyAmericanDeli.jpg);
+	background-attachment: fixed;
+	background-position: left top;
+  
+}
+
+label{
+	font-family: "Arial Black", Gadget, sans-serif;
+	color: #006;
+	
+}
+.tituloHeader{
+	font-size: 30px;
+	color: #006;
+	font-weight: bold;
+	text-align: center;
+	vertical-align: middle;
+	display: block;
+	
+}
+
+.tdFichas{
+	
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 25px;
+	font-weight: bold;
+	color: #FFF;
+	background-image: url(../imagenes/fichas/ficha_10.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	text-align: center;
+	width: 85px;
+}
+
+.trFichas{
+	text-align: center;
+	vertical-align: middle;
+	height: 70px;
+	
+}
+
+input_{
+	border-top-width: 2px;
+	border-right-width: 2px;
+	border-bottom-width: 2px;
+	border-left-width: 2px;
+	border-top-style: none;
+	border-left-style: none;
+	border-right-color: #999;
+	border-bottom-color: #999;
+			
+}
+
+/* -------------Titulos------------------- */
+
+.titulo{
+   font-family: "Arial Black", Gadget, sans-serif;
+   font-weight:bold;
+   font-size:24px;
+}
+
+.tituloCabecera{
+	
+	font-family:  "Arial Black", Gadget, sans-serif;
+	font-size: 20px;
+	color: #006;
+	}
+.tituloCeldas{
+	background: none repeat scroll 0 0 #4169E1;
+    color: #CCCCCC;
+    font-family: "Arial Black",Gadget,sans-serif;
+    font-size: 20px;
+}
+
+.tituloEtiqueta{
+	font-family: "Arial Black", Gadget, sans-serif;
+	font-size:18px;
+	color: #006;
+	}
+.tituloMesa{
+	font-family:Tahoma, Geneva, sans-serif;
+	font-size:12px;
+}
+
+.tituloCampos{
+	font-family:  "Arial Black", Gadget, sans-serif;
+	font-size: 14px;
+	color: #000;
+	font-weight: bold;
+}
+
+.tituloCeldas{
+	font-family:  "Arial Black", Gadget, sans-serif;
+	font-size: 25px;
+	color: #ffffff;
+	background:#172C60;
+}	
+.texto{
+	font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+	font-size:14px;
+	color: #006;
+	}
+.texto_blanco{
+	border-style: dotted; 
+	border-width: 0px; 
+	font-family:"Trebuchet MS";
+	font-size: 12px; 
+	color:#FFFFFF;
+}
+.separador{
+	border-color:#00C;
+	height:5px;
+	width:100%;
+	background:#FFF;
+}
+.txt_total{
+	
+	background:#87CEFA;
+ 	font-family: "Arial, Helvetica, sans-serif";font-size: 25px;
+	text-align:center;	
+	}
+.total{
+	
+	
+	background:#1491BA;
+ 	font-family: "Arial, Helvetica, sans-serif";font-size: 25px;
+	text-align:center;
+ 	
+}
+
+.preguntasTitulo{background:#0E98B6;padding:8px 5px;color:#fff;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;font-size:16px;font-weight:700}
+
+.anulacionesSeparador{padding:25px 5px;color:#000;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;float:left;width:48%}
+
+.anulacionesInput input[type="text"],.anulacionesInput input[type="password"]{height:35px;width:300px}
+	
+/*------------------Tabla-----------------------------------------*/
+.tabla_cabecera{ 
+	background:#F3F3F3;
+	/*background-image: url(../imagenes/grid-blue-ln.gif);*/color:#000; font-family: "Arial, Helvetica, sans-serif";font-size: 24px;
+	border-collapse:collapse; border-color:#a6c9e2; border-left-color:#a6c9e2; border-right-color:#a6c9e2; border-top-color:#a6c9e2; 			   	border-bottom-color:#a6c9e2;
+}
+.tabla_detalleMov{ 
+font-family: "Trebuchet MS";font-size: 12px;background:#ffffff;color:#333;hover:expression(this.onmouseover=new Function("this.style.background='#b1d2ea';this.style.color='#222222';"),this.onmouseout=new Function("this.style.background='#ffffff';this.style.color='#000';"));
+} 
+.tabla_detalleMov:hover{ 
+font-family: "Trebuchet MS";font-size: 12px;background:#b1d2ea;color:#222222;
+} 
+.tabla_detalle{ 
+	font-family: "Trebuchet MS";font-size: 12px;background:#ffffff;color:#333;
+} 
+
+.tabla_logeo{ 
+	background-color:#B0E1FC;
+	background-image:url(../imagenes/botones/grid_boton.gif);/* font-family: "Trebuchet MS";font-size: 16px;*/
+	font-family: "Arial Black", Gadget, sans-serif; font-size: 14px;	color: #006;
+	border-collapse:collapse; border-color:#a6c9e2; border-left-color:#a6c9e2; border-right-color:#a6c9e2; border-top-color:#a6c9e2;
+	border-bottom-color:#a6c9e2;
+	height:40px;
+	width:80px;
+
+}
+/*------------------------Fondo Tabla----------------------------------*/
+.fondo_tabla{
+	background-color:#87CEFA;
+	border:1px;
+
+}
+.fondo_Cabecera{
+	background-color:#00BFFF;
+}
+
+/*------------------------Lista--------------------------------------*/
+.lista td{background-color:#B0E1FC;/*background-image: url(../imagenes/grid-blue-pg.gif);*/color:#ffffff;
+	font-family: "Trebuchet MS";font-size: 12px;}
+.activo td{background: url(../imagenes/grid-activo.gif) center;color:#5b9dd0; font-family: "Trebuchet MS";font-size: 12px;}
+
+.upper {
+ 	text-transform:uppercase;
+} 
+.lower {
+  	text-transform:lowercase;
+}
+/*..............id.................*/
+#basic-modal-content {display:none;}
+
+#simplemodal-overlay {background-color:#000; cursor:wait;}
+
+/* Container */
+#simplemodal-container {color:#bbb; background-image: url(../imagenes/fondoprueba.jpg); border:4px solid #444; padding:12px;}
+#simplemodal-container code {background:#141414; border-left:3px solid #65B43D; color:#bbb; display:block;
+	margin-bottom:12px; padding:4px 6px 6px;}
+#simplemodal-container a {color:#ddd;}
+#simplemodal-container a.modalCloseImg {background:#440605;/*background:url(../imagenes/x.png) no-repeat;*/ width:25px; height:29px;
+	display:inline; z-index:3200; position:absolute; top:-15px; right:-16px; cursor:pointer;}
+#simplemodal-container #basic-modal-content {padding:8px;}
+
+
+/******************************************************************
+ 								 Style Admin
+*******************************************************************/
+/*.............id...........*/
+#header{
+	height: 50px;
+	width:100%;
+}
+
+#menu{
+	height: 70px;
+	width:800;
+	padding-top: 5px;
+	padding-right: 5px;
+	padding-bottom: 5px;
+	padding-left: 5px;
+	display: block;
+	float:left;
+	background-color: #036;
+}
+#headerLogo{
+	height: 70px;
+	width: 300px;
+	background-image: url(../imagenes/acceso/grupo_kfc.png);
+	background-repeat: no-repeat;
+	background-position: center center;
+	overflow: visible;
+	visibility: visible;
+	float:left;
+
+}
+
+#clear{
+	height: 50px;
+	width: auto;
+}
+a {
+	text-decoration: none;
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 10px;
+	color: #CCC;
+	
+}
+
+/*a:hover {
+	font-weight: bold;
+	color: #FFF;
+	font-size: 10px;
+}*/
+
+/*******************************************************************
+   								Paginador
+********************************************************************/
+.pager
+{
+    width: 720px;
+    height: 30px;
+    padding: 0;
+    margin: 0;
+    padding-top: 10px;
+    padding-left: 10px; /*border-radius: 8px; 	-moz-border-radius: 8px;*/
+}
+.pager div.short
+{
+    float: right;
+    margin: 0;
+    padding: 0;
+    margin-right: 10px;
+    width: 74px;
+}
+.pager div.short input
+{
+    width: 28px;
+    height: 18px;
+    border: none;
+    margin-left: 8px;
+    float: left;
+}
+.pager ul
+{
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    float: left;
+    margin-right: 4px;
+}
+.pager ul li
+{
+    display: inline;
+    margin-left: 2px;
+}
+.pager ul li a
+{
+    text-decoration: none;
+    display: inline-table;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+}
+
+.pager span
+{
+    margin-left: 4px;
+    color: White;
+    float: left;
+}
+.pager .btn
+{
+    display: block;
+    width: 40px;
+    text-align: center;
+    float: left;
+    padding: 0;
+    margin: 0;
+    margin-left: 4px;
+    cursor: pointer;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}
+
+.cadenasLabel 
+{
+    background:#aaa;
+    color:#fff;
+    border-radius:8px;   
+    padding-top: 10px;
+    padding:1em;
+    margin:1em;
+    cursor:pointer;
+}
+.cadenasLabel:hover {
+    background:#ccc;   
+}
+
+.cadenasInput {   
+    font-weight: bold;
+    margin: 5px 10px 0 10px;
+    width:180px;
+    height: 50px;
+    font-size:14px;
+    padding:10px 12px;
+    cursor: pointer;
+}
+
+
+.botonesConceptos {       
+    /*
+    font-weight: 600;
+     margin: 5px 10px 0 10px;
+     color: #ffffff;
+    background-color: #33B8FF;
+    */
+ -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  font-weight: 500;
+  margin: 5px 10px 0 10px;
+  border-radius: 0px;
+  font-family: Arial;
+  color: #ffffff;
+  background: #5592ba;
+  text-decoration: none;
+    
+}
+
+
+
+.cntSelectMovimiento{
+    padding: 10px 40px;
+    height: 60px;
+    width: 510px;
+}
+
+.cntSelectMovimiento select{
+    font-size: 18px;
+    width: 450px;
+    height: 50px;
+    overflow: hidden;
+    border: 1px solid #ccc;
+    width: 500px;
+}
+
+.cntSelectMovimiento option {
+    padding: 12px 0;
+}
+
+
+.cntSelectMovimiento label{
+    font-size: 18px;
+}
+
+.cntObservacion
+{
+    height: 60px;
+    width: 510px;
+    position: fixed;
+    top: 70px;
+}

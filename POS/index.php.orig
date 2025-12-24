@@ -1,0 +1,353 @@
+<?php
+
+//////////////////////////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: CHRISTIAN PINTO///////////////////////////////////////
+///////////DESCRIPCION: INICIO DE SESION INGRESO AL SISTEMA CON VALIDACIONES ///
+////////////////TABLAS: Control_Estacion, Estacion, Peridodo, User_Pos /////////
+////////FECHA CREACION: 12/08/2015//////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+        
+session_start();
+unset($_SESSION["nombre_usuario"]); 
+unset($_SESSION["nombre_cliente"]);
+session_destroy();
+$parametros_cookies = session_get_cookie_params(); 
+
+include_once"clases/clase_direccion.php";
+
+$ip = new direccion();
+$lc_ip = $ip->fn_getIp();
+$_SESSION["cargoPisoArea"]="No";
+?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Max Point</title>
+
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.css" type="text/css"/>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap-theme.min.css" type="text/css"/>
+    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" type="text/css"/>
+    <link rel="stylesheet" href="css/style_index.css" type="text/css"/>
+    <link rel="stylesheet" href="css/jquery-ui.css" type="text/css"/>
+    <link rel="stylesheet" type="text/css" href="css/alertify.core.css"/>
+    <link rel="stylesheet" type="text/css" href="css/alertify.default.css"/>
+    <link rel="stylesheet" type="text/css" href="css/style_home_seleccion.css">
+    <link rel="stylesheet" type="text/css" href="css/teclado_facturacion.css"/> 
+    <link rel="stylesheet" type="text/css" href="css/progressBar.css"/> 
+</head>
+
+<body>  
+    <input type="hidden" id="hid_ip" value="<?php echo $lc_ip; ?>"/>
+
+    <br>
+	<div class="col-md-10 col-md-offset-1 " id="login">
+    <div>
+        <div>
+            <p class="nombremax" style="text-align:center">Max<span class="nombrepoint">Point</span></p>
+            <p class="text-info" style="color: #FFF;text-align:center;">VERSION 1.9.11</p>
+        </div>
+    </div>                
+
+    <div class="panel-body">               
+        <div class="row">
+            <div class="col-xs-5">                            
+                <div class="row">
+                    <div class=" form-group">
+                        <button type="button" class="btn btn-lg btn-primary btn-block iniciarsesion" id="btn_nombreCaja" onclick="fn_abrirmodalinfo();">
+							Iniciar Sesi&oacute;n                            
+                        </button>                         
+                    </div>
+                    
+                    <!-- MODAL INFORMACAION DE ESTACION-->
+                    <div class="modal fade" id="modalInfo" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
+                        <div class="modal-dialog" style="width:700px;">
+                            <div class="modal-content">
+                                <div class="modal-header panel-footer">                                    
+                                    <h4 class="modal-title" id="myModalLabel">Informaci&oacute;n de Estaci&oacute;n: 
+                                        <label id="btn_nombreCajaModal"></label>
+                                    </h4>
+                                </div> 
+                                <br>
+                                <div class="row">
+                                    <div class="col-xs-3 text-right"><h5>IP:</h5></div>
+                                    <div class="col-xs-6">
+                                        <div class="form-group">
+                                            <input type="text" class="form-control" id="ipestacion" disabled="disabled" value="<?php echo $lc_ip; ?>"/>
+                                        </div>
+                                    </div>
+                                </div> 
+
+                                <div class="row">
+                                    <div class="col-xs-3 text-right"><h5>Impresoras:</h5></div>
+                                    <div class="col-xs-8">
+                                        <div class="form-group">
+                                            <div id="inimpresoras" class="center-block">    
+                                                <table id="tablaimpresoras" class="table table-bordered table-hover"></table>                          
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> 
+
+                                <div class="modal-footer panel-footer">
+                                    <button id="btn_cerrar_navegador" type="button" class="btn btn-sm" onclick="cerrarNavegador();" style="height:60px;width:60px; background-image:url(imagenes/ExitScreen.png); background-repeat:no-repeat; background-position:center; border: medium none;" ></button>
+                                    <!--<button id="btn_replicar" type="button" class="btn btn-success" onclick="fn_aplicarReplica();"> Replicar </button>-->
+                                    <button id="btn_imprimir" type="button" class="btn btn-primary" onclick="fn_testimpresion();"> Test Impresi&oacute;n </button>                                    
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal"> Cerrar </button>        
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
+                    <div class="modal fade" id="mdlErrorReplica" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-backdrop="static">
+                        <div class="modal-dialog" style="width:900px;">
+                            <div class="modal-content">
+                                <div class="modal-header panel-footer">                                 
+                                    <h4 class="modal-title" id="myModalLabel">Informaci&oacute;n de Replica</h4>
+                                </div> 
+                                <br>
+                                <div class="row">
+                                    <div class="col-xs-3 text-right" style="color: #0000FF"><h5><b>Replica Aplicada</b></h5></div>                                    
+                                </div> 
+                                <div class="row">  
+                                    <div class="col-xs-1 text-right"><h5></h5></div>
+                                    <div class="col-xs-10">
+                                        <div class="form-group">
+                                            <div class="center-block" style="overflow-y: scroll; height: 150px;">    
+                                                <table id="tblReplica" class="table table-bordered table-hover" ></table>                          
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-xs-3 text-right" style="color: #c71c1c"><h5><b>Error de Replica</b></h5></div>                                    
+                                </div> 
+                                <div class="row">  
+                                    <div class="col-xs-1 text-right"><h5></h5></div>
+                                    <div class="col-xs-10">
+                                        <div class="form-group">
+                                            <div class="center-block" style="overflow-y: scroll; height: 150px;">    
+                                                <table id="tblErrorReplica" class="table table-bordered table-hover"></table>                          
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> 
+
+                                <div class="modal-footer panel-footer">                                    
+                                    <button type="button" class="btn btn-danger" data-dismiss="modal">Cerrar</button>        
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                                     
+                <div class="row">                                   
+                    <div class=" form-group">
+                        <input type="password" class="form-control input-lg iniciarsesion" id="usr_clave" name="usr_clave" placeholder="Contraseña" autocomplete="off">
+                    </div>                                     
+                </div>
+                                      
+                <div class="row">                                  
+                    <div class=" form-group">
+                        <h2 style="color:#FFF">Estado Estaci&oacute;n:</h2>
+                    </div>    
+                </div>
+                                      
+                <div class="row">
+                    <div class="col-md-offset-1">
+                        <div class=" form-group">
+                            <h1 id="Respuesta_Estacion" style="color:#FFF" name="0"></h1>
+                            <h4 id="Respuesta_FondoAsignado" style="color:#FFF" name="0"></h4>
+                        </div> 
+                    </div> 
+                </div>
+
+                <div class="row" id="div_periodo_secuencial"></div>
+                
+                <input type="hidden" id="txtTipo" name="txtTipo"/>
+                <input type="hidden" id="txtEstacion" name="txtEstacion"/>
+                <input type="hidden" id="txtIp" name="txtIp" value="<?php echo $lc_ip; ?>"/> 
+            </div>                        
+                                                        
+            <div class="col-xs-5">
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('7')" value=" 7 ">7</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('8')" value=" 8 ">8</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('9')" value=" 9 ">9</button>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('4')" value=" 4 ">4</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('5')" value=" 5 ">5</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('6')" value=" 6 ">6</button>
+                        </div>
+                    </div>
+                </div>
+                       
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('1')" value=" 1 ">1</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('2')" value=" 2 ">2</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('3')" value=" 3 ">3</button>
+                        </div>
+                    </div>                                     
+                </div>                              
+                                
+                <div class="form-group">
+                    <div class="row">
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" onClick="fn_agregarNumero('0')" value=" 0 ">0</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default numeros" id="btn_borrarUno" onClick="fn_eliminarCantidad()" value=" <- ">&lt;&#61;</button>
+                        </div>
+                        <div class="col-xs-4">
+                            <button class="btn btn-lg btn-default" id="btn_borrarTodo" onClick="fn_eliminarTodoI()" value=" <- ">Borrar</button>
+                        </div>
+                    </div>  
+                </div>     
+            </div>
+                            
+            <div class="form-group">
+                <div class="row">
+                    <div class="col-xs-2"> 
+                    <div id="div_botonesInicio">
+                        <button class="btn btn-lg btn-default numeros btn-success mi-elemento" id="btn_ingresarOk" onClick="fn_validaEstacionEnUsoUsuario();" value=" ok ">OK</button>                         
+                        <button class="btn btn-lg btn-default numeros btn-success iniciar" id="btn_iniciarPeriodo" onClick="fn_validaUsuarioPerfil();" value="iniciar" omn >I</br>N</br>I</br>C</br>I</br>A</br>R</button>
+                        <button class="btn btn-lg btn-default numeros btn-success iniciar" id="btn_ingreso_Admin" onClick="fn_ingresoAdmin();" value="ingreso_Admin" omn >OK</button>                                         
+                     </div>
+                    </div>
+                </div>
+            </div>
+        </div>                       
+        <br>                        
+        <div class="row">
+            <div class="col-xs-4">
+                <button id="btn_apagar" type="button" class="btn btn-sm" onclick="fn_apagarEstacion();" style="height:60px;width:60px; background-image:url(imagenes/apagarrojo.png); background-repeat:no-repeat; background-color: #303946; background-position:center; border: medium none;" ></button>
+            </div>
+            <div class="col-xs-4" id="botonAsignarCaja">                
+               <button class="btn btn-lg btn-primary btn-block btn-success btn_ingresarDesmontar asignar" id="validar" onClick="fn_validaUsuarioPerfilAsignaCaja();" name="validar">Asignar Caja</button>
+               <button class="btn btn-lg btn-danger btn-block btn_ingresarDesmontar" onClick="fn_verificaCajaAsignada();" id="desmotar" name="desmotar">Desasignar Caja</button>
+            </div>         
+            <div class="col-xs-4"></div>
+        </div>
+    </div>
+</div>
+
+<div id="credencialesAdmin" style="min-height:87px">
+    <div class="preguntasTitulo">Ingrese Credenciales del Administrador</div>
+    <div class="anulacionesSeparador">
+        <div class="anulacionesInput"><span><img src="imagenes/admin_resources/users_two_48.png" height="55px" width="55px"></span> &nbsp;<input type="password" id="usr_claveAdmin" style="width: 380px; font-size: 20px;"/>				
+        </div>
+    </div>
+</div>
+ 
+<div id="credencialesAdminteclado" style="left:35%; top:450px; position:absolute; display:block; z-index:99999;">
+    <table id="tabla_credencialesAdmin" align="center">
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,7)">7</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,8)">8</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,9)">9</button></td>
+            <td><button class='btnVirtualOKpq' onClick="fn_eliminarNumero(usr_claveAdmin);">&larr;</button></td>
+        </tr>
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,4)">4</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,5)">5</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,6)">6</button></td>
+            <td><button class='btnVirtualOKpq' onClick="fn_eliminarTodo(usr_claveAdmin);">&lArr;</button></td>
+        </tr>
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,1)">1</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,2)">2</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,3)">3</button></td>
+            <td><button class='btnVirtualOKpq' onClick="fn_validaAdmin();">OK</button></td>
+        </tr>
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracterNum(usr_claveAdmin,0)">0</button></td>
+            <td colspan="4"><button class='btnVirtualCancelar' onClick="fn_cerrarValidaAdmin();">Cancelar</button></td>           
+        </tr>
+    </table> 
+</div>
+
+<div id="numPadAdmin"></div>
+ 
+ <!--INGRESO FONDO -->
+<div id="IngresoFondos">
+    <div class="preguntasTitulo">Asignar Fondo.</div>
+    <div class="anulacionesSeparador">
+        <div class="anulacionesInput"><span><img src="imagenes/billete.png" height="55px" width="55px"></span> &nbsp;<input type="text" id="usr_admin_fondo" style="width: 380px; font-size: 20px;" readonly="readonly" />				
+        </div>       
+    </div>
+</div>
+<div id="IngresoFondosteclado" style="left:35%; top:450px; position:absolute; display:block; z-index:99999;"> 
+    <table id="tabla_credencialesAdminfondo" align="center">
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,7)">7</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,8)">8</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,9)">9</button></td>
+            <td><button class='btnVirtualOKpq' onClick="fn_eliminarNumero(usr_admin_fondo);">&larr;</button></td>
+        </tr>
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,4)">4</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,5)">5</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,6)">6</button></td>
+            <td><button class='btnVirtualOKpq' onClick="fn_eliminarTodo(usr_admin_fondo);">&lArr;</button></td>
+        </tr>
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,1)">1</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,2)">2</button></td>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,3)">3</button></td>
+            <td><button class='btnVirtualOKpq' onClick="fn_IngresoFondo();">OK</button></td>
+        </tr>
+        <tr>
+            <td><button class='btnVirtual' onClick="fn_agregarCaracter(usr_admin_fondo,0)">0</button></td>
+            <td><button class='btnVirtual' id='btn_punto' onClick="fn_agregarCaracter(usr_admin_fondo,'.')">.</button></td>
+            <td colspan="4"><button style="width:195px" class='btnVirtualOKpq' onClick="fn_cerrarValidaAdmin();">Cancelar</button></td>           
+        </tr>
+    </table> 
+</div>
+ 
+<div id="cntFormulario"></div>
+<div  id="mdl_rdn_pdd_crgnd" class="modal_cargando" style="display:none">
+    <div id="mdl_pcn_rdn_pdd_crgnd" class="modal_cargando_contenedor">
+        <img src="imagenes/admin_resources/progressBar.gif" />
+    </div>
+</div>  
+<input type="hidden" id="hid_cadena"/>
+<input type="hidden" id="hid_rest" />
+<input type="hidden" id="hid_tiposervicio" />
+<input type="hidden" id="hid_idusuario" />
+<input type="hidden" id="bandera" />
+<input type="hidden" id="moneda" />
+<input type="hidden" id="fechaAperturaPeriodo" />
+
+<script src="js/jquery1.11.1.js"></script>    
+<script src="bootstrap/js/bootstrap.min.js"></script>
+<script src="bootstrap/js/bootstrap.js"></script>
+<script src="js/jquery-ui.js"></script>
+<script language="javascript1.1"  src="js/alertify.js"></script>
+<script type="text/javascript" src="js/teclado_credenciales.js"></script> 
+<script type="text/javascript" src="js/ajax_loguin.js"></script>
+<script type="text/javascript" src="js/ajax_infoestacion.js"></script>    
+  
+</body>
+</html>

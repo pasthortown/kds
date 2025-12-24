@@ -1,0 +1,77 @@
+@charset "utf-8";*{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}body{background:#7DAAEC url(../imagenes/ordenpedido/bg_tomaPedido.png) repeat}button{height:66px;width:120px;cursor:pointer}.menu_desplegable{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:999999}.modal_opciones_drc{position:fixed;right:0;width:240px;height:100%;background:#fff;color:#333;overflow:auto;box-shadow:inset 0 0 0 0 #000,0 0 10px #000;z-index:9999999}.boton_Accion{-moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#1d5987;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin-top:5px;margin-left:4px;margin-right:4px;text-decoration:none;text-shadow:-1px 1px 0 #fff;/* width:70px; */float:right}.boton_Accion:hover{background-color:#dfeffc;color:#2e6e9e}.boton_Opcion_Bloqueado{-moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#88989C;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin:10px 20px 0 0;text-decoration:none;text-shadow:-1px 1px 0 #fff;width:200px;float:right}.boton_Opcion{-moz-box-shadow:inset 0 1px 0 0 #fff;-webkit-box-shadow:inset 0 1px 0 0 #fff;background-color:#dfeffc;-moz-border-radius:6px;-webkit-border-radius:6px;border-radius:6px;border:1px solid #dcdcdc;display:inline-block;cursor:pointer;color:#1d5987;font-family:Arial;font-size:14px;font-weight:700;padding:22px 12px;margin:10px 20px 0 0;text-decoration:none;text-shadow:-1px 1px 0 #fff;width: 200px;float:right}.boton_Opcion:hover{background-color:#dfeffc;color:#2e6e9e}.botonPago{height:66px;width:140px;cursor:pointer;margin-right:5px}
+
+
+.cntn_glbl_trnsccns{width:1009px;height:766px}
+#contenedorIzquierda{
+    float: right;
+    width: px;
+    height: 1px;
+    /* padding:0; */
+    /* background:#FFF; */
+    margin: 0 0 0 15px;
+}
+#contenedorDerecha{margin:0 0 0 5px;padding:0;float:left;width: 500px;/* height: 500px; */}
+.cnt_mn_nfrr_btns{
+    width:1000px;
+    height:76px;
+    float:left;
+    margin:0;
+    padding:0;
+    position: relative;
+    top: 20px;
+    left: 10px;
+}
+
+#listado{width:100%}
+#listaPedido{float:left;background:#fff;width: 1000px;font-size:12px;height:680px;text-align:left;position: relative;top: 10px;left: 10px;}
+.cabeceraOrden{position:absolute;height:40px;line-height:40px;background:#333;width: 1000px;color:#fff;font-size:12px}
+
+#listado2{font-size:.9em}
+.cabeceraOrden2{position:fixed;height:40px;line-height:40px;background:#333;width:786px;color:#fff;font-size:18px}
+.listaFactura{float:left;width: 150px;font-size:14px}
+.listaMesa{float:left;width: 80px;font-size:14px}
+.listaSubtotal{float:left;width: 80px;font-size:14px}
+.listaTotal{float:left;width: 80px;font-size:14px}.listaCaja{float:left;width: 80px;font-size:14px}
+.listaCajero{float:left;width: 120px;font-size:14px}
+.listaComentario{float:left;width: 230px;border: 1px;font-size:14px}
+.listaStatus{float:left;width:90px}
+.listaComentario p{font-size:11px;line-height:1.2}
+#listadoPedido .ui-selecting{background:#ccc}
+#listadoPedido .ui-selected{background:#999}
+ul#listadoPedido{margin:0;padding:40px 0 0;list-style:none}
+ul#listadoPedido li{padding:2px 6px 2px 0;margin:0 0 2px;border:1px transparent solid;border-top:1px solid #d2d2d2;float:left;width: 1000px;height:40px;background:#fff url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x;line-height:40px}
+ul#listadoPedido li:hover{cursor:pointer}
+ul#listadoPedido .focus{background:#7DAAEC;color:#fff;cursor:pointer}
+#listadoTxTarjetass .ui-selecting{background:#ccc}
+#listadoTxTarjetass .ui-selected{background:#999}
+ul#listadoTxTarjetass{margin:0;padding:40px 0 0;list-style:none}
+ul#listadoTxTarjetass li{padding:2px 6px 2px 0;margin:0 0 2px;border:1px transparent solid;border-top:1px solid #d2d2d2;float:left;width:774px;height:40px;background:#fff url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x;line-height:40px}
+ul#listadoTxTarjetass li:hover{cursor:pointer}
+ul#listadoTxTarjetass .focus{background:#7DAAEC;color:#fff;cursor:pointer}
+
+#listadoPedido2 .ui-selecting{background:#ccc}#listadoPedido2 .ui-selected{background:#999}ul#listadoPedido2{margin:0;padding:40px 0 0;list-style:none}ul#listadoPedido2 li{padding:4px 6px 4px 5px;margin:0 0 5px;border:1px transparent solid;border-top:1px solid #d2d2d2;float:left;width:100%;height:50px;background:#eee url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x}ul#listadoPedido2 li:hover{background:#003871;color:#fff;cursor:pointer}ul#listadoPedido2 .focus{background:#003871;color:#fff;cursor:pointer}.botonesLista{background:#fff;height:30px;line-height:30px;color:#000;padding:5px 10px;width:200px;border-radius:0;float:left;font-size:20px}
+.calculosTransacciones{background:#fff;margin:64px 0 20px;border:1px solid #fff;padding:10px}.calculosTrans{padding:10px;text-align:right;font-size:17px}#calculosLista{height:120px;padding:10px 0 20px;float:left;width:100%;background:#fff;font-size:1.1em}#barraCategoria{position:absolute;float:left;left:270px;top:372px;height:250px}#barraProducto{position:absolute;float:left;top:10px;left:290px;height:250px}#barraCajero{background:#0E98B6;position:relative}#barraPrincipal{background:#003871 url(../imagenes/ordenpedido/background_tomaPedido.png) repeat;padding:20px 10px;position:relative}.preguntasTitulo{background:#0E98B6;padding:8px 5px;color:#fff;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;font-size:16px;font-weight:700}.anulacionesSeparador{padding:25px 5px;color:#000;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;float:left;width:48%}.anulacionesSeparadorFin{padding:30px 5px;color:#000;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;float:left;width: 80%;height: 20px;text-align:right}.anulacionesSeparadorFin #btn_anulaok{margin-right:20px}.anulacionesMensaje{padding:15px 5px;color:#db1016;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none}.anulacionesInput input[type="text"],.anulacionesInput input[type="password"]{height:35px;width:300px}.anulacionesSubmit input[type="submit"]{width:100px;height:70px;font-size:20px}#alertify-cancel{display:none!important}#alertify-ok{background-color:#3b7808;border:1px solid #3b7808}#motivoObservacion{width:350px;height:120px;resize:none}.listaFactura2{float:left;width:130px}.listaEstado{float:left;margin-left:40px;width:90px}.listaEstadoDescripcion{float:left;margin-left:40px;width:80px}.listaMensaje{float:left;margin-left:40px;width:220px;text-align:left}.listaFecha{float:left;margin-left:10px;width:140px;text-align:left}.anulacionesSeparador select{height: 44px}.anulacionesSeparador option{height: 44px;}
+
+.boton_Accion_EE1 {
+    -moz-box-shadow: inset 0 1px 0 0 #fff;
+    -webkit-box-shadow: inset 0 1px 0 0 #fff;
+    background-color: #4080b0;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    cursor: pointer;
+    color: white;
+    font-family: Arial;
+    font-size: 14px;
+    font-weight: 700;
+    padding: 22px 12px;
+    margin: 10px 20px 0 0;
+    text-decoration: none;
+    text-shadow: -1px 1px 0 #fff;
+    width: 200px;
+    float: right;
+    box-shadow: 5px 5px 5px #050505;
+    font-weight: initial;
+}

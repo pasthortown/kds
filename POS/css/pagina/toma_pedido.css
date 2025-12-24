@@ -1,0 +1,272 @@
+            #modalPickupPedidos .modal-content {
+                background: #efefef;
+            }
+
+            #modalPickupPedidos .btn-close {
+                margin-right: 20px;
+                height: 40px;
+                width: 40px;
+                background-color: #d1d1d1;
+            }
+
+            #modalPickupPedidos .modal-dialog {
+                min-width: 900px !important;;
+            }
+
+            /* Modal Pickup Detalles */
+            #modalPickupDetallesPedido .modal-content {
+                background: #efefef;
+            }
+
+            #contenedorListaTiendaTransferir a {
+                line-height: 60px;
+            }
+
+            #contenedorListaMotivosTransferir a {
+
+                line-height: 60px;
+            }
+
+            #contenedorListaTiendaTransferir a.active {
+                background: #198754de;
+            }
+
+            #contenedorListaMotivosTransferir a.active {
+                background: #198754de;
+            }
+
+            #modalPickupDetallesPedido .btn-close {
+                margin-right: 20px;
+                height: 40px;
+                width: 40px;
+                background-color: #d1d1d1;
+            }
+
+            #modalPickupDetallesPedido .modal-dialog {
+                min-width: 900px !important;;
+            }
+
+            .custom-table-pickup dl, .custom-table-pickup ol, .custom-table-pickup ul {
+                margin: 0 !important;
+            }
+
+            /*Esto es para una tabla customizada que mostrara los pedidos pickuo*/
+            .custom-table-pickup thead {
+                text-align: center;
+            }
+
+            .custom-table-pickup .table > :not(caption) > * > * {
+                padding: 0 !important;
+            }
+
+            .custom-table-pickup thead tr, .custom-table-pickup thead th {
+                border-top: none;
+                border-bottom: none !important;
+            }
+
+            .custom-table-pickup tbody th, .custom-table-pickup tbody td {
+                color: #777;
+            }
+
+            .custom-table-pickup tbody th small, .custom-table-pickup tbody td small {
+                color: #b3b3b3;
+                font-weight: 400;
+            }
+
+            .custom-table-pickup tbody tr:not(.spacer) {
+                border-radius: 7px;
+                overflow: hidden;
+                -webkit-transition: .3s all ease;
+                -o-transition: .3s all ease;
+                transition: .3s all ease;
+            }
+
+            .custom-table-pickup tbody tr:not(.spacer):hover {
+                -webkit-box-shadow: 0 2px 10px -5px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 2px 10px -5px rgba(0, 0, 0, 0.1);
+            }
+
+            .custom-table-pickup tbody tr th, .custom-table-pickup tbody tr td {
+                background: #fff;
+                border: none;
+            }
+
+            .custom-table-pickup tbody tr th:first-child, .custom-table-pickup tbody tr td:first-child {
+                border-top-left-radius: 7px;
+                border-bottom-left-radius: 7px;
+            }
+
+            .custom-table-pickup tbody tr th:last-child, .custom-table-pickup tbody tr td:last-child {
+                border-top-right-radius: 7px;
+                border-bottom-right-radius: 7px;
+            }
+
+            .custom-table-pickup tbody tr.spacer td {
+                padding: 0 !important;
+                height: 2px;
+                border-radius: 0 !important;
+                background: transparent !important;
+            }
+
+            .middle-pedido-pickup {
+                vertical-align: middle;
+                text-align: center;
+            }
+
+
+            .lista-rectangular li li::marker {
+                content: none;
+            }
+
+            .lista-rectangular li li {
+                color: black;
+            }
+
+            .lista-rectangular {
+                display: inline-block;
+                counter-reset: li; /* Initiate a counter */
+                list-style: none; /* Remove default numbering */
+                font: 15px 'trebuchet MS', 'lucida sans';
+                padding: 0;
+                text-align: left;
+            }
+
+            .lista-rectangular a {
+                position: relative;
+                display: block;
+                color: #464343 !important;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all .3s ease-out;
+            }
+
+            .lista-rectangular a:before {
+                content: attr(data-pedido);
+                color: black !important;
+                height: 2em;
+                width: 2em;
+                margin-right: 5px;
+                text-align: center;
+                font-weight: bold;
+            }
+
+            .btn-print {
+                background: #d1d1d1;
+                color: #cf5bf5;
+                height: 50px;
+                width: 50px;
+            }
+
+            .btn-print-clickeable[disabled] .btn-print {
+                background: #e9e5e5;
+                color: #bfbdbd;
+                cursor: default;
+            }
+
+            .icon-btn-print {
+                line-height: 35px;
+                font-size: 25px;
+            }
+
+            .tippy-box[data-theme~='pickup'] {
+                background-color: #02961b;
+                color: white;
+            }
+
+            .tippy-box[data-theme~='pickup'][data-placement^='top'] > .tippy-arrow::before {
+                border-top-color: #02961b;
+            }
+
+            .tippy-box[data-theme~='alert'][data-placement^='top'] > .tippy-arrow::before {
+                border-top-color: #c55003;
+            }
+
+            .tippy-box[data-theme~='alert'] {
+                background-color: #c55003;
+                color: white;
+            }
+
+            .btnPedidosPickupNothing, .btnPedidosPickupNothing:hover {
+                text-shadow: none;
+                font-size: 14px !important;
+                box-shadow: none;
+                color: #1d5987;
+                background-color: #dfeffc;
+                border: 1px solid #dcdcdc;
+            }
+
+            .btnPedidosPickup, .btnPedidosPickup:hover {
+                color: white;
+                background-color: #dd3e3e !important;
+                border: none !important;
+            }
+
+            .jb-shortscroll-wrapper {
+                z-index: 5;
+            }
+
+            .separacionTomaPedido {
+                border-top: 2px solid #4bceb4;
+                border-bottom: 2px solid #4bceb4;
+                border-left: none;
+                border-right: none;
+                height: 6px
+            }
+
+            .imgVoucher {
+                width: 100%;
+            }
+
+            .imgVA {
+                float: left;
+                width: 40%;
+                height: 32%;
+                background-color: #FFFF;
+                margin: 3% 5% 3% 3%;
+                border: #d3dad9 3px dotted;
+            }
+
+            .botonClienteExt {
+                width: 90%;
+                margin: 2% auto 2% auto;
+                border-radius: 5px;
+                background-color: #769ad4;
+                color: white;
+            }
+
+            .new, .sale {
+                position: absolute;
+                top: 0;
+                right: 0;
+            }
+
+            img {
+                vertical-align: middle;
+                border: 0;
+            }
+
+            .class_punto_falta, .class_punto_ok, .class_punto_info {
+                position: absolute;
+                right: 0px;
+                top: 34px; /*en caso de abajo top: 1px; 42px;en caso de abajo*/
+                /*                border-radius: 0px 0px 0px 4px; border-radius: 5px 0px 0px 0px; en caso de abajo.*/
+                border: 1px black solid;
+                font-size: 12px; /*10px;en caso de abajo*/
+                font-weight: bold;
+                padding: 2px;
+                border-radius: 15px;
+            }
+
+            .class_punto_info {
+                color: white;
+                background-color: #0fea2166;
+            }
+
+            .class_punto_falta {
+                background-color: #d26e6eb3;
+            }
+
+            .class_punto_ok {
+                color: white;
+                background-color: #0fea2166;
+            }

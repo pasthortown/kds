@@ -1,0 +1,177 @@
+@charset "utf-8";
+/* CSS Document */
+
+.btnVirtual{
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 34px;
+	font-weight: bold;
+	color: #ffffff;
+	background-color: #06F;
+	border: medium outset #cccccc;
+	width:70px;
+	height:55px;
+	vertical-align: middle;
+}
+.btnVirtual:hover{
+	background-color: #CCC;
+	border: medium groove #CCC;
+	color: #000000;
+}
+
+.btnVirtual:active{
+	background-color: #C00;
+	border: 5px groove #cccccc;
+	font-size: 34px;
+	font-style: normal;
+	font-weight: bold;
+	color: #FFF;
+}
+
+.btnVirtualBorrar{
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 34px;
+	font-weight: bold;
+	color: #ffffff;
+	background-color: #04936B;
+	border: medium outset #cccccc;
+	width:70px;
+	height:55px;
+	vertical-align: middle;
+}
+.btnVirtualBorrar:hover{
+	background-color: #CCC;
+	border: medium groove #CCC;
+	color: #000000;
+}
+
+.btnVirtualBorrar:active{
+	background-color: #C00;
+	border: 5px groove #cccccc;
+	font-size: 34px;
+	font-style: normal;
+	font-weight: bold;
+	color: #FFF;
+}
+
+
+
+
+.btnVirtualOKpq{
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 34px;
+	font-weight: bold;
+	color: #ffffff;
+	background-color: #04936B;
+	border: medium outset #cccccc;
+	width:140px;
+	height:55px;
+	vertical-align: middle;
+}
+.btnVirtualOKpq:hover{
+	background-color: #CCC;
+	border: medium groove #CCC;
+	color: #000000;
+}
+
+.btnVirtualOKpq:active{
+	background-color: #C00;
+	border: 5px groove #cccccc;
+	font-size: 34px;
+	font-style: normal;
+	font-weight: bold;
+	color: #FFF;
+}
+
+
+
+
+
+.btnVirtualOK{
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 34px;
+	font-weight: bold;
+	color: #ffffff;
+	background-color: #04936B;
+	border: medium outset #cccccc;
+	width:195px;
+	height:55px;
+	vertical-align: middle;
+}
+.btnVirtualOK:hover{
+	background-color: #CCC;
+	border: medium groove #CCC;
+	color: #000000;
+}
+
+.btnVirtualOK:active{
+	background-color: #C00;
+	border: 5px groove #cccccc;
+	font-size: 34px;
+	font-style: normal;
+	font-weight: bold;
+	color: #FFF;
+}
+
+
+.btnEspaciadora{
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 34px;
+	font-weight: bold;
+	color: #ffffff;
+	background-color: #04936B;
+	border: medium outset #cccccc;
+	width:575px;
+	height:50px;
+	vertical-align: middle;
+}
+.btnEspaciadora:hover{
+	background-color: #CCC;
+	border: medium groove #CCC;
+	color: #000000;
+}
+
+.btnEspaciadora:active{
+	background-color: #C00;
+	border: 5px groove #cccccc;
+	font-size: 34px;
+	font-style: normal;
+	font-weight: bold;
+	color: #FFF;
+}
+
+
+.btnEspaciadoraGr{
+	font-family: Tahoma, Geneva, sans-serif;
+	font-size: 34px;
+	font-weight: bold;
+	color: #ffffff;
+	background-color: #04936B;
+	border: medium outset #cccccc;
+	width:700px;
+	height:50px;
+	vertical-align: middle;
+}
+.btnEspaciadoraGr:hover{
+	background-color: #CCC;
+	border: medium groove #CCC;
+	color: #000000;
+}
+
+.btnEspaciadoraGr:active{
+	background-color: #C00;
+	border: 5px groove #cccccc;
+	font-size: 34px;
+	font-style: normal;
+	font-weight: bold;
+	color: #FFF;
+}
+
+#numPad{
+	width:220px;
+	height:auto;
+}
+
+#txtPad{
+	width:750px;
+	height:auto;
+}

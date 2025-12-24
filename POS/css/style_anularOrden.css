@@ -1,0 +1,312 @@
+@charset "utf-8";
+/* CSS Document */
+
+body
+{
+	width:100%;
+	margin:auto;
+	min-width:800px;
+	max-width:2000px;
+	background:#7DAAEC url('../imagenes/ordenpedido/bg_tomaPedido.png') repeat;
+	font-family:Arial, Helvetica, sans-serif;
+	overflow-x:hidden;
+	overflow-y:hidden;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+	/*cursor:none;*/
+}
+
+button
+{
+	height:66px;
+	width: 120px;
+	cursor:pointer;
+}
+#cuentasAbiertas {width: 170px; display: table-cell; vertical-align: middle; margin-right:20px;}
+#cuentasCerradas {width: 170px; display: table-cell; vertical-align: middle; margin-right:20px;}
+#anularOrden {width: 170px; display: table-cell; vertical-align: middle; margin-right:20px;}
+#cancelar {width: 170px; display: table-cell; vertical-align: middle; margin-right:20px;}
+.botonPago {height:66px; width:140px; cursor:pointer; margin-right:5px;}
+/*div y botones de la lista de toma de pedido*/
+
+#contenedorTotal { float:left; width:1024px; height:768px; /*border:1px solid #fff;*/}
+
+#contenedorIzquierda { float:left; width:280px; padding:0px;}
+#contenedorDerecha { float:left; width:740px;}
+/*#contenedorIzquierda { float:left; width:220px; padding:0px;}
+#contenedorDerecha { float:left; width:803px;}*/
+
+#listado
+{
+	width:100%;
+}
+
+/*frame de la lista de toma de pedidos*/ 
+#listaPedido{
+	float: left;
+	background:  #fff;
+	width: 100%;
+	font-size: 1.1em;
+	height: 652px;
+	overflow-x: hidden;
+	overflow-y: scroll;
+}
+
+#listado2
+{
+	font-size:0.9em;
+}
+
+.cabeceraOrden {
+	position:absolute;
+	height:40px;
+	line-height:40px;
+	background:#333;
+	width:740px;
+	/*width:787px;*/
+	color:#fff;
+	font-size:20px;
+}
+.cabeceraOrden2 { position:fixed; height:40px; line-height:40px; background:#333; width:786px; color:#fff; font-size:20px;}
+.listaFactura { float:left; width:300px; text-align:left; font-size:20px; }
+.listaFactura2 { float:left; width:130px; text-align:left; font-size:20px;}
+.listaMesa { float:left; margin-left:10px; width:75px; text-align:left; font-size:20px;}
+.listaSubtotal { float:left; width:75px; margin-left:20px; text-align:left; font-size:20px;}
+.listaTotal { float:left; width:75px; margin-left:20px; text-align:left; font-size:20px;}
+.listaCaja { float:left; width:75px; margin-left:5px; text-align:left; font-size:20px;}
+.listaCajero { float:left; width:75px; text-align:left; font-size:20px; margin-left:20px;}
+.listaStatus { float:left; width:140px; text-align:left; font-size:20px; margin-left:20px;}
+.listaEstado{float:left; margin-left:40px; width:100px; text-align:left; font-size:20px;}
+.listaEstadoDescripcion{float:left; margin-left:40px; width:100px; text-align:left; /*font-size:12px;*/ font-size:20px;}
+.listaMensaje{float:left; margin-left:40px; width:220px; text-align:left; font-size:20px;}
+.listaFecha{float:left; margin-left:10px; width:140px; text-align:left; font-size:20px;}
+/*Seleccionar elemnto de la lista*/
+#listadoPedido .ui-selecting 
+{
+    background: #ccc;
+}
+#listadoPedido .ui-selected 
+{
+    background: #999;
+}
+
+ul#listadoPedido   {
+  margin: 0;
+  padding: 40px 0 0 0;
+  list-style: none;
+}
+
+ul#listadoPedido li {
+  padding:4px 6px 4px 5px;
+  margin:0 0 5px 0;
+  border: 1px transparent solid;
+  border-top:1px solid #d2d2d2;
+  float:left;
+  width:100%;
+  height:50px;
+  background: #eee url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x;
+  line-height:50px;
+
+}
+
+ul#listadoPedido li:hover  {
+  cursor:pointer;
+}
+
+ul#listadoPedido .focus  {
+  background: #003871;
+  color:#fff;
+  cursor:pointer;
+}
+
+
+
+
+#listadoPedido2 .ui-selecting 
+{
+    background: #ccc;
+}
+#listadoPedido2 .ui-selected 
+{
+    background: #999;
+}
+
+ul#listadoPedido2   {
+  margin: 0;
+  padding: 40px 0 0 0;
+  list-style: none;
+}
+
+ul#listadoPedido2 li {
+  padding:4px 6px 4px 5px;
+  margin:0 0 5px 0;
+  border: 1px transparent solid;
+  border-top:1px solid #d2d2d2;
+  float:left;
+  width:100%;
+  height:50px;
+  background: #eee url(../imagenes/ordenpedido/bg_Listas.png) top center repeat-x;
+}
+
+ul#listadoPedido2 li:hover  {
+  background: #003871;
+  color:#fff;
+  cursor:pointer;
+}
+
+ul#listadoPedido2 .focus  {
+  background: #003871;
+  color:#fff;
+  cursor:pointer;
+}
+
+
+
+
+.botonesLista
+{
+	background: #fff;
+    height: 30px;
+	line-height:30px;
+	color:#000;
+    padding: 5px 10px;
+    /*width: 200px;*/
+	width: 270px;
+	border-radius: 0px;
+	float:left;
+	font-size:20px;
+}
+
+.calculosTransacciones {
+	background: #fff;
+	margin: 100px 20px 20px 20px;
+	border: 1px solid #fff;
+	padding: 10px;
+}
+
+.calculosTrans {
+	padding:10px;
+	text-align:right;
+	font-size:20px;
+	
+	
+	
+}
+
+/*div del calculos*/
+#calculosLista
+{
+    height: 120px;
+    padding: 10px 0 20px 0;
+    float:left;
+    width: 100%;
+	background:#fff;
+	font-size:1.1em;
+}
+
+/*frame de los productos del establecimiento*/
+#barraCategoria
+{
+	position:absolute;
+	float:left;
+	left: 270px;
+	top:  372px;
+	height: 250px;
+}
+
+/*frame de las categorías del establecimiento*/
+#barraProducto
+{
+	position:absolute;
+	float:left;
+	top:  10px; 
+    left: 290px; 
+	height: 250px;
+}
+
+/*frame de la barra con información del cajero*/
+#barraCajero {
+	background: #0E98B6;
+    position: relative;
+}
+
+/*frame de la barra principal del sistema*/
+#barraPrincipal
+{
+	background: #003871 url('../imagenes/ordenpedido/background_tomaPedido.png') repeat;
+    padding: 20px 10px;
+    position: relative;
+}
+
+.preguntasTitulo { 
+	background:#003871;
+	padding:8px 5px;
+	color:#fff;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+	font-size:20px;
+}
+
+
+/* ANULACIONES */
+
+.anulacionesSeparador { 
+	padding:25px 5px;
+	color:#000;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+	float:left;
+	width:48%;
+}
+.anulacionesSeparadorFin { 
+	padding:30px 5px;
+	color:#000;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+	float:left;
+	width:48%;
+	text-align:right;
+}
+.anulacionesSeparadorFin #btn_anulaok { 
+	margin-right:20px;
+}
+.anulacionesMensaje { 
+	padding:15px 5px;
+	color:#db1016;
+	margin:0;
+	-moz-user-select: none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.anulacionesInput input[type="text"], .anulacionesInput input[type="password"] {
+	height:35px;
+	width:300px;
+}
+.anulacionesSubmit input[type="submit"] {
+	width:100px;
+	height:70px;
+	font-size:20px;
+}
+
+#alertify-cancel {
+	display:none !important;	
+}
+
+#alertify-ok {
+	background-color:#3b7808;
+	border: 1px solid #3b7808;
+}
+
+#motivoObservacion { width:350px; height:120px; resize:none;}

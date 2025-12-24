@@ -1,0 +1,14 @@
+.form-endpoint-trade{
+    margin-bottom: 10px;
+}
+
+#contenedor_lst_rest_no_activos {
+    height: 550px;
+    overflow-y: auto;
+}
+
+.colorTipo{
+    background-color:black;
+    width: 50%;
+    padding:5px;
+}

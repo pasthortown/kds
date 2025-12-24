@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Impresion Detalle Pedido</title>
+        <link rel="StyleSheet" href="../../css/style_impresion_ordenpedido.css" type="text/css"/>
+    </head>
+    <body>
+        <?php
+        require_once "../../system/conexion/clase_sql.php";
+        include_once "../../clases/clase_webservice.php";
+        include_once "../../clases/app.Cadena.php";
+        include_once "../../tokens/MainApiToken.php";
+        
+        $servicioWebObj=new webservice();
+        $cupon = $_GET['cupon'];
+        $iduser = $_GET['usr_id'];
+        $nombre = $_GET['usr_descripcion'];
+        $tienda = $_GET['rst_id'];
+       
+        $dataSolicitud = array(
+            "cupon" => $cupon,
+            "codUsuario" => 1,
+            "codRestaurante" => $tienda,
+            "usuario" => $nombre);
+
+        $restaurante = $tienda;//$_SESSION['rstId'];
+        $datosWebservice=$servicioWebObj->retorna_WS_Cupones_ImpresionHTML($restaurante);
+        $url=$datosWebservice["urlwebservice"];
+        //$url = "http://azsoa.cloudapp.net:7380/GerenteNacional.ServiciosWeb/webresources/cupones/impresionhtml/";
+        //Convert Data tipo object a json
+        $dataString = json_encode($dataSolicitud);
+
+        //Consumo WebServices
+        $Cadena = new Cadena();
+        $idCadena=$Cadena->ObtenerCadenaRestaurante($tienda);
+
+        if($idCadena["idCadena"] != 'N/A'){
+            $token = apiTokenIntegracion($idCadena["idCadena"],'TokenOrdenPedido');
+            $tokenType = trim(apiTokenIntegracion($idCadena["idCadena"],'TokenTypeOrdenPedido'));
+            $tokenHeader = "Authorization:$tokenType ".$token;
+
+        }else{
+            $tokenHeader=''; 
+        }
+
+        $solicitud = curl_init($url);
+        curl_setopt($solicitud, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($solicitud, CURLOPT_POSTFIELDS, $dataString);
+        curl_setopt($solicitud, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($solicitud, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json',$tokenHeader));
+        curl_setopt($solicitud, CURLOPT_TIMEOUT, 30);
+        curl_setopt($solicitud, CURLOPT_CONNECTTIMEOUT, 30);
+
+        $respuestaSolicitud = curl_exec($solicitud);
+        $respuesta = json_decode($respuestaSolicitud);
+        $estado = curl_getinfo($solicitud);
+
+        curl_close($solicitud);
+
+        if ($estado['http_code'] != 200) {
+        
+            if($idCadena["idCadena"] != 'N/A'){
+
+                apiTokenIntegracion($idCadena["idCadena"],'CrearToken');
+                $token = apiTokenIntegracion($idCadena["idCadena"],'TokenOrdenPedido');
+                $tokenType = trim(apiTokenIntegracion($idCadena["idCadena"],'TokenTypeOrdenPedido'));
+                $tokenHeader = "Authorization:$tokenType ".$token;
+
+            }else{
+                $tokenHeader=''; 
+            }
+        
+            $solicitud = curl_init($url);
+            curl_setopt($solicitud, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($solicitud, CURLOPT_POSTFIELDS, $dataString);
+            curl_setopt($solicitud, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($solicitud, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json',$tokenHeader));
+            curl_setopt($solicitud, CURLOPT_TIMEOUT, 30);
+            curl_setopt($solicitud, CURLOPT_CONNECTTIMEOUT, 30);
+    
+            $respuestaSolicitud = curl_exec($solicitud);
+            $respuesta = json_decode($respuestaSolicitud);
+            $estado = curl_getinfo($solicitud);
+    
+            curl_close($solicitud);
+
+        }
+
+        //echo $respuesta->html;
+        $ant = array("Usuario", "CUPON");
+        $new   = array("Cajero","CUPON PREIMPRESO");
+        echo str_replace($ant, $new, $respuesta->html);
+        $html = ' <div class="contenedor">
+                    <div class="cabecera">
+                        <table>
+                        <!-- CLIENTE Y MESA DE IMPRESION ANTERIOR
+                        <tr>
+                            <td colspan="2" align="left" class="normal" style="height: 40px"><b>Cliente:</b></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="left" class="normal" style="height: 40px"><b>Mesa:</b></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="left" class="normal">--------------------------------------</td>
+                        </tr> 
+                        --!>
+                    <tr>
+                        <td colspan="2" align="left" class="normal">QR '.$cupon.' </td>
+                    </tr>
+                        </table>
+                    </div>
+                </div>';
+        echo $html;
+        ?>
+    </body>
+</html>

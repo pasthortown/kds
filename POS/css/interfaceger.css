@@ -1,0 +1,7 @@
+*{margin: 0;padding: 0;}
+
+body{background:#7DAAEC url(../imagenes/ordenpedido/bg_tomaPedido.png) repeat}
+
+.modal_cargando{position:fixed;top:0;left:0;width:100%;height:766px;background:rgba(0,0,0,0.2);z-index:999999;margin:0;padding:0}
+.modal_cargando_contenedor{margin:300px auto;width:140px;height:140px;color:#333;z-index:9999999;overflow-x:hidden;overflow-y:hidden;background:#fff;-webkit-box-shadow:0 0 37px 4px rgba(0,0,0,0.75);-moz-box-shadow:0 0 37px 4px rgba(0,0,0,0.75);box-shadow:0 0 37px 4px rgba(0,0,0,0.75)}
+.modal_cargando_contenedor img{margin:50px}

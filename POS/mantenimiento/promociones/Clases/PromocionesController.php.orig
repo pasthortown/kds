@@ -1,0 +1,891 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: fabricio.sierra
+ * Date: 7/31/2018
+ * Time: 10:50 AM
+ */
+
+namespace Maxpoint\Mantenimiento\promociones\Clases;
+use Maxpoint\Mantenimiento\adminReplicacion\Clases\Controller;
+use Carbon\Carbon;
+use GuzzleHttp\Client;
+use Doctrine\DBAL\Connection;
+use PDO;
+
+
+class PromocionesController extends Controller
+{
+    const NOMBRE_MODULO_CUPONES = 'Cupon';
+    const ESTADO_ACTIVO = "ActivoMasterdata";
+    const ESTADO_INACTIVO = "InactivoMasterdata";
+    const ESTADO_CANJEADO = "CanjeadoMasterdata";
+    const ESTADO_ANULADO = "AnuladoMasterdata";
+
+    public $configuraciones;
+
+    /**
+     * Permite seleccionar todas las categorias creadas para una promoción
+     * @param cdn_id - ID de la cadena que se está consultando
+     * Date: 13/09/2018
+     * Time: 17:38 PM
+     * @versión  3.0
+     * @author Eduardo Valencia <educristo@gmail.com>
+     * @copyright KFC
+     */
+    public function buscarCategoriasCupon($cdn_id){
+        $query = "EXEC [promociones].[USP_Promociones] 'categoriaCupon', $cdn_id,0,'0'";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    public function __construct(Connection $conn)
+    {
+        parent::__construct($conn);
+        $query = "EXEC [promociones].[USP_Promociones] 'cargarConfiguracionesPromociones',".$_SESSION["cadenaId"].", '0',''";
+        $res = $this->cargarDatos($query);
+        if($res["estado"]!=1){
+            $this->configuraciones=false;
+            return;
+        }
+        if(count($res["datos"])<1){
+            $this->configuraciones=false;
+            return;
+        }
+        $this->configuraciones=$res["datos"][0];
+    }
+
+    public function getConfiguraciones(){
+        return $this->configuraciones;
+    }
+
+    public function buscarPromocionPorID($idPromocion){
+        $query = "EXEC [promociones].[USP_Promociones] 'buscarPromocionPorID', 0,0, '$idPromocion'";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    public function buscarPromocionPorCodigoExterno($codigo){
+        $query = "EXEC [promociones].[USP_Promociones] 'buscarPromocionPorCodigoExterno', 0,0, '$codigo'";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    public function buscarPromocionPorCodigoExternoJSON($codigo,$detenerseEnError=false){
+        $res = $this->buscarPromocionPorCodigoExterno($codigo);
+        if($res["estado"]!=1){
+            $resultado["mensajePromocion"] = "Error al intentar buscar la promoción";
+            $this->enviarRespuestaJson($resultado);
+        }
+        //Si no se encuentra la promoción, retornar
+
+        $numeroPromocionesEncontradas = count($res["datos"]);
+        if(0 == $numeroPromocionesEncontradas){
+            $resultado["mensajePromocion"] = "No se encontró la promoción";
+            $this->enviarRespuestaJson($resultado);
+        }
+
+        if($numeroPromocionesEncontradas > 1){
+            $resultado["mensajePromocion"] = "Se encontraron varias promociones con el mismo código.";
+            $this->enviarRespuestaJson($resultado);
+        }
+
+        $promocionEncontrada = array_shift($res["datos"]);
+        return $promocionEncontrada;
+    }
+
+    public function validacionesOrdenFacturaPromocion($idPromocion,$idOrdenPedido,$idFactura,$dop_cuenta){
+        /*
+         * 	 Restriccion Productos
+         *   Monto Bruto Factura
+         *   Numero Productos Factura
+         *   Promocion Sobre Promocion
+         *   Descuento Sobre Descuento
+         *   Canal($promocion,$idFactura,$idOrdenPedido){--fact,ordenpedido
+         *   Restaurante?
+         * */
+        //$query = "EXEC [promociones].[USP_ValidacionesOrdenFacturaPromocion] '$idPromocion','$idOrdenPedido', '$idFactura'";
+
+        $sql="EXEC [promociones].[USP_ValidacionesOrdenFacturaPromocion] :par1,:par2,:par3,:par4,:par5,:par6,:par7";
+        $stmt = $this->conexion->prepare($sql);
+        $par6=null;
+        $par7=null;
+		$cobro = 0;
+		
+        $stmt->bindParam(":par1",$idPromocion);
+        $stmt->bindParam(":par2",$idOrdenPedido);
+        $stmt->bindParam(":par3",$idFactura);
+        $stmt->bindParam(":par4",$dop_cuenta);
+<<<<<<< HEAD
+		$stmt->bindParam(":par5",$cobro);
+=======
+        $stmt->bindParam(":par5",$cobro);
+>>>>>>> origin/MXP_Version_1.9.10.6
+        $stmt->bindParam(":par6",$par6,PDO::PARAM_STR|PDO::PARAM_INPUT_OUTPUT,5);
+        $stmt->bindParam(":par7",$par7,PDO::PARAM_STR|PDO::PARAM_INPUT_OUTPUT,300);
+
+        $res=$stmt->execute();
+        return ["estado"=>trim($par6),"mensaje"=>trim($par7)];
+    }
+
+    function validarRestaurante($promocion,$restauranteCompra){
+
+        //TODO: Validación Restricción restaurante
+        //obtener los restaurantes de la promoción
+        if($promocion["Requiere_restaurante"]==0) {
+            return true;
+        }
+
+        //Verificar si el restaurante en en el que se realizo la compra
+        //se encuentra en el listado de restaurantes válidos
+        $restaurantesValidos = $this->obtenerRestaurantesPromocion($promocion["Id_Promociones"]);
+
+        $restaurantesValidos = explode(",",$restaurantesValidos) ;
+        return in_array($restauranteCompra,$restaurantesValidos);
+    }
+
+    function validarLimiteCanjesCliente($promocion){
+        //TODO: Validación Límite canjes cliente
+        //Buscar el total de canjes de esta promoción que el cliente ha realizado hasta el momento (WS Azure)
+            //Buscar la dirección del WebService
+            //Ejecutar consulta
+            //Guardar datos
+        //Comparar el valor
+    }
+
+    function validarCaducidadTiempo($promocion){
+        //TODO: Validación Caducidad con tiempo
+        //Buscar la fecha en la que el cliente tomo el cupón (WS Trade)
+            //Buscar la dirección del WebService
+            //Ejecutar consulta
+            //Guardar datos
+        //Calcular la fecha de vencimiento
+        //Comparar si la fecha actual es menor que la fecha de vencimiento
+        return true;
+    }
+
+    function validarFechas($promocion){
+        //Comparar si la fecha actual se encuentra entre la fecha de activación
+        // y la fecha de caducidad de la promoción
+		$cdateIntentoCanje = Carbon::now();
+		$dateValidaDesde = $promocion["Activo_desde"] . " 00:00:00";
+		$cdateValidaDesde = Carbon::createFromFormat("Y-m-d H:i:s", $dateValidaDesde);
+		$dateValidaHasta = $promocion["Activo_Hasta"] . " 23:59:59";
+        $cdateValidaHasta = Carbon::createFromFormat("Y-m-d H:i:s", $dateValidaHasta);
+        return $cdateIntentoCanje->between($cdateValidaDesde, $cdateValidaHasta);
+    }
+
+
+    function validarFormasPago($promocion){
+        //Validar que la forma de pago de la factura se encuentra dentro de
+        // las formas de pago habilitadas
+        //TODO: FUTURO::::::Validación Restricción por forma de pago::::::
+    }
+
+    function validarMaximoCanjeMultiple($promocion,$cantidadIntentoCanjes){
+        //Validar si el numero de cupones que desea canjear el cliente es menor
+        //al numero máximo de canjes que permite una promoción en una misma compra.
+
+        $maximoCanjeMultipleConfigurado = $promocion["Maximo_canje_multiple"];
+        return $maximoCanjeMultipleConfigurado == 0 || $cantidadIntentoCanjes <= $maximoCanjeMultipleConfigurado;
+    }
+
+    function validarDiaCanje($promocion){
+        $resultadoValidacion=["estado"=>true,"mensaje"=>"OK"];
+
+        //Validar si el día en el que se está canjeando está dentro de los días permitidoa
+        if(!$promocion["Requiere_dias"]) return $resultadoValidacion;
+
+        $arrayDiasPermitidos=explode(",",$promocion["Dias_canjeable"]) ;
+        $fechaIntentoCanje   = Carbon::now();
+        $diaIntentoCanje=$fechaIntentoCanje->dayOfWeek;
+
+        if(!in_array($diaIntentoCanje,$arrayDiasPermitidos)){
+            $dias=[ "1"=>"Lunes", "2"=>"Martes", "3"=>"Miércoles", "4"=>"Jueves", "5"=>"Viernes", "6"=>"Sábado", "7"=>"Domingo" ];
+            $resultadoValidacion["estado"]=false;
+
+            $nombresDias=[];
+            foreach($arrayDiasPermitidos as $dia){
+                $nombresDias[$dia]=$dias[$dia];
+            }
+
+            $mensaje="El cupón se puede canjear los días ".implode(", ",$nombresDias);
+            $resultadoValidacion["mensaje"] = $mensaje;
+        }
+        return $resultadoValidacion;
+    }
+
+    function validarHorarioCanje($promocion){
+        if($promocion["Requiere_horario"] == false || 0==$promocion["Requiere_horario"]) return true;
+        //Validar si la hora en la que se está canjeando está dentro del horario permitido
+        $arrayHorarioPermitido=explode(",",$promocion["Horario_canjeable"]) ;
+        $inicio = Carbon::createFromFormat('H:i',$arrayHorarioPermitido[0]) ;
+        $fin   = Carbon::createFromFormat('H:i',$arrayHorarioPermitido[1]) ;
+        $horaIntentoCanje   = Carbon::now();
+		
+        return $horaIntentoCanje->between($inicio,$fin);
+    }
+
+    function validarEdadClienteCanje($promocion,$cliente){
+        if($promocion["Requiere_rango_edad"]==0) return true;
+
+        try{
+            $fechaNacimiento=Carbon::createFromFormat("Y-m-d",substr($cliente->fechaNacimiento,0,10));
+		
+        }catch(\Exception $ex){
+            return false;
+        }
+
+        $edadCliente = $fechaNacimiento->age;
+		
+
+        //var_dump(explode($promocion["Rango_edad"],","));
+
+        $rangoEdadCupon = explode(",",$promocion["Rango_edad"]);
+        if( count($rangoEdadCupon)!==2 ) return false;
+        return  ($edadCliente >= $rangoEdadCupon[0] && $edadCliente <= $rangoEdadCupon[1] ) ;
+    }
+
+    function validarGeneroClienteCanje($promocion,$cliente){
+        //TODO: Validación Restricción Género
+        //Buscar la dirección del WebService ( género del cliente )(WS Trade)
+        //Ejecutar consulta
+        //Guardar datos
+        //Revisar
+    }
+
+    function validarCodigoUnico($promocion){
+        if($promocion["Tiene_codigo_unico"]){
+            //Crear validación de código único en SP
+        }
+        return true;
+        //TODO: Validación Restricción código único
+        // Si la promoción requiere un código único, revisar si el código ingresado ya fue canjeado o no
+    }
+
+    function cargarListadoPromociones($cdnId){
+        $query = "EXEC [promociones].[USP_Promociones] 'cargarListadoPromociones',$cdnId, '0',''";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    function cargarConfiguraciones($cdnId){
+        $query = "EXEC [promociones].[USP_Promociones] 'cargarConfiguracionesPromociones',$cdnId, '0',''";
+        $res = $this->cargarDatos($query);
+
+        return $res;
+    }
+
+    function cargarConfiguracionesJSON($cdnId){
+        $query = "EXEC [promociones].[USP_Promociones] 'cargarConfiguracionesPromociones',$cdnId, '0',''";
+        //die($query);
+        $res = $this->cargarDatosJSON($query);
+        if($res["estado"]==0) {
+            $res["errores"]=["Error: No se pudo cargar las configuraciones del  módulo de cupones"];
+            $this->enviarRespuestaJson($res);
+        }
+
+        return $res["datos"][0];
+    }
+
+    function ejecutarCanje($Id_Promociones,$CodigoCanjeado,$cfac_id,$Id_cliente,$Cantidad,$idUsuario,$IDCabeceraOrdenPedido,$dop_cuenta,$idCanjeMasterData){
+        $fecha=Carbon::now()->format("Y-m-d H:i:s");
+        $query = "SET DATEFORMAT YMD
+                  EXEC [promociones].[IAE_CanjeCupon]
+                    'insertarCanje','','$Id_Promociones','$CodigoCanjeado',
+                    '$cfac_id','$Id_cliente','',NULL,'$Cantidad',
+                    '','$idUsuario','$IDCabeceraOrdenPedido', $dop_cuenta,'$idCanjeMasterData'";
+        $res = $this->cargarDatos($query);
+
+        return $res;
+    }
+
+    // TODO: Insertar Política de Servidor de Webservices Trade
+    function guardarUrlServidorTrade($cdn_id,$urlServidor,$usuarioAdm){
+        $query = "EXEC [config].[IAE_Politica_Cadena] 
+            @cdn_id=$cdn_id,
+            @accion='insertarValor',
+            @idModulo=1,
+            @descripcionPolitica = 'WS SERVIDOR',
+            @descripcionParametro = 'TRADE CUPONES',
+            @lastUser = '$usuarioAdm',
+            @valorVarchar = '$urlServidor',
+            @configuracion = 0
+            ";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    function guardarRutaEndpointCanjeTrade($cdn_id,$rutaEndpoint,$usuarioAdm){
+        $query = "EXEC [config].[IAE_Politica_Cadena] 
+            @cdn_id=$cdn_id,
+            @accion='insertarValor',
+            @idModulo=1,
+            @descripcionPolitica = 'WS RUTA SERVICIO',
+            @descripcionParametro = 'TRADE CUPONES CANJE',
+            @lastUser = '$usuarioAdm',
+            @valorVarchar = '$rutaEndpoint',
+            @configuracion = 0
+            ";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+
+    function guardarClaveJWTTrade($cdn_id,$claveJWT,$usuarioAdm){
+        $query = "EXEC [config].[IAE_Politica_Cadena] 
+            @cdn_id=$cdn_id,
+            @accion='insertarValor',
+            @idModulo=1,
+            @descripcionPolitica = 'PROMOCIONES',
+            @descripcionParametro = 'CLAVE JWT',
+            @lastUser = '$usuarioAdm',
+            @valorVarchar = '$claveJWT',
+            @configuracion = 0
+            ";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    // TODO: Insertar Política de Endpoint Canje Azure
+    function guardarEndpointCanjeAzure($cdn_id,$urlServidor,$usuarioAdm){
+        $query = "EXEC [config].[IAE_Politica_Cadena] 
+            @cdn_id=$cdn_id,
+            @accion='insertarValor',
+            @idModulo=1,
+            @descripcionPolitica = 'WS RUTA SERVICIO',
+            @descripcionParametro = 'PROMOCIONES CANJE AZURE',
+            @lastUser = '$usuarioAdm',
+            @valorVarchar = '$urlServidor',
+            @configuracion = 0
+            ";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    // TODO: Insertar política de Endpoint Validaciones Azure
+    function guardarEndpointValidacionesAzure($cdn_id,$urlServidor,$usuarioAdm){
+        $query = "EXEC [config].[IAE_Politica_Cadena] 
+            @cdn_id=$cdn_id,
+            @accion='insertarValor',
+            @idModulo=1,
+            @descripcionPolitica = 'WS RUTA SERVICIO',
+            @descripcionParametro = 'PROMOCIONES VALIDACIONES AZURE',
+            @lastUser = '$usuarioAdm',
+            @valorVarchar = '$urlServidor',
+            @configuracion = 0
+            ";
+        $res = $this->cargarDatos($query);
+        return $res;
+    }
+
+    function fn_consultar($lc_sqlQuery, $lc_datos) {
+        $this->lc_regs = array();
+        switch ($lc_sqlQuery) {
+            case "cargarBeneficiosPromociones":
+                $lc_sql = "EXEC [promociones].[Regiones]  ";
+                // echo($lc_sql);
+                if ($this->fn_ejecutarquery($lc_sql)) {
+                    while ($row = $this->fn_leerarreglo()) {
+                        $this->lc_regs[] = array("rgn_id" => $row['rgn_id'],
+                            "rgn_descripcion" => utf8_encode(trim($row['rgn_descripcion'])),
+                            "agregado" => $row['agregado'],
+                            "pais_id" => $row['pais_id']);
+                    }
+                }
+                $this->lc_regs['str'] = $this->fn_numregistro();
+                return json_encode($this->lc_regs);
+                break;
+
+        }
+    }
+
+	function guardarPromocion(
+							$Id_Promociones,
+							$cdn_id,
+							$Codigo_externo,
+							$Nombre,
+							$Nombre_imprimible,
+							$Codigo_amigable,
+							$Limite_canjes_total,
+							$Limite_canjes_cliente,
+							$Total_canjeados,
+							$Caduca_con_tiempo,
+							$Unidad_Tiempo_validez,
+							$Tiempo_validez,
+							$Activo_desde,
+							$Activo_Hasta,
+							$Requiere_productos,
+							$Requiere_forma_Pago,
+							$Puntos_Acumulables,
+							$Saldo_Acumulable,
+							$Bruto_minimo_factura,
+							$Bruto_maximo_factura,
+							$Cantidad_minima_productos_factura,
+							$Permite_otras_promociones,
+							$Maximo_canje_multiple,
+							$Requiere_dias,
+							$Dias_canjeable,
+							$Requiere_horario,
+							$Horario_canjeable,
+							$Requiere_rango_edad,
+							$Rango_edad,
+							$Requiere_genero,
+							$genero,
+							$Tiene_codigo_unico,
+							$Activo,
+							$Motivo_inactivacion,
+							$Permite_descuento_sobre_descuento,
+							$Concatenador_beneficios,
+							$Concatenador_plus_promocion,
+							$Requiere_canal,
+							$Requiere_restaurante,
+							$LastUser,
+							$Beneficios_Promocion,
+							$Productos_Requeridos_Promocion,
+							$Forma_Pago_Promocion,
+							$Restaurantes_Requeridos_Promocion,
+							$Canales_Requeridos_Promocion,
+							$IDColeccionPromociones,
+							$categoriasSeleccionadasPromocion){
+	    $query = "EXEC [promociones].[IAE_insertarNuevaPromocion]
+		'$Id_Promociones',
+		$cdn_id,
+		'$Codigo_externo',
+		'$Nombre',
+		'$Nombre_imprimible',
+		'$Codigo_amigable',
+		$Limite_canjes_total,
+		$Limite_canjes_cliente,
+		$Total_canjeados,
+		$Caduca_con_tiempo,
+		'$Unidad_Tiempo_validez',
+		$Tiempo_validez,
+		'$Activo_desde',
+		'$Activo_Hasta',
+		$Requiere_productos,
+		$Requiere_forma_Pago,
+		$Puntos_Acumulables,
+		$Saldo_Acumulable,
+		$Bruto_minimo_factura,
+		$Bruto_maximo_factura,
+		$Cantidad_minima_productos_factura,
+		$Permite_otras_promociones,
+		$Maximo_canje_multiple,
+		$Requiere_dias,
+		'$Dias_canjeable',
+		$Requiere_horario,
+		'$Horario_canjeable',
+		$Requiere_rango_edad,
+		'$Rango_edad',
+		$Requiere_genero,
+		'$genero',
+		$Tiene_codigo_unico,
+		$Activo,
+		'$Motivo_inactivacion',
+		$Permite_descuento_sobre_descuento,
+		'$Concatenador_beneficios',
+		'$Concatenador_plus_promocion',
+		$Requiere_canal,
+		$Requiere_restaurante,
+		'$LastUser',
+		'$Beneficios_Promocion',
+		'$Productos_Requeridos_Promocion',
+		'$Forma_Pago_Promocion',
+		'$Restaurantes_Requeridos_Promocion',
+		'$Canales_Requeridos_Promocion',
+		'$IDColeccionPromociones',
+		'$categoriasSeleccionadasPromocion'";
+
+        $res = $this->cargarDatos($query);
+        return $res;
+	}
+
+	public function refrescarTokenTrade(){
+       // $cliente=
+    }
+
+    public function obtenerRestaurantesPromocion($idPromocion){
+        $sql="EXEC [promociones].[USP_Promociones] 'restaurantesPromocion',".$_SESSION["cadenaId"].", '0','$idPromocion'";
+        $res = $this->cargarDatos($sql);
+        if($res["estado"]==0){
+            return [];
+        }
+        return $res["datos"][0]["variableV"];
+    }
+
+    function extraerClaveConfiguraciones($clave){
+        if(!isset($this->configuraciones[$clave])) {
+            $this->enviarRespuestaJson([
+                "estadoPromocion"=>"ERROR",
+                "mensajePromocion"=>"Error en configuraciones de cupones ($clave)",
+                "estadoCanje"=>"ERROR",
+                "mensajeCanje"=>"No se realiza el canje"
+            ]);
+        }
+        return $this->configuraciones[$clave];
+    }
+
+    function cargarDetallesCupon($idCadena,$idCupon){
+        $sql="EXEC [promociones].[USP_Promociones] 'detallesCupon',".$idCadena.", '0','$idCupon'";
+        $res = $this->cargarDatosMultiResultset($sql);
+
+        $retorno=[
+            "estado"=>$res["estado"],
+            "mensaje"=>"No se pudo cargar los datos del cupón",
+            "datos"=>[],
+        ];
+
+        if($res["estado"]==0){
+            return $retorno;
+        }
+
+        $datosPromocion=$res["datos"][0];
+        $beneficios=$res["datos"][1];
+        $plusRequeridos=$res["datos"][2];
+
+        if(count($datosPromocion)<1){
+            return $retorno;
+        }
+
+        $promocion = $datosPromocion[0];
+        $promocion["beneficios"] = $beneficios;
+        $promocion["plus_requeridos"] = $plusRequeridos;
+
+        $retorno["datos"]=$promocion;
+        //return $res["datos"][0]["variableV"];
+        return $retorno;
+    }
+
+    function retornaCanjesPendientesSincronizacionMasterData(){
+        $sql="EXEC [promociones].[USP_Promociones] 'sincronizacionMasterData',0, '0',''";
+        $res = $this->cargarDatos($sql);
+        return $res;
+    }
+
+    function confirmarSincronizacionCanjesMasterData($parametrosConsulta){
+        $sql = "EXEC [promociones].[USP_Promociones] 'confirmarSincronizacionMasterData',0, '0','','".$parametrosConsulta["idUsuario"]."'";
+        $res = $this->ejecutarUpdate($sql);
+        return $res;
+    }
+
+    public function getURLSincronizacionCanjeMastarData(){
+        return "http://".$this->configuraciones["direccionServidorMasterData"].$this->configuraciones["endpointMasterDataSincronizarCanje"];
+    }
+
+    public function getURLInsercionCanjeMastarData(){
+        return "http://".$this->configuraciones["direccionServidorMasterData"].$this->configuraciones["endpointMasterDataInsertarCanje"];
+    }
+
+    public function getURLSincronizacionAnulacionMastarData(){
+        return "http://".$this->configuraciones["direccionServidorMasterData"].$this->configuraciones["endpointMasterDataAnulacion"];
+    }
+
+    public function getURLCanjesClienteMastarData(){
+        return "http://".$this->configuraciones["direccionServidorMasterData"].$this->configuraciones["endpointMasterDataCanjesCliente"];
+    }
+
+    public function getURLInactivarCanjeMastarData(){
+        return "http://".$this->configuraciones["direccionServidorMasterData"].$this->configuraciones["endpointMasterDataInactivarCanje"];
+    }
+
+    function sincronizarCanjesPromociones(){
+        $idUsuario = $_SESSION['usuarioId'];
+
+        //SINCRONIZACION DE CANJES
+        //Buscar los canjes que no se han sincronizado
+        $resultsetCanjesPendientes = $this->retornaCanjesPendientesSincronizacionMasterData();
+
+        if($resultsetCanjesPendientes["estado"] === 1 && count($resultsetCanjesPendientes["datos"])>0){
+            $dataPeticion=[
+                "canjes" => $resultsetCanjesPendientes["datos"],
+                "rst_id" => $_SESSION["rstId"],
+                "cdn_id" => $_SESSION["cadenaId"]
+            ];
+
+            $data_string=json_encode($dataPeticion);
+           // error_log("Sincronizacion Canjes\n".$data_string,3,"sincronizaciones.log");
+            $url = $this->getURLSincronizacionCanjeMastarData();
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+            curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+            //execute post
+            $result = curl_exec($ch);
+            $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            if($http_status!==200){
+                return;
+                /*
+                $resultado = array(
+                    "estado"=>"ERROR",
+                    "mensaje"=>"Error al conectar con el servidor de canjes."
+                );
+
+                enviarRespuestaJson($resultado);
+                */
+            }
+
+            $respuesta=json_decode($result);
+            //close connection
+            curl_close($ch);
+
+            if($respuesta->estado!=1){
+                //$resultado = array(
+                //    "estado"=>"ERROR",
+                //    "mensaje"=>"Error al conectar con el servidor de canjes."
+                //);
+                //enviarRespuestaJson($resultado);
+                return;
+            }
+
+            $parametrosConsulta=[
+                "idUsuario"=>$idUsuario
+            ];
+            //Cambiar el estado de los canjes en el local
+            $resultsetCambiarEstado = $this->confirmarSincronizacionCanjesMasterData($parametrosConsulta);
+            return;
+        }
+
+        //Crear un proceso para avisar a soporte que hay un problema al sincronizar los canjes
+        //Ejecutar la sincronización
+
+    }
+
+    function sincronizarAnulacionCanjesFactura($parametros){
+        $dataPeticion=[
+            "cfacId"=>$parametros["cfac_id"],
+            "ncreId"=>$parametros["ncre_id"]
+        ];
+
+        $data_string=json_encode($dataPeticion);
+        $ch = curl_init($this->getURLSincronizacionAnulacionMastarData());
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        //execute post
+        $result = curl_exec($ch);
+        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if($http_status!==200){
+            return;
+        }
+
+        $respuesta=json_decode($result);
+        //close connection
+        curl_close($ch);
+
+        if($respuesta->estado!=1){
+            return;
+        }
+
+        //Cambiar el estado de los canjes en el local
+        $resultsetCambiarEstado = $this->confirmarAnulacionCanjesMasterData($parametros);
+        return $resultsetCambiarEstado;
+    }
+
+    function anularCanjes($parametros){
+        $sql = "EXEC [promociones].[USP_Anulacion_Canjes] 
+            'anularCanjesFactura',
+            ".$parametros["rst_id"].",
+            '".$parametros["cfac_id"]."',
+            '".$parametros["ncre_id"]."',
+            '".$parametros["usr_id"]."'";
+        $res = $this->cargarDatos($sql);
+        return $res;
+    }
+
+    function confirmarAnulacionCanjesMasterData($parametrosConsulta){
+        $sql = "EXEC [promociones].[USP_Anulacion_Canjes] 
+            'confirmarAnulacionCanjesFactura',
+            ".$parametrosConsulta["rst_id"].",
+            '".$parametrosConsulta["cfac_id"]."',
+            '".$parametrosConsulta["ncre_id"]."',
+            '".$parametrosConsulta["usr_id"]."'";
+        $res = $this->cargarDatos($sql);
+        return $res;
+    }
+
+    function guardarTiposCupon($parametrosConsulta){
+        $sql = "EXEC [promociones].[IAE_tiposCupon] 
+            ".$parametrosConsulta["idPromocion"].",
+            '".$parametrosConsulta["nombresTipos"]."',
+            ".$parametrosConsulta["cdn_id"].",
+            '".$parametrosConsulta["usr_id"]."'";
+        $res = $this->cargarDatos($sql);
+        return $res;
+    }
+
+    function insertarCanjeMasterData($datosCupon,$datosCliente){
+        $fecha = Carbon::now()->format("Y-m-d H:i:s");
+        $dataPeticion = [
+            "canje"=>[
+                "tipoIdentificacion" => $datosCliente["tipoIdentificacion"],
+                "identificacion" => "".$datosCliente["identificacion"],
+                "uidTrade" => "".$datosCliente["uid_trade"],
+                "rstId" => $datosCupon["rstId"],
+                "idPromociones" => $datosCupon["idPromociones"],
+                "codigoExterno" => $datosCupon["Codigo_externo"],
+                "fechaCreacion" => $fecha,
+                "estatus" => self::ESTADO_ACTIVO,
+            ]
+        ];
+        $data_string=json_encode($dataPeticion);
+        $urlInsercionCanjeMd=$this->getURLInsercionCanjeMastarData();
+        $ch = curl_init($urlInsercionCanjeMd);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 3);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        //execute post
+        $result = curl_exec($ch);
+        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if($http_status!==200){
+            $resultado = (object)array(
+                "estado"=>"ERROR",
+                "mensaje"=>"Error al conectar con el servidor de canjes. (Insertar MD)"
+            );
+
+            return $resultado;
+        }
+
+        $respuesta=json_decode($result);
+
+        //close connection
+        curl_close($ch);
+
+        return $respuesta;
+    }
+
+    function desactivarCanjeCuponOrdenMasterData($parametros){
+        // desactivarCanjeCuponOrdenAzure
+        $respuestaError=(object)[
+            "estado"=>"error",
+            "mensaje"=>"No se pudo desactivar el canje"
+        ];
+
+        //Encontrar el ID del canje de MasterData a partir de la cabecera de pedido y el id de promoción
+        $consultaSQL = "SELECT pc.IDCanjeMasterData FROM dbo.Promociones_Canjeados pc
+         WHERE pc.Id_Promociones = (
+            SELECT dop.Detalle_Orden_PedidoVarchar3 
+            FROM dbo.Detalle_Orden_Pedido dop	
+            WHERE dop.Detalle_Orden_PedidoVarchar3 IS NOT NULL
+            AND dop.IDDetalleOrdenPedido	='".$parametros["idDetalleOrden"]."')
+        AND pc.IDCabeceraOrdenPedido	='".$parametros["idOrden"]."'
+        AND pc.IDStatus=config.fn_estado('Cupon','Inactivo')";
+
+        $cargarCanjes = $this->cargarDatos($consultaSQL);
+        if($cargarCanjes["estado"]!==1){
+            $respuestaError->mensaje="Error al consultar los canjes de la factura";
+            return($respuestaError);
+        }
+
+        $respuesta=(object)[
+            "estado"=>1,
+            "mensaje"=>"OK",
+            "datos"=>["OK"]
+        ];
+
+        $canjesDesactivar = $cargarCanjes["datos"];
+        if(count($canjesDesactivar) < 1){
+            return $respuesta;
+        }
+
+        $resultadoSincronizacion = $this->consumirWSInactivarCanjeMasterData($canjesDesactivar);
+        $resultadoInactivacionLocal = $this->inactivarCanjesLocalmente($canjesDesactivar);
+        return $resultadoInactivacionLocal;
+
+    }
+
+    function desactivarCanjeCuponOrdenTextoMasterData($parametros){
+       // desactivarCanjeCuponOrdenAzure
+        $respuestaError=(object)[
+            "estado"=>"error",
+            "mensaje"=>"No se pudo desactivar el canje"
+        ];
+
+        //Encontrar el ID del canje de MasterData a partir de la cabecera de pedido y el id de promoción
+        $consultaSQL = "SELECT * FROM 
+                dbo.Promociones_Canjeados pc	
+                WHERE pc.Id_Promociones	='".$parametros["idCupon"]."' 
+                AND pc.IDCabeceraOrdenPedido	='".$parametros["idOrden"]."'
+                AND pc.IDStatus=config.fn_estado('Cupon','Inactivo')";
+
+        $cargarCanjes = $this->cargarDatos($consultaSQL);
+        if($cargarCanjes["estado"]!==1){
+            $respuestaError->mensaje="Error al consultar los canjes de la factura";
+            return($respuestaError);
+        }
+
+        $respuesta=(object)[
+            "estado"=>1,
+            "mensaje"=>"OK",
+            "datos"=>["OK"]
+        ];
+
+        $canjesDesactivar = $cargarCanjes["datos"];
+        if(count($canjesDesactivar) < 1){
+            return $respuesta;
+        }
+
+        $resultadoSincronizacion = $this->consumirWSInactivarCanjeMasterData($canjesDesactivar);
+        $resultadoInactivacionLocal = $this->inactivarCanjesLocalmente($canjesDesactivar);
+
+        return $respuesta;
+
+    }
+
+    function consumirWSInactivarCanjeMasterData($canjesDesactivar){
+        $dataPeticion = ["CanjesInactivar"=>$canjesDesactivar];
+        $data_string=json_encode($dataPeticion);
+        $ch = curl_init($this->getURLInactivarCanjeMastarData());
+
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json', 'Accept: application/json'));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        //execute post
+        $result = curl_exec($ch);
+        $http_status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if($http_status!==200){
+            $resultado = (object)array(
+                "estado"=>"ERROR",
+                "mensaje"=>"Error al conectar con el servidor de canjes (Inactivar MD)."
+            );
+            return $resultado;
+        }
+
+        $respuesta = json_decode($result);
+        //close connection
+        curl_close($ch);
+
+        return $respuesta;
+    }
+
+    public function inactivarCanjesLocalmente($canjes)
+    {
+        // TODO: Ejecutar sentencia de actualización de estado de el/los canjes recibidos por parámetros
+        $varCanjes = print_r($canjes,true);
+
+        $idsCanjesAnular=[];
+        foreach($canjes as $canje){
+            $idsCanjesAnular[]=$canje["IDCanjeMasterData"];
+        }
+        $strIdsCanjesAnular=implode($idsCanjesAnular,",");
+        $consultaSQL =  $sql="EXEC [promociones].[USP_Promociones] 'confirmarInactivacionMasterData',0, 0,'','','$strIdsCanjesAnular'";
+        error_log( $consultaSQL.PHP_EOL ,3 ,"inactivacionCanje.log");
+        $resultadoInactivar = $this->cargarDatos($consultaSQL);
+        return $resultadoInactivar;
+    }
+
+}

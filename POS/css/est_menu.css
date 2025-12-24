@@ -1,0 +1,414 @@
+@charset "utf-8";
+/* CSS Document */
+/****************************************************************************************
+Style menu Global, Style menu Master
+*******************************************************************************************
+					Style menu Global
+********************************************************************************************/
+body
+	{
+	padding:0px;
+	margin:0px;
+	background-color:#F3F3F3;
+	}
+	
+#wrap
+	{
+	margin-top:30px;
+	}
+/* MENU CONFIG */	
+#menubar
+	{
+	width:100%;
+	height:25px;
+	position:fixed;
+	top:0px;
+	left:0px;
+	margin:0 auto;
+	padding:0;
+	background-image:url(../imagenes/menuAdmin/menuHorizontal/menubar_default.jpg);
+	background-repeat:repeat-x;
+	line-height:25px;
+	font-family:Verdana;
+	font-size:1.2em;
+	z-index:4000;
+	}
+ul#navmenu
+	{
+	margin:0 auto;
+	padding:0;
+	float:left;
+	list-style: none;
+	border: 0 none;
+	margin-left:25px;
+	}
+
+ul#navmenu li {
+	margin: 0;
+	border: 0 none;
+	padding: 0;
+	float: left; /*For Gecko*/
+	display: inline;
+	list-style: none;
+	position: relative;
+}
+
+ul#navmenu ul {
+	margin: 0;
+	border: 0 none;
+	padding: 0;
+	width: 250px;
+	list-style: none;
+	display: none;
+	position: absolute;
+	top: 25px;
+	left: 0;
+	-webkit-box-shadow: 3px 3px 20px #000;
+	-webkit-border-radius: 5px;
+}
+
+ul#navmenu ul li {
+	float: none; /*For Gecko*/
+	display: block !important;
+	display: inline; /*For IE*/
+	background-image:none;
+}
+
+/* Root Menu */
+ul#navmenu a {
+	padding: 0 10px;
+	float: none !important; /*For Opera*/
+	float: left; /*For IE*/
+	display: block;
+	color:#000000;
+	line-height:25px;
+	text-decoration: none;
+	height: auto !important;
+	height: 1%; /*For IE*/ 
+	text-align:center;
+}
+
+/* Root Menu Hover Persistence */
+ul#navmenu a:hover,
+ul#navmenu li:hover a,
+ul#navmenu li.iehover a {
+	border-bottom:none;
+	color: #FFFFFF;
+	background-image:url(../imagenes/menuAdmin/menuHorizontal/menubar_hover.jpg);
+}
+
+/* 2nd Menu */
+ul#navmenu li:hover li a,
+ul#navmenu li.iehover li a {
+	float: none;
+	line-height:25px;
+	width:230px;
+	text-align:left;
+	color: #000000;
+	background-image:none;
+	background-color:#FFF;
+	border-bottom:none;
+}
+
+/* 2nd Menu Hover Persistence */
+ul#navmenu li:hover li a:hover,
+ul#navmenu li:hover li:hover a,
+ul#navmenu li.iehover li a:hover,
+ul#navmenu li.iehover li.iehover a {
+	color: #FFF;
+	background-image:url(../imagenes/menuAdmin/menuHorizontal/menu_ex_hover_bg.jpg);
+	background-repeat:repeat-x;
+	border-bottom:none;
+}
+
+ul#navmenu ul li
+	{
+	width:250px;
+	padding:0px;
+	background-color:#FFF;
+	border: 1px solid #999999;
+	border-top:none;
+	border-bottom:none;
+	}
+ul#navmenu ul li.start
+	{
+	background-color:#FFF;
+	border: 1px solid #999999;
+	border-top:none;
+	border-bottom:none;
+	padding-top:5px;
+	}
+ul#navmenu ul li.end
+	{
+	-moz-border-radius-bottomleft:7px;
+	-webkit-border-bottom-left-radius:7px;
+	-moz-border-radius-bottomright:7px;
+	-webkit-border-bottom-right-radius:7px;
+	padding-bottom:5px;
+	background-color:#FFF;
+	border: 1px solid #999999;
+	border-top:none;
+	}
+	
+ul#navmenu ul li.expand a
+	{
+	background-image:url(../imagenes/menuAdmin/menuHorizontal/menu_ex_arrow_defa.jpg);
+	background-repeat:no-repeat;
+	background-position:right;
+	border-bottom:none;
+	}
+
+ul#navmenu li:hover li.expand a:hover,
+ul#navmenu li:hover li.expand:hover a
+	{
+	background-image:url(../imagenes/menuAdmin/menuHorizontal/menu_ex_arrow_hover.jpg);
+	background-repeat:no-repeat;
+	background-position:right;
+	border-bottom:none;
+	}
+
+/* 3rd Menu */
+ul#navmenu li:hover li.expand:hover li a,
+ul#navmenu li.iehover li.iehover li a {
+	background: #FFFFFF;
+	color: #000000;
+	background-image:none;
+	border-bottom:none;
+}
+
+/* 3rd Menu Hover Persistence */
+ul#navmenu li:hover li.expand:hover li a:hover,
+ul#navmenu li:hover li.expand:hover li:hover a,
+ul#navmenu li.iehover li.iehover li a:hover,
+ul#navmenu li.iehover li.iehover li.iehover a {
+	color: #FFF;
+	background-image:url(../imagenes/menuAdmin/menuHorizontal/menu_ex_hover_bg.jpg);
+	background-repeat:repeat-x;
+	border-bottom:none;
+	background-color: #FFFFFF;
+}
+
+ul#navmenu ul li ul li
+	{
+	width:250px;
+	padding:0px;
+	background-color:#FFF;
+	border: 1px solid #999999;
+	border-bottom:none;
+	border-top:none;
+	}
+ul#navmenu ul li ul li.start
+	{
+	background-color:#FFF;
+	border: 1px solid #999999;
+	border-bottom:none;
+	padding-top:5px;
+	-moz-border-radius-topright:7px;
+	-webkit-border-top-right-radius:7px;
+	}
+ul#navmenu ul li ul li.end
+	{
+	-moz-border-radius-bottomleft:7px;
+	-webkit-border-bottom-left-radius:7px;
+	-moz-border-radius-bottomright:7px;
+	-webkit-border-bottom-right-radius:7px;
+	padding-bottom:5px;
+	background-color:#FFF;
+	border: 1px solid #999999;
+	border-top:none;
+	}
+
+/* 4th Menu */
+ul#navmenu li:hover li:hover li:hover li a,
+ul#navmenu li.iehover li.iehover li.iehover li a {
+	background: #CCCCCC;
+	color: #000000;
+}
+
+/* 4th Menu Hover */
+ul#navmenu li:hover li:hover li:hover li a:hover,
+ul#navmenu li.iehover li.iehover li.iehover li a:hover {
+	background: #16171B;
+	color: #FFF;
+}
+
+ul#navmenu ul ul,
+ul#navmenu ul ul ul {
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 250px;
+	margin: 0px;
+	-webkit-box-shadow: 3px 3px 20px #000;
+	-webkit-border-radius: 5px;
+}
+
+/* Do Not Move - Must Come Before display:block for Gecko */
+ul#navmenu li:hover ul ul,
+ul#navmenu li:hover ul ul ul,
+ul#navmenu li.iehover ul ul,
+ul#navmenu li.iehover ul ul ul {
+	display: none;
+}
+
+ul#navmenu li:hover ul,
+ul#navmenu ul li:hover ul,
+ul#navmenu ul ul li:hover ul,
+ul#navmenu li.iehover ul,
+ul#navmenu ul li.iehover ul,
+ul#navmenu ul ul li.iehover ul {
+	display: block;
+}
+
+#divtest{
+	width: 100%;
+}
+/******************************************************************
+Style menu Master
+*******************************************************************/
+/***** Configuración Global *****/
+
+
+
+body {
+	font-family: arial, helvetica, sans-serif;
+	font-size: 10pt;
+	line-height: normal;
+}
+
+/***** Common Formatting *****/
+
+h1, h2, h3, h4, h5, h6 {
+margin:0;
+padding:0;
+font-weight:normal;
+}
+
+h1 {
+padding:30px 0 25px 0;
+letter-spacing:-1px;
+font:2em arial, helvetica, sans-serif;
+}
+
+h2 {
+padding:20px 0;
+letter-spacing:-1px;
+font:1.5em arial, helvetica, sans-serif;
+}
+
+h3 {
+font:1em arial, helvetica, sans-serif;
+font-weight:bold;
+}
+
+p, ul, ol {
+margin:0;
+padding:0 0 18px 0;
+}
+
+ul, ol {
+list-style:none;
+padding:0 0 18px 40px;
+}
+
+blockquote {
+margin:22px 40px;
+padding:0;
+}
+
+small {
+font-size:0.85em;
+}
+
+img {
+border:0;
+}
+
+sup {
+position:relative;
+bottom:0.3em;
+vertical-align:baseline;
+}
+
+sub {
+position:relative;
+bottom:-0.2em;
+vertical-align:baseline;
+}
+
+acronym, abbr {
+cursor:help;
+letter-spacing:1px;
+border-bottom:1px dashed;
+}
+
+/***** Links *****/
+
+a, a:visited {
+text-decoration:none;
+}
+
+/***** Forms *****/
+
+form {
+margin:0;
+padding:0;
+display:inline;
+}
+
+input, select, textarea {
+font:1em arial, helvetica, sans-serif;
+}
+
+textarea {
+line-height:1.25;
+}
+
+label {
+cursor:pointer;
+}
+
+/***** Tables *****/
+
+table {
+border:0;
+margin:0 0 18px 0;
+padding:0;
+}
+
+	table tr td {
+	padding:2px;
+	}
+
+/***** Wrapper *****/
+
+#wrap {
+width:960px;
+margin:0 auto;
+}
+
+/***** Global Classes *****/
+
+.clear 			{ clear:both; }
+
+.float-left 	{ float:left; }
+.float-right 	{ float:right; }
+
+.text-left 		{ text-align:left; }
+.text-right 	{ text-align:right; }
+.text-center 	{ text-align:center; }
+.text-justify 	{ text-align:justify; }
+
+.bold 			{ font-weight:bold; }
+.italic 		{ font-style:italic; }
+.underline 		{ border-bottom:1px solid; }
+.highlight 		{ background:#ffc; }
+
+.wrap 			{ width:960px;margin:0 auto; }
+
+.img-left 		{ float:left;margin:4px 10px 4px 0; }
+.img-right 		{ float:right;margin:4px 0 4px 10px; }
+
+.nopadding 		{ padding:0; }
+.noindent 		{ margin-left:0;padding-left:0; }
+.nobullet 		{ list-style:none;list-style-image:none; }

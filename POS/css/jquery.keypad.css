@@ -1,0 +1,125 @@
+/* Main style sheet for jQuery Keypad v1.5.1. */
+button.keypad-trigger {
+	width: 5px;
+	padding: 0px;
+}
+img.keypad-trigger {
+	margin: 2px;
+	vertical-align: middle;
+}
+.keypad-popup, .keypad-inline, .keypad-key{
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 18px;
+	color: #FFF;
+	font-weight: bold;
+}
+.keypad-special {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 18px;
+	color: #FFF;
+}
+
+.keypad-popup {
+	display: none;
+	z-index: 10;
+	margin: 0;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	padding-left: 0px;
+	padding-top: 10px;
+}
+.keypad-keyentry {
+	display: none;
+}
+.keypad-inline {
+	background-color: #fff;
+	border: 1px solid #888;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+}
+.keypad-disabled {
+	position: absolute;
+	z-index: 100;
+	background-color: white;
+	opacity: 0.5;
+	filter: alpha(opacity=50);
+}
+.keypad-rtl {
+	direction: rtl;
+}
+.keypad-prompt {
+	clear: both;
+	text-align: center;
+}
+.keypad-prompt.ui-widget-header {
+	margin: 4px;
+}
+.keypad-row {
+	width: 100%;
+}
+.keypad-space {
+	display: inline-block;
+	margin: 4px;
+	width: 35px;
+}
+.keypad-half-space {
+	display: inline-block;
+	margin: 4px 2px;
+	width: 16px;
+}
+.keypad-key, .keypad-special {
+	margin: 2px;
+	padding: 2px;
+	width: 50px;
+	height: 50px;
+	background-color: #036;
+	-moz-border-radius: 4px;
+	-webkit-border-radius: 4px;
+	border-radius: 4px;
+	text-align: center;
+	cursor: pointer;
+	border-right-width: 2px;
+	border-bottom-width: 2px;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-right-color: #999;
+	border-bottom-color: #999;
+	background-color: #AB1010;
+	border-top-width: 1px;
+	border-left-width: 1px;
+	border-top-style: solid;
+	border-left-style: solid;
+	border-top-color: #FFF;
+	border-left-color: #FFF;
+}
+.keypad-key[disabled] {
+	border: 4px outset;
+}
+.keypad-key-down {
+}
+.keypad-special {
+	width: 105px;
+}
+.keypad-spacebar {
+	width: 320px;
+}
+.keypad-tab {
+	width: 30px;
+}
+.keypad-clear, .keypad-back, .keypad-close, .keypad-shift {
+	color: #066;
+}
+.keypad-clear {
+	background-color: #FC0;
+}
+.keypad-back {
+	background-color: #FC0;
+}
+.keypad-close {
+	background-color: #FC0;
+}
+.keypad-shift {
+	background-color: #0aa;
+}

@@ -1,0 +1,62 @@
+
+/*///////////////////////////////////////////////////////////////////
+///////DESARROLLADO POR: Daniel Llerena /////////////////////////////
+///////DESCRIPCION: Estilo para todos los botenes ///////////////////
+///////TABLAS INVOLUCRADAS:           ///////////////////////////////
+///////FECHA CREACION: 22-05-2015////////////////////////////////////
+///////USUARIO QUE MODIFICO:                /////////////////////////
+///////FECHA MODIFICACION:            ///////////////////////////////
+///////DECRIPCION ULTIMO CAMBIO:                            /////////
+////////////                                             ////////////
+///////////////////////////////////////////////////////////////////*/
+
+@charset "utf-8";
+/* CSS Document */
+/*
+Style Admnin menu Plu,Style Admin toma Pedido, estilo bonones Jose
+*****************************************************************
+Style Admnin menu Plu
+*****************************************************************/
+
+.botonesbarra {	
+display: inline-block; 
+position: relative; 
+padding: 0; 
+margin-right: .1em;
+text-decoration: none !important; 
+cursor: pointer; text-align: center; zoom: 1; overflow: visible;
+font-family: Lucida Grande, Lucida Sans, Arial, sans-serif; 
+font-size: 1em; 
+font-weight: bold;
+border: 1px solid #a6c9e2; 
+border: 1px solid #c5dbec; 
+background: #dfeffc url(../imagenes/calendario/ui-bg_glass_85_dfeffc_1x400.png) 50% 50% repeat-x; 
+color: #1d5987; 
+-moz-border-radius: 8px; -khtml-border-radius: 8px; -webkit-border-radius: 8px; border-radius: 8px; 
+}
+
+.botonesbarra:hover{	
+border: 1px solid #c5dbec; 
+background: #dfeffc url(../imagenes/calendario/ui-bg_glass_75_d0e5f5_1x400.png) 50% 50% repeat-x; 
+font-weight: bold; 
+color: #2e6e9e;
+text-decoration: none; 
+}
+
+.botonesbarradescuadre {	
+display: inline-block; 
+position: relative; 
+padding: 0; 
+margin-right: .1em;
+text-decoration: none !important; 
+cursor: pointer; text-align: center; zoom: 1; overflow: visible;
+font-family: Lucida Grande, Lucida Sans, Arial, sans-serif; 
+font-size: 1em; 
+font-weight: bold;
+border: 1px solid #a6c9e2; 
+border: 1px solid #c5dbec; 
+background: #dfeffc url(../imagenes/calendario/ui-bg_glass_85_dfeffc_1x400.png) 50% 50% repeat-x; 
+color: #1d5987; 
+-moz-border-radius: 8px; -khtml-border-radius: 8px; -webkit-border-radius: 8px; border-radius: 8px; 
+z-index:99999;
+}

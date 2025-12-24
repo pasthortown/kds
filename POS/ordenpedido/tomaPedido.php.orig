@@ -1,0 +1,1218 @@
+<?php
+session_start();
+require_once "../parametros.php";
+include_once "../system/conexion/clase_sql.php";
+include_once "../clases/clase_seguridades.php";
+include_once "../clases/clase_ordenPedido.php";
+include_once "../seguridades/seguridad_niv2.inc";
+<<<<<<< HEAD
+include_once "../clases/clase_facturacion.php";
+=======
+>>>>>>> origin/MXP_Version_1.9.10.6
+
+use Maxpoint\Mantenimiento\promociones\Clases\PromocionesController;
+
+$seguridades = new seguridades();
+$tomaPedido = new menuPedido();
+$botonesPermitidos = $seguridades->fn_accesoPermisosPerfilBotones($_SESSION['usuarioId'], "Mesas");
+$habilitarBotonQR = $tomaPedido->habilitarBotonQR($_SESSION['cadenaId'], $_SESSION['rstId']);
+
+$objFactura = new facturas();
+$lc_rst = $_SESSION['rstId'];
+$lc_cdnId = $_SESSION['cadenaId'];
+
+/////////////////////////////////////////////////////////////////////////////
+///////DESARROLLADO: Jorge Tinoco ///////////////////////////////////////////
+///////FECHA CREACION: 06/02/2016 ///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+///////MODIFICADO POR: Christian Pinto //////////////////////////////////////
+///////DESCRIPCION: Cierre Periodo abierto mas de un dia ////////////////////
+///////FECHA MODIFICACION: 07/07/2016 ///////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+        <title>Toma de Pedido</title>
+
+        <!-- Librerias CSS -->
+        <link rel="StyleSheet" href="../css/tomaPedido.css" type="text/css"/>
+        <link rel="stylesheet" type="text/css" href="../css/jquery-ui.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/jquery.jb.shortscroll.css" />
+        <link rel="stylesheet" type="text/css" href="../css/tomaPedido.css"/>
+
+        <!-- Scripts para alertas-->
+        <link rel="stylesheet" href="../css/alertify.core.css"/>
+        <link rel="stylesheet" href="../css/alertify.default.css"/>
+        <!-- Scripts para keyboard -->
+        <link rel="stylesheet" type="text/css" href="../css/teclado.css"/>
+        <link rel="stylesheet" type="text/css" href="../css/bloquear_acceso.css"/>
+
+        <link rel="stylesheet" type="text/css" href="../bootstrap/css/bootstrap.css"/>
+
+        <link rel="stylesheet" type="text/css" href="../css/style_odp_modales_payphone.css"/>
+        <!-- Librerias JavaScript -->
+        <script type="text/javascript" src="../js/jquery.min.js"></script>
+        <script type="text/javascript" src="../js/jquery-ui.js"></script>
+
+        <script type="text/javascript" src="../bootstrap/js/bootstrap.js"></script>
+
+        <!-- Scripts para scroll-->
+        <script type="text/javascript" src="../js/mousewheel.js"></script>
+        <script type="text/javascript" src="../js/jquery.jb.shortscroll.js"></script>
+
+        <!-- Swiper -->
+        <script type="text/javascript" src="../js/swiper.js"></script>
+
+        <!-- Scripts para alertas-->
+        <script type="text/javascript" src="../js/alertify.js"></script>
+        <!-- Scripts para keyboard -->
+        <script type="text/javascript" src="../js/teclado.js"></script>
+        <!-- Toma Pedido -->
+        <script type="text/javascript" src="../js/ajax_ordenPedido.js"></script>
+        <script type="text/javascript" src="../js/ajax_bloquear_acceso.js"></script>
+
+        <style type="text/css">
+            .separacionTomaPedido {
+                border-top: 2px solid #4bceb4;
+                border-bottom: 2px solid #4bceb4;
+                border-left: none;
+                border-right: none;
+                height: 6px
+            }
+
+            .imgVoucher {
+                width: 100%;
+            }
+
+            .imgVA {
+                float: left;
+                width: 40%;
+                height: 32%;
+                background-color: #FFFF;
+                margin: 3% 5% 3% 3%;
+                border: #d3dad9 3px dotted;
+            }
+
+            .botonClienteExt {
+                width: 90%;
+                margin: 2% auto 2% auto;
+                border-radius: 5px;
+                background-color: #769ad4;
+                color: white;
+            }
+
+            .new, .sale {
+                position: absolute;
+                top: 0;
+                right: 0;
+            }
+
+            img {
+                vertical-align: middle;
+                border: 0;
+            }
+
+            .class_punto_falta, .class_punto_ok, .class_punto_info {
+                position: absolute;
+                right: 0px;
+                top: 34px; /*en caso de abajo top: 1px; 42px;en caso de abajo*/
+                /*                border-radius: 0px 0px 0px 4px; border-radius: 5px 0px 0px 0px; en caso de abajo.*/
+                border: 1px black solid;
+                font-size: 12px; /*10px;en caso de abajo*/
+                font-weight: bold;
+                padding: 2px;
+                border-radius: 15px;
+            }
+
+            .class_punto_info {
+                color: white;
+                background-color: #0fea2166;
+            }
+
+            .class_punto_falta {
+                background-color: #d26e6eb3;
+            }
+
+            .class_punto_ok {
+                color: white;
+                background-color: #0fea2166;
+            }
+        </style>
+    </head>
+
+    <input type="hidden" name="bloqueo" id="bloqueo"  value="<?php echo $_SESSION['bloqueoacceso']; ?>"/>
+
+        <?php
+        $usr_id = $_SESSION['usuarioIdAdmin']; // usuarioId
+        $cdn_id = $_SESSION['cadenaId'];
+        $rst_id = $_SESSION['rstId'];
+        $est_id = $_SESSION['estacionId'];
+        $est_ip = $_SESSION['direccionIp'];
+        $nombre = $_SESSION['nombre'];
+        $usuario = $_SESSION['usuario'];
+
+        $idControlEstacion = $_SESSION['IDControlEstacion'];
+        $simboloMoneda = $_SESSION['simboloMoneda'];
+
+<<<<<<< HEAD
+        $vitality = (isset($_SESSION['vitality'])) ? $_SESSION['vitality'] : 0;
+        if ($vitality == 1) {
+            $idClienteVitality = $_SESSION['idClienteVitality'];
+            $balanceVitality = $_SESSION['balanceVitality'];
+        }
+
+=======
+>>>>>>> origin/MXP_Version_1.9.10.6
+        $fidelizacionActiva = (isset($_SESSION['fidelizacionActiva'])) ? $_SESSION['fidelizacionActiva'] : 0;
+        if ($fidelizacionActiva == 1) {
+            $PerteneceGrupoAmigos = (isset($_SESSION['fdznNombres'])) ? 1 : 0;
+        } else {
+            $PerteneceGrupoAmigos = 0;
+            $_SESSION['fdznNombres'] = null;
+        }
+
+        if ($fidelizacionActiva == 1) {
+            if (isset($_SESSION['fb_econtroDatos'])) {
+                $fb_econtroDatos = $_SESSION['fb_econtroDatos'];
+                $fb_document = $_SESSION['fb_document'];
+                $fb_name = $_SESSION['fb_name'];
+                $fb_status = $_SESSION['fb_status'];
+                $fb_points = $_SESSION['fb_points'];
+            $fb_money = $_SESSION['fb_money'];
+            } else {
+                $fb_document = 0;
+                $fb_name = "USUARIO";
+                $fb_points = 0;
+            $fb_money = 0;
+                $fb_econtroDatos = 0;
+                $fb_status = '';
+            }
+        } else {
+            $fb_document = 0;
+            $fb_name = "USUARIO";
+            $fb_points = 0;
+        $fb_money = 0;
+        $fb_status = '';
+            $fb_econtroDatos = 0;
+            $fb_status = '';
+        }
+
+<<<<<<< HEAD
+        // variable configuracion turnero activo
+
+        if (!isset($_SESSION["turneroActivo"]) || !isset($_SESSION["turneroURl"])) {
+            try {
+                $response = $objFactura->fn_configuracionTurnero($lc_cdnId,$lc_rst);
+                $_SESSION["turneroActivo"] = $response['Respueseta']['activo'];
+                $_SESSION["turneroURl"]    = $response['Respueseta']['url'];
+            } catch (Exception $e) {
+                return $e;
+            }
+        }
+
+        if(!isset($SESSION["habilitadoPorEstacion"])){
+            try{
+                $responseEnable =  $objFactura->fn_turneroHabilitadoPorEstacion($_SESSION['estacionId']);
+                $_SESSION["habilitadoPorEstacion"] = $responseEnable['Respuesta']['habilitado'];
+            }catch (Exception $e){
+                return $e;
+            }
+        }
+
+=======
+>>>>>>> origin/MXP_Version_1.9.10.6
+        // variable configuracion kiosko activo
+        if (!isset($_SESSION["configuracionKioskoActivo"]) || !isset($_SESSION["ordenesKioskoURL"])) {
+            try {
+                $response = $tomaPedido->fn_configuracionKiosko($cdn_id, $rst_id);
+                if ($response["respuesta"]["estado"] == 1) {
+                    $_SESSION["configuracionKioskoActivo"] = $response["respuesta"]["activo"];
+                    $_SESSION["ordenesKioskoURL"] = $response["respuesta"]["url"];
+                }
+            } catch (Exception $e) {
+                
+            }
+        }
+        $configuracionKioskoActivo = (isset($_SESSION["configuracionKioskoActivo"])) ? $_SESSION["configuracionKioskoActivo"] : 0;
+        $ordenesKioskoURL = (isset($_SESSION["ordenesKioskoURL"])) ? $_SESSION["ordenesKioskoURL"] : "0";
+
+        // variable si la orden actual es retomada de kiosko
+        $kiosko = (isset($_SESSION['kioskoActivo'])) ? $_SESSION['kioskoActivo'] : 0;
+
+        $lc_tipoServicio = $_SESSION['TipoServicio'];
+
+        $_SESSION['cargoPisoArea'] = "Si";
+
+        $num_Pers = 0;
+        $bloqueado = $_SESSION['bloqueoacceso'];
+
+        if (isset($_GET["numPers"])) {
+            $num_Pers = $_GET["numPers"];
+        }
+        if (isset($_GET["numMesa"])) {
+            $mesa_id = $_GET["numMesa"];
+        }
+
+        if (isset($_GET["cat_id"])) {
+            $cat_id = $_GET["cat_id"];
+        } else {
+            $cat_id = "";
+        }
+        if (isset($_GET["numSplit"])) {
+            $numSplit = $_GET["numSplit"];
+
+
+        } else {
+            $numSplit = 1;
+            ?>
+            <script type="text/javascript"> fn_obtenerMesa();</script>
+        <?php }
+        print('<input type="hidden" name="hide_numSplit" id="hide_numSplit" value="' . $numSplit . '"/>');
+        ?>
+    </head>
+    <body style="overflow-y: hidden">
+<<<<<<< HEAD
+    <input type="hidden" name="bloqueo" id="bloqueo" value="<?php echo $_SESSION['bloqueoacceso']; ?>"/>
+    <div id="formCobrar">
+        <input type="hidden" name="pantallaAcceso" value="TOMA PEDIDO" id="pantallaAcceso"/>
+        <input type="hidden" name="codigoCategoria" id="codigoCategoria"/>
+        <input type="hidden" name="hide_menu_id" id="hide_menu_id"/>
+
+        <input type="hidden" name="hide_numeroCuenta" value="<?php echo $numSplit; ?>" id="hide_numeroCuenta"/>
+        <input type="hidden" name="hide_tipov_id" id="hide_tipov_id"/>
+        <input type="hidden" name="hide_vae_IDCliente" id="hide_vae_IDCliente"/>
+
+        <input type="hidden" name="hide_cli_direccion" id="hide_cli_direccion"/>
+        <input type="hidden" name="hide_cli_documento" id="hide_cli_documento"/>
+        <input type="hidden" name="hide_cli_email" id="hide_cli_email"/>
+        <input type="hidden" name="hide_cli_nombres" id="hide_cli_nombres"/>
+        <input type="hidden" name="hide_cli_telefono" id="hide_cli_telefono"/>
+        <input type="hidden" id="idControlEstacion" value="<?php echo $idControlEstacion; ?>"/>
+
+        <input type="text" name="hide_pluId" id="hide_pluId" style="display: none;"/>
+        <input type="hidden" name="hide_magp_id" id="hide_magp_id"/>
+        <input type="hidden" name="hide_plu_gramo" id="hide_plu_gramo"/>
+        <input type="hidden" name="hide_odp_id" id="hide_odp_id"/>
+        <input type="hidden" name="hide_dop_id" id="hide_dop_id"/>
+        <input type="hidden" name="hide_mesa_id" id="hide_mesa_id" value="<?php echo $mesa_id; ?>"/>
+        <input type="hidden" name="hide_num_Pers" id="hide_num_Pers" value="<?php echo $num_Pers; ?>"/>
+        <input type="hidden" name="hide_cdn_id" id="hide_cdn_id" value="<?php echo $cdn_id; ?>"/>
+        <input type="hidden" name="hide_usr_id" id="hide_usr_id" value="<?php echo $usr_id; ?>"/>
+        <input type="hidden" name="hide_rst_id" id="hide_rst_id" value="<?php echo $rst_id; ?>"/>
+        <input type="hidden" name="hide_cat_id" id="hide_cat_id" value="<?php echo $cat_id; ?>"/>
+        <input type="hidden" name="hide_est_id" id="hide_est_id" value="<?php echo $est_id; ?>"/>
+        <input type="hidden" name="hide_est_ip" id="hide_est_ip" value="<?php echo $est_ip; ?>"/>
+        <input type="hidden" id="txtTipoServicio" value="<?php echo $lc_tipoServicio; ?>"/>
+
+        <input type="hidden" id="hide_fidelizacionActiva" value="<?php echo $fidelizacionActiva; ?>"/>
+
+        <!-- Orden actual es retomada de kiosko -->
+        <input type="hidden" id="hide_ordenKiosko" value="<?php echo $kiosko; ?>"/>
+        <!-- Configuracion Turnero - Activo -->
+
+        <input id="hide_turneroActivo"  type="hidden"  value="<?php echo $_SESSION["turneroActivo"] ; ?>"/>
+        <input id="hide_turneroURl"     type="hidden"  value="<?php echo $_SESSION["turneroURl"]; ?>"/>
+        <input id="hide_turneroHabilitadoPorEstacion"  type="hidden"  value="<?php echo $_SESSION["habilitadoPorEstacion"]; ?>"/>
+        <!-- Configuracion Kiosco - Activo -->
+        <input type="hidden" id="hide_configuracionKioskoActivo" value="<?php echo $configuracionKioskoActivo; ?>"/>
+        <!-- Configuracion Turnero - Servidor Sockets -->
+        <input type="hidden" id="hide_ordenesKioskoURL" value="<?php echo $ordenesKioskoURL; ?>"/>
+        <!-- Servidor Socket se encuentra levantado -->
+        <input type="hidden" id="hide_socketActivo" value="0"/>
+
+        <input type="hidden" name="hide_cdn_tipoimpuesto" id="hide_cdn_tipoimpuesto"/>
+        <input type="hidden" name="cantidadOK" id="cantidadOK" value="1"/>
+        <input type="hidden" name="pluAgregar" id="pluAgregar"/>
+        <input type="hidden" name="magpAgregar" id="magpAgregar"/>
+        <input type="hidden" name="hid_cla_id" id="hid_cla_id"/>
+        <input type="hidden" name="banderaCierrePeriodo" id="banderaCierrePeriodo" value="<?php echo $_SESSION['sesionbandera']; ?>"/>
+        <input type="hidden" id="txt_bloqueado" value="<?php echo $bloqueado ?>"/>
+        <input type="hidden" name="cantidadKG" id="cantidadKG" value="0"/>
+        <input type="hidden" name="alPeso" id="alPeso" value="0"/>
+        <input type="hidden" name="ventaAlPeso" id="ventaAlPeso" value="0"/>
+        <input type="hidden" name="aplicaLectorBarras" id="aplicaLectorBarras" value="0"/>
+        <input type="hidden" name="num_puntos" id="num_puntos" value="<?php echo $fb_points; ?>"/>
+        <input type="hidden" name="num_puntosIniciales" id="num_puntosIniciales" value="<?php echo $fb_points; ?>"/>
+            <input type="hidden" name="saldo" id="saldo" value="<?php echo $fb_money; ?>" />
+
+        <input type="hidden" name="num_puntos_plusActual" id="num_puntos_plusActual" value=""/>
+        <input type="hidden" name="num_puntos_plusActualiniciales" id="num_puntos_plusActualiniciales" value=""/>
+
+        <input type="hidden" name="puntosPorPluNoAgrupado" id="puntosPorPluNoAgrupado" value="0"/>
+
+        <input type="hidden" name="hide_PerteneceGrupoAmigos" id="hide_PerteneceGrupoAmigos"
+               value="<?php echo $PerteneceGrupoAmigos; ?>"/>
+
+
+        <input type="hidden" name="hide_fb_econtroDatos" id="hide_fb_econtroDatos"
+               value="<?php echo $fb_econtroDatos; ?>"/>
+        <input type="hidden" name="hide_fb_status" id="hide_fb_status" value="<?php echo $fb_status; ?>"/>
+
+        <input type="hidden" name="fdzn_cedula" id="fdzn_cedula" value="<?php echo $fb_document; ?>"/>
+
+        <input type="hidden" name="simboloMoneda" id="simboloMoneda" value="<?php echo $simboloMoneda; ?>"/>
+        <input type="hidden" name="fdzn_nombre_cliente" id="fdzn_nombre_cliente" value="<?php echo $_SESSION['fdznNombres']; ?>"/>
+=======
+        <input type="hidden" name="bloqueo" id="bloqueo" value="<?php echo $_SESSION['bloqueoacceso']; ?>"/>
+        <div id="formCobrar">
+            <input type="hidden" name="pantallaAcceso" value="TOMA PEDIDO" id="pantallaAcceso"/>
+            <input type="hidden" name="codigoCategoria" id="codigoCategoria"/>
+            <input type="hidden" name="hide_menu_id" id="hide_menu_id"/>
+
+            <input type="hidden" name="hide_numeroCuenta" value="<?php echo $numSplit; ?>" id="hide_numeroCuenta"/>
+            <input type="hidden" name="hide_tipov_id" id="hide_tipov_id"/>
+            <input type="hidden" name="hide_vae_IDCliente" id="hide_vae_IDCliente"/>
+
+            <input type="hidden" name="hide_cli_direccion" id="hide_cli_direccion"/>
+            <input type="hidden" name="hide_cli_documento" id="hide_cli_documento"/>
+            <input type="hidden" name="hide_cli_email" id="hide_cli_email"/>
+            <input type="hidden" name="hide_cli_nombres" id="hide_cli_nombres"/>
+            <input type="hidden" name="hide_cli_telefono" id="hide_cli_telefono"/>
+            <input type="hidden" id="idControlEstacion" value="<?php echo $idControlEstacion; ?>"/>
+
+            <input type="text" name="hide_pluId" id="hide_pluId" style="display: none;"/>
+            <input type="hidden" name="hide_magp_id" id="hide_magp_id"/>
+            <input type="hidden" name="hide_plu_gramo" id="hide_plu_gramo"/>
+            <input type="hidden" name="hide_odp_id" id="hide_odp_id"/>
+            <input type="hidden" name="hide_dop_id" id="hide_dop_id"/>
+            <input type="hidden" name="hide_mesa_id" id="hide_mesa_id" value="<?php echo $mesa_id; ?>"/>
+            <input type="hidden" name="hide_num_Pers" id="hide_num_Pers" value="<?php echo $num_Pers; ?>"/>
+            <input type="hidden" name="hide_cdn_id" id="hide_cdn_id" value="<?php echo $cdn_id; ?>"/>
+            <input type="hidden" name="hide_usr_id" id="hide_usr_id" value="<?php echo $usr_id; ?>"/>
+            <input type="hidden" name="hide_rst_id" id="hide_rst_id" value="<?php echo $rst_id; ?>"/>
+            <input type="hidden" name="hide_cat_id" id="hide_cat_id" value="<?php echo $cat_id; ?>"/>
+            <input type="hidden" name="hide_est_id" id="hide_est_id" value="<?php echo $est_id; ?>"/>
+            <input type="hidden" name="hide_est_ip" id="hide_est_ip" value="<?php echo $est_ip; ?>"/>
+            <input type="hidden" id="txtTipoServicio" value="<?php echo $lc_tipoServicio; ?>"/>
+
+            <input type="hidden" id="hide_fidelizacionActiva" value="<?php echo $fidelizacionActiva; ?>"/>
+
+            <!-- Orden actual es retomada de kiosko -->
+            <input type="hidden" id="hide_ordenKiosko" value="<?php echo $kiosko; ?>"/>
+            <!-- Configuracion Turnero - Activo -->
+            <input type="hidden" id="hide_configuracionKioskoActivo" value="<?php echo $configuracionKioskoActivo; ?>"/>
+            <!-- Configuracion Turnero - Servidor Sockets -->
+            <input type="hidden" id="hide_ordenesKioskoURL" value="<?php echo $ordenesKioskoURL; ?>"/>
+            <!-- Servidor Socket se encuentra levantado -->
+            <input type="hidden" id="hide_socketActivo" value="0"/>
+
+            <input type="hidden" name="hide_cdn_tipoimpuesto" id="hide_cdn_tipoimpuesto"/>
+            <input type="hidden" name="cantidadOK" id="cantidadOK" value="1"/>
+            <input type="hidden" name="pluAgregar" id="pluAgregar"/>
+            <input type="hidden" name="magpAgregar" id="magpAgregar"/>
+            <input type="hidden" name="hid_cla_id" id="hid_cla_id"/>
+            <input type="hidden" name="banderaCierrePeriodo" id="banderaCierrePeriodo" value="<?php echo $_SESSION['sesionbandera']; ?>"/>
+            <input type="hidden" id="txt_bloqueado" value="<?php echo $bloqueado ?>"/>
+            <input type="hidden" name="cantidadKG" id="cantidadKG" value="0"/>
+            <input type="hidden" name="alPeso" id="alPeso" value="0"/>
+            <input type="hidden" name="ventaAlPeso" id="ventaAlPeso" value="0"/>
+            <input type="hidden" name="aplicaLectorBarras" id="aplicaLectorBarras" value="0"/>
+            <input type="hidden" name="num_puntos" id="num_puntos" value="<?php echo $fb_points; ?>"/>
+            <input type="hidden" name="num_puntosIniciales" id="num_puntosIniciales" value="<?php echo $fb_points; ?>"/>
+
+            <input type="hidden" name="num_puntos_plusActual" id="num_puntos_plusActual" value=""/>
+            <input type="hidden" name="num_puntos_plusActualiniciales" id="num_puntos_plusActualiniciales" value=""/>
+
+            <input type="hidden" name="puntosPorPluNoAgrupado" id="puntosPorPluNoAgrupado" value="0"/>
+
+            <input type="hidden" name="hide_PerteneceGrupoAmigos" id="hide_PerteneceGrupoAmigos"
+                   value="<?php echo $PerteneceGrupoAmigos; ?>"/>
+
+
+            <input type="hidden" name="hide_fb_econtroDatos" id="hide_fb_econtroDatos"
+                   value="<?php echo $fb_econtroDatos; ?>"/>
+            <input type="hidden" name="hide_fb_status" id="hide_fb_status" value="<?php echo $fb_status; ?>"/>
+
+            <input type="hidden" name="fdzn_cedula" id="fdzn_cedula" value="<?php echo $fb_document; ?>"/>
+
+            <input type="hidden" name="simboloMoneda" id="simboloMoneda" value="<?php echo $simboloMoneda; ?>"/>
+>>>>>>> origin/MXP_Version_1.9.10.6
+
+        <input id="hidVitality" type="hidden" value="<?php echo $vitality; ?>"/>
+        <!--              <input type="hidden" name="puntosQueValeElplu" id="puntosQueValeElplu" value="0" />
+          <input type="hidden" name="CantidadDePlus" id="CantidadDePlus" value="0" />
+          <input type="hidden" name="PuntosPluSugerido" id="puntosQueValeElplu" value="0" />-->
+
+
+        </div>
+        <input type="hidden" id="hid_bandera_gramo"/>
+        <input type="hidden" id="hid_gramoPlu"/>
+
+
+        <input type="hidden" id="txtDocumentoClientePaypone"  value=""/>
+
+        <div id="pnt_rdn_pdd_mxpnt" class="pnt_rdn_pdd_mxpnt">
+
+            <!-- Informacion Orden del Pedido -->
+            <div id="rdn_pdd_brr_nfmcn" class="rdn_pdd_brr_nfmcn">
+                <div id="cntdr_mn_dnmc_stcn" style="width: 260px; height: 65px;">
+
+                <!--                    <input name="Que alcanza" type="button"   id='queAlcanza' onclick="fn_abuscarProductosQuemeAlcanza()"    class="boton_Accion_Bloqueado_puntos queAlcanza_activo" alt="Guardar Cuenta"  /> -->
+                    <input name="Que alcanza" type="button" id='queAlcanza' onclick="fn_abuscarProductosQuemeAlcanza()"
+                           class="boton_Accion_Bloqueado_puntos queAlcanza_activo" alt="Guardar Cuenta"/>
+                </div>
+                <div id="listaPedidoTomaPedido">
+                    <div id="listado">
+                        <ul id="listadoPedido"></ul>
+                    </div>
+                </div>
+                <div id="Pedidoskiosko">
+                    <ul id="listaPedidosKiosko"></ul>
+                </div>
+                <div id="nfrmcn_srs_sstm" class="nfrmcn_srs_sstm" onclick="fn_salirSistema()">
+                    <div id="informacionFidelizacion">
+                        <?php
+                        if ($fidelizacionActiva == 1) {
+                            if (isset($_SESSION['fdznNombres'])) {
+                                echo '<div>Hola, <span id="nombreCliente">' . $_SESSION['fdznNombres'] . '</span></div><div id="TotalPuntos"></div>';
+                            } else {
+                                echo "<script languaje=\"javascript\">document.getElementById('listaPedidoTomaPedido').style.height = \"630px\";    </script>";
+                            }
+                        }
+                        ?>
+                    </div>
+                    <div id="nmbr_srs_sstm" class="nmbr_srs_sstm">
+                        <?php echo $nombre; ?> <span id="btnDesmesa"></span>
+                        <div id="nfrmcn_srs_sstm_periodo" class="nfrmcn_srs_sstm_periodo"></div>
+                    </div>
+                    <div id="nfrmcn_srs_sstm_hora" class="nfrmcn_srs_sstm_hora">
+                    </div>
+                </div>
+            </div>
+
+            <div id="rdn_pdd_ctgrs_prdcts" class="rdn_pdd_ctgrs_prdcts">
+                <!-- Productos -->
+                <div id="cnt_rdn_pdd_pls" class="cnt_rdn_pdd_pls">
+                    <div id="barraProducto"></div>
+                </div>
+                <!-- Categorias  -->
+                <div id="cnt_rdn_pdd_ctgrs" class="cnt_rdn_pdd_ctgrs">
+                    <div id="barraCategoria"></div>
+                </div>
+                <!-- Acciones -->
+                <div id="cnt_rdn_pdd_btns" class="cnt_rdn_pdd_btns">
+
+                    <input name="Menu" type="button" id="boton_sidr" value="Menu" class="boton_Accion" onclick=""
+                           style="margin-right: 14px;"/>
+                    <input name="Actualizar" type="button" id="boton_ref" alt="Actualizar"
+                           class="boton_Accion refresh_activo classDisabled" onclick="fn_actualizar()"/>
+                    <input name="Guardar Cuenta" type="button" servicio="2" id='Volver'
+                           onclick="fn_volver(<?php echo "'$mesa_id'"; ?>)" disabled="disabled"
+                           class="boton_Accion_Bloqueado guardar_activo classDisabled" alt="Guardar Cuenta"/>
+                    <input name="Comentar" type="button" id='comentar' onclick='fn_comentar()' alt="Comentar"
+                           class="boton_Accion_Bloqueado comentar_activo classDisabled" disabled="disabled"/>
+                    <input name="Eliminar" type="button" id='btn_eliminarElemnto' onclick='fn_validarAnulacion()'
+                           alt="Eliminar" class="boton_Accion_Bloqueado eliminar_bloqueado classDisabled"
+                           disabled="disabled"/>
+                    <input name="Cantidad" type="button" id='agregarCantidad'
+                           class="boton_Accion_Bloqueado cantidad_activo classDisabled" alt="Cantidad" disabled="disabled"/>
+
+                    <!-- DESACTIVAR BOTÓN DE CUPON EN LA PANTALLA TOMA DE PEDIDO
+                        <input name="Cobrar Voucher" type="button"  title=""  id='cobrarVoucher' onclick='abrirModalVoucher(<?php echo $numSplit; ?>)' class="boton_Accion_Bloqueado pagovoucher classDisabled" alt="Pagar" disabled="disabled"/>
+                    -->
+
+                    <input name="Cobrar" type="button" id='cobrar' onclick='fn_cobrar(<?php echo $numSplit; ?>)'
+                           class="boton_Accion_Bloqueado ok_activo classDisabled" alt="Pagar" disabled="disabled"/>
+                    <!--<input name="Guardar Cuenta" type="button" id='btn_sistema' onclick='fn_guardarCuenta()' class="boton_Accion_Bloqueado guardar_activo classDisabled" alt="Guardar Cuenta" disabled="disabled" />-->
+
+                    <?php
+<<<<<<< HEAD
+                    if ($fidelizacionActiva == 1) {
+                        if (isset($_SESSION['fdznNombres'])) {
+                            echo '<div>Hola, <span id="nombreCliente">' . $_SESSION['fdznNombres'] . '</span></div><div id="TotalPuntos" style="width: 120px; display: inline-block;"></div><div id="TotalSaldo" style="display: inline-block;"></div>';
+                        } else {
+                            echo "<script languaje=\"javascript\">document.getElementById('listaPedidoTomaPedido').style.height = \"630px\";    </script>";
+                        }
+                        }
+                        if ($vitality == 1) {
+                            //echo '<div>VITALITY</div><div id="CupoVitality" style="width: 120px; display:none;">Cupo: $<span id="spnBalanceVitality" >5</span></div>';
+                            echo '<div>VITALITY</div><div id="CupoVitality" style="width: 120px; display:none;">Cupo: $<span id="spnBalanceVitality" >' . $balanceVitality . '</span></div>';
+=======
+                    if ($habilitarBotonQR == 1) {
+                        echo '<input name="btnagregarPromocion" type="button" id="btnagregarPromocion" class="boton_Accion ok_CuponElectronico " alt="Cupon Electronico" data-qr-type="' . $habilitarBotonQR . '" /> ';
+>>>>>>> origin/MXP_Version_1.9.10.6
+                    }
+                    ?>
+
+                <!--<input type="button" id='Volver' onclick="fn_volver(<?php echo "'$mesa_id'"; ?>)" class="boton_Accion_Bloqueado ok_atras" alt="Pagar"  />-->
+
+                    <input type="button" id="etiqueta_cantidad" class="boton_Cantidad" value="x1" disabled="disabled"/>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- SubMenu Opciones -->
+        <div id="rdn_pdd_brr_ccns" class="menu_desplegable">
+            <!--Lado Izquierdo <div id="cnt_mn_dsplgbl_pcns_zqrd" class="modal_opciones_zqd"></div> -->
+            <div id="cnt_mn_dsplgbl_pcns_drch" class="modal_opciones_drc">
+                <input name="Funciones Gerente" type="button" id='funcionesGerente' onclick='fn_funcionesGerente()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Funciones Gerente" disabled="disabled"/>
+                <input name="Transacciones" type="button" id='btn_transacciones' onclick='fn_irTransacciones()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Transacciones" disabled="disabled"/>
+                <input name="Resumen Ventas" type="button" id='resumenVentas' onclick='fn_resumenVentas()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Resumen Ventas" disabled="disabled"/>
+                <input name="Separar cuentas" servicio="2" type="button" id='separarCuentas' onclick='fn_separar()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Separar Cuentas"/>
+                <input servicio="2" name="Imprimir Pre-Cuenta" type="button" id='precuenta'
+                       onclick='fn_CrearEImprimirPreCuenta(<?php echo $numSplit; ?>)'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Pre Cuenta" disabled="disabled"/>
+                       <?php
+                       if ($numSplit == 1) {
+                           echo '<input  servicio="2" name = "Dividir por personas" type = "button" id = "dividirCuenta" onclick = "fn_dividirCuenta(' . "'$mesa_id'" . ')" class = "boton_Opcion_Bloqueado classDisabled" value = "Dividir Cuenta" />';
+                       }
+                       ?>
+                <input name="Imprimir Orden Pedido" type="button" id='imprimir_orden' onclick='fn_imprimirOrdenPedido()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Imprimir Orden" disabled="disabled"/>
+                <input name="Buscar" type="button" id='buscar' onclick='fn_modalBuscador()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Buscador" disabled="disabled"/>
+                <input name="Salir mesas" type="button" id='regresar' onclick='fn_salirMesas()'
+                       class="boton_Opcion_Bloqueado classDisabled" value="Salir Mesas" disabled="disabled"/>
+                <input name="Cupones" type="button" id='btn_cuponesSG' class="boton_Opcion_Bloqueado classDisabled"
+                       onclick="fn_modalCupones()" value="Cupones" disabled="disabled"/>
+                <input name="btnCancelarOrden" type="button" id="btnCancelarOrdenFidelizacion"
+                       class="boton_Opcion_Bloqueado" onclick="fn_cancelarOrdenFidelizacion()" value="Cancelar Orden"
+                       disabled="disabled"/>
+                <input name="Salir" type="button" id="salir" class="boton_Opcion_Bloqueado classDisabled"
+                       onclick="fn_salirSistema()" value="Salir"/>
+            </div>
+        </div>
+
+        <!-- Modal Ingreso de Cantidades -->
+        <div id="aumentarContador">
+            <label>Cantidad </label>
+            <input type="text" name="cantidad" id="cantidad" value="" style="width: 190px; height: 30px;"/>
+            <table style="margin-top: 20px">
+                <tr>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('7')">7</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('8')">8</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('9')">9</button>
+                    </td>
+                    <td>
+                        <button id="ok_cantidad" class="btnVirtualBorrar" onclick="fn_okCantidad()">OK</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('4')">4</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('5')">5</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('6')">6</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtualBorrar" onclick="fn_eliminarCantidad()">&larr;</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('1')">1</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('2')">2</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtual" onclick="fn_agregarNumero('3')">3</button>
+                    </td>
+                    <td>
+                        <button class="btnVirtualBorrar" id="btn_punto" onclick="fn_agregarNumero('.')">.</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button id="btn_cantidad_cero" class="btnVirtual" onclick="fn_agregarNumero('0')">0</button>
+                    </td>
+                    <td colspan="3">
+                        <button class="btnVirtualCancelar" id="btn_punto" onclick="fn_cancelarAgregarCantidad()"
+                                style="width: 200px;">Cancelar
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Lector de Barras -->
+        <div id="lectorBarras">
+            <input type="text" name="txt_lectorBarras" id="txt_lectorBarras" value=""/>
+        </div>
+
+        <!-- Buscador -->
+        <div id="cuadro_buscador">
+            <table>
+                <tr>
+                    <td>
+                        <label for="txt_busca">Descripci&oacute;n Producto</label>
+                        <input type="text" name="txt_busca" id="txt_busca" style="width: 456px; height: 36px;"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="buscaProducto">
+                            <table>
+                                <tr></tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Preguntas Sugeridas -->
+        <div id="preguntasContenedor">
+        </div>
+
+        <!-- Confirmacion Credenciales -->
+        <div id="anulacionesContenedor">
+            <div class="preguntasTitulo"><label>Credenciales de Administrador</label></div>
+            <div class="anulacionesSeparador">
+                <input type="password" name="usr_clave" id="usr_clave" onchange="fn_validarUsuario()"
+                       style="height: 35px; width: 454px;"/>
+            </div>
+        </div>
+
+<<<<<<< HEAD
+    </div>
+
+    <!-- SubMenu Opciones -->
+    <div id="rdn_pdd_brr_ccns" class="menu_desplegable">
+            <!-- Menu Izquierdo -->
+            <div id="cnt_mn_dsplgbl_pcns_zqrd" class="modal_opciones_zqd">
+                <input name="Promociones" type="button" id='btnPromocionesCodigo' class="boton_Opcion" value="Promociones" />
+                <!-- <input name="Promociones" type="button" id='btnPromocionesCodigo' onclick='' class="boton_Opcion_Bloqueado classDisabled" value="Promociones" disabled="disabled" /> -->
+                <input name="Fidelizacion" type="button" id='btnFidelizacion' class="boton_Opcion" value="Fidelización" onclick="fn_modalFidelizacion(true)" />
+                <!--Boton Vitality-->
+                <input type="button" id="btnIrPntVitality" class="boton_Opcion" value="Vitality" onclick="opcionSetVitality('Vitality');"/>
+
+            </div>
+            <!-- Menu Derecho -->
+        <div id="cnt_mn_dsplgbl_pcns_drch" class="modal_opciones_drc">
+            <input name="Funciones Gerente" type="button" id='funcionesGerente' onclick='fn_funcionesGerente()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Funciones Gerente" disabled="disabled"/>
+            <input name="Transacciones" type="button" id='btn_transacciones' onclick='fn_irTransacciones()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Transacciones" disabled="disabled"/>
+            <input name="Resumen Ventas" type="button" id='resumenVentas' onclick='fn_resumenVentas()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Resumen Ventas" disabled="disabled"/>
+            <input name="Separar cuentas" servicio="2" type="button" id='separarCuentas' onclick='fn_separar()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Separar Cuentas"/>
+            <input servicio="2" name="Imprimir Pre-Cuenta" type="button" id='precuenta'
+                   onclick='fn_CrearEImprimirPreCuenta(<?php echo $numSplit; ?>)'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Pre Cuenta" disabled="disabled"/>
+            <?php
+            if ($numSplit == 1) {
+                echo '<input  servicio="2" name = "Dividir por personas" type = "button" id = "dividirCuenta" onclick = "fn_dividirCuenta(' . "'$mesa_id'" . ')" class = "boton_Opcion_Bloqueado classDisabled" value = "Dividir Cuenta" />';
+            }
+            ?>
+            <input name="Imprimir Orden Pedido" type="button" id='imprimir_orden' onclick='fn_imprimirOrdenPedido()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Imprimir Orden" disabled="disabled"/>
+            <input name="Buscar" type="button" id='buscar' onclick='fn_modalBuscador()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Buscador" disabled="disabled"/>
+            <!--<input name="Salir mesas" type="button" id='regresar' onclick='fn_salirMesas()'
+                   class="boton_Opcion_Bloqueado classDisabled" value="Salir Mesas" disabled="disabled"/>-->
+            <input name="Cupones" type="button" id='btn_cuponesSG' class="boton_Opcion_Bloqueado classDisabled"
+                   onclick="fn_modalCupones()" value="Cupones" disabled="disabled"/>
+            <input name="btnCancelarOrden" type="button" id="btnCancelarOrdenFidelizacion"
+                   class="boton_Opcion_Bloqueado" onclick="fn_cancelarOrdenFidelizacion()" value="Cancelar Orden"
+                   disabled="disabled"/>
+            <input name="Salir" type="button" id="salir" class="boton_Opcion_Bloqueado classDisabled"
+                   onclick="fn_salirSistema()" value="Salir"/>
+        </div>
+    </div>
+
+    <!-- Modal Ingreso de Cantidades -->
+    <div id="aumentarContador">
+        <label>Cantidad </label>
+        <input type="text" name="cantidad" id="cantidad" value="" style="width: 190px; height: 30px;"/>
+        <table style="margin-top: 20px">
+            <tr>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('7')">7</button>
+                </td>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('8')">8</button>
+                </td>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('9')">9</button>
+                </td>
+                <td>
+                    <button id="ok_cantidad" class="btnVirtualBorrar" onclick="fn_okCantidad()">OK</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('4')">4</button>
+                </td>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('5')">5</button>
+                </td>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('6')">6</button>
+                </td>
+                <td>
+                    <button class="btnVirtualBorrar" onclick="fn_eliminarCantidad()">&larr;</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('1')">1</button>
+                </td>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('2')">2</button>
+                </td>
+                <td>
+                    <button class="btnVirtual" onclick="fn_agregarNumero('3')">3</button>
+                </td>
+                <td>
+                    <button class="btnVirtualBorrar" id="btn_punto" onclick="fn_agregarNumero('.')">.</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="btn_cantidad_cero" class="btnVirtual" onclick="fn_agregarNumero('0')">0</button>
+                </td>
+                <td colspan="3">
+                    <button class="btnVirtualCancelar" id="btn_punto" onclick="fn_cancelarAgregarCantidad()"
+                            style="width: 200px;">Cancelar
+                    </button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Lector de Barras -->
+    <div id="lectorBarras">
+        <input type="text" name="txt_lectorBarras" id="txt_lectorBarras" value=""/>
+    </div>
+
+    <!-- Buscador -->
+    <div id="cuadro_buscador">
+        <table>
+            <tr>
+                <td>
+                    <label for="txt_busca">Descripci&oacute;n Producto</label>
+                    <input type="text" name="txt_busca" id="txt_busca" style="width: 456px; height: 36px;"/>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div id="buscaProducto">
+                        <table>
+                            <tr></tr>
+                        </table>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Preguntas Sugeridas -->
+    <div id="preguntasContenedor">
+    </div>
+
+    <!-- Confirmacion Credenciales -->
+    <div id="anulacionesContenedor">
+        <div class="preguntasTitulo"><label>Credenciales de Administrador</label></div>
+        <div class="anulacionesSeparador">
+            <input type="password" name="usr_clave" id="usr_clave" onchange="fn_validarUsuario()"
+                   style="height: 35px; width: 454px;"/>
+=======
+        <!-- Codigos GO TRADE -->
+        <div id="tecladoCodigos">
+            <div class="preguntasTitulo"><label>Ingrese Codigo</label></div>
+            <div class="anulacionesSeparador">
+                <input type="text" id="txt_codigos" style="height: 35px; width: 454px;"/>
+            </div>
+>>>>>>> origin/MXP_Version_1.9.10.6
+        </div>
+
+<<<<<<< HEAD
+    <!-- Codigos GO TRADE -->
+    <div id="tecladoCodigos">
+        <div class="preguntasTitulo"><label>Ingrese Código</label></div>
+        <div class="anulacionesSeparador">
+            <input type="text" id="txt_codigos" style="height: 35px; width: 454px;"/>
+=======
+        <!-- Modal Comentarios -->
+        <div id="contenedorComentario">
+            <label id="plu_comentar"></label>
+            <br/>
+            <br/>
+            <textarea id="comentario" style="width: 460px; height: 200px; resize:none;"></textarea>
+>>>>>>> origin/MXP_Version_1.9.10.6
+        </div>
+
+        <!-- Modal Cupones Sistema Gerente-->
+        <div id="modalCuponSistemaGerente">
+            <div class="preguntasTitulo"><label>Ingreso Cup&oacute;n Sistema Gerente</label><img
+                    src="../imagenes/admin_resources/btn_eliminar.png" onclick="fn_cerrarModalCuponesSistemaGerente()"
+                    class="btn_cerrar_modal_cupones"/></div>
+
+            <div id="cnt_tp_nv_cnj_cpn" class="cnt_tp_nv_cnj_cpn">
+                <div class="preguntasBotonPlu">
+                    <input id="pcn_tp_cnj_cpn_0" class="respuestaPregunta" type="checkbox" value="0" checked="checked"
+                           disabled="disabled"/>
+                    <label onclick="fn_procesoCanjearAutomatico()" for="pcn_tp_cnj_cpn_0">
+                        <p>Autom&aacute;tico</p>
+                    </label>
+                </div>
+                <div class="preguntasBotonPlu">
+                    <input id="pcn_tp_cnj_cpn_1" class="respuestaPregunta" type="checkbox" value="1" disabled="disabled"/>
+                    <label onclick="fn_procesoCanjearManual()" for="pcn_tp_cnj_cpn_1">
+                        <p>Manual</p>
+                    </label>
+                </div>
+            </div>
+
+            <div id="aut_frm_cnj_cpn">
+                <div class="anulacionesSeparador">
+                    <input type="password" name="input_cuponSistemaGerenteAut" id="input_cuponSistemaGerenteAut"
+                           onchange="fn_canjearCuponAutomatico()" style="height: 35px; width: 454px;"/>
+                </div>
+            </div>
+            <div id="man_frm_cnj_cpn" style="display:none;">
+                <div class="cuponesSeparador">
+                    <center>
+                        <input type="text" id="input_cuponSistemaGerenteMan1" name="input_cuponSistemaGerenteMan1"
+                               onclick="fn_activarCasilla('#input_cuponSistemaGerenteMan1');"
+                               style="height: 35px; width: 100px;"/> -
+                        <input type="text" id="input_cuponSistemaGerenteMan2" name="input_cuponSistemaGerenteMan2"
+                               onclick="fn_activarCasilla('#input_cuponSistemaGerenteMan2');"
+                               style="height: 35px; width: 100px;"/> /
+                        <input type="text" id="input_cuponSistemaGerenteMan3" name="input_cuponSistemaGerenteMan3"
+                               onclick="fn_activarCasilla('#input_cuponSistemaGerenteMan3');"
+                               style="height: 35px; width: 100px;"/> /
+                        <input type="text" id="input_cuponSistemaGerenteMan4" name="input_cuponSistemaGerenteMan4"
+                               onclick="fn_activarCasilla('#input_cuponSistemaGerenteMan4');"
+                               style="height: 35px; width: 100px;"/>
+                    </center>
+                </div>
+            </div>
+        </div>
+
+        <div id="numPad"></div>
+        <div id="txtPad"></div>
+        <div id="keyboard"></div>
+        <div id="dominio1" style="z-index: 9999999"></div>  
+        <div id="dominio2" style="z-index: 9999999"></div>
+
+
+        <div id="mdl_prgnts_sgrds" class="modal_preguntas_sugeridas">
+            <div id="mdl_pcns_prgnts_sgrds" class="modal_preguntas_opciones">
+                <div id="cntndr_mdl_prgnts_sgrds" class="cntndr_mdl_prgnts_sgrds">
+                    <div id="cbcr_prgnts_sgrds_cntdor" class="cbcr_prgnts_sgrds_cntdor"></div>
+                    <div id="cbcr_prgnts_sgrds" class="cbcr_prgnts_sgrds"></div>
+                    <div id="body_prgnts_sgrds" style="height: 700px" class="body_prgnts_sgrds">
+                        <div id="cntndr_body_prgnts_sgrds" style="width: 720px;"></div>
+                    </div>
+                </div>
+                <div id="cntndr_mdl_prgnts_sgrds_btns" class="cntndr_mdl_prgnts_sgrds_btns"></div>
+            </div>
+        </div>
+
+        <div id="mdl_rdn_pdd_crgnd" class="modal_cargando">
+            <div id="mdl_pcn_rdn_pdd_crgnd" class="modal_cargando_contenedor">
+                <img src="../imagenes/loading.gif"/>
+            </div>
+        </div>
+
+        <div id="modalCuponSistemaGerenteVoucher">
+            <div class="preguntasTitulo"><label id="infoMdalf">Ingreso Cup&oacute;n Sistema Gerente</label><img
+                    src="../imagenes/admin_resources/btn_eliminar.png"
+                    onclick="fn_cerrarModalCuponesSistemaGerenteVoucher()" class="btn_cerrar_modal_cupones"/></div>
+            <div id="voucherAE"></div>
+            <div id="select_cliente"></div>
+            <div id="select_tipocupo"></div>
+            <div id="botonVolver1" style="display: none">
+                <img onclick="pantalla1()" style="margin-top: 3%; width: 10%;" src="../imagenes/volverCupon.png"></img>
+            </div>
+            <div id="botonVolver2" style="display: none">
+                <img onclick="pantalla2()" id="imgPantalla2" style="margin-top: 3%; width: 10%;"
+                     src="../imagenes/volverCupon.png"></img>
+            </div>
+            <div id="voucherAEs">
+                <center><input type="password" name="input_cuponSistemaGerenteAutEXT"
+                               onchange="fn_canjearCuponAutomaticoVoucher()" id="input_cuponSistemaGerenteAutEXT"
+                               style="height: 35px; width: 454px;"/></center>
+            </div>
+        </div>
+
+        <div id="modalQRPromociones" title="Leer QR Promoción">
+            <div style="text-align:center;">
+                <div>
+                    <h3>Coloca el QR en el lector</h3>
+                </div>
+                <div>
+                    <img src="../imagenes/qr.jpg" width="250"/>
+                </div>
+                <div>
+                    <input id="valorQRPromociones" type="password" name="valorQRPromociones"/>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal -->
+        <div id="mdlVenta" class="modal_tipopedido">
+            <div id="mdlTipoVenta" class="modal open">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-headertipo" style="background-color: #0a98bb;">
+                            <h4 class="modal-title"
+                                style="font-size: 21px;color:white;font-family: Arial;text-align: center; ">TIPO DE
+                                PEDIDO</h4>
+                        </div>
+                        <div class="modal-body" align="center">
+                            <div class="row">
+                                <div class="col-md-6 col-md-offset-3">
+                                    <table id="mdlTipoVentaCuerpo"></table>
+                                </div>
+                            </div>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div>
+        </div>
+
+<<<<<<< HEAD
+    <!-- Contenedor para integraciones, nuevas funcionalidades -->
+    <div id="cntIntegraciones">
+        <!-- Modal -->
+        <div class="modal" id="mdlIntegracion" tabindex="-1" role="dialog" aria-labelledby="testLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="testLabel">Promociones</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p class="parrafoPromocion">Ingrese código de la promoción</p>
+                        <br/>
+                        <input type="text" id="inputParametro" class="codigoPromocion" value="" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="mdlVenta" class="modal_tipopedido">
+        <div id="mdlTipoVenta" class="modal open">
+            <div class="modal-dialog modal-dialog-centered">
+=======
+        <div id="mdlKioskoCodigo" class="modal_cargando" style="display: none">
+            <div class="modal-dialog" style="margin: 200px auto;width:400px;">
+>>>>>>> origin/MXP_Version_1.9.10.6
+                <div class="modal-content">
+                    <div class="modal-headertipo" style="background-color: #2e6e9e;">
+                        <h3 id="hRetomarOrden" class="modal-title" style="color:#dfeffc; text-align: center;"></h3>
+                    </div>
+                    <div class="modal-body" style="text-align: center;">
+                        <p class="parrafoPromocion"><b>Leer código QR de la orden de pedido</b></p>
+                        <div>
+                            <img src="../imagenes/qr.jpg" width="100"/>
+                        </div>
+                        <input id="inpCodigoOrdenPedido" type="password" onchange="leerCodigoOrdenPedido(this.value)"
+                               class="codigoPromocion" style="margin-top: 10px;" value=""/>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="mostrarModalCodigoKiosko(false)">Cancelar
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mdlOpciones" class="modal_cargando" style="display: none">
+            <div class="modal-dialog" style="margin: 200px auto; width:600px;">
+                <div class="modal-content">
+                    <div class="modal-headertipo" style="background-color: #2e6e9e;">
+                        <p id="hTituloModalKiosko" class="tituloModalKiosko"></p>
+                        <p id="hSubtituloModalKiosko" class="subtituloModalKiosko"></p>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6 col-md-offset-3" style="margin-left: 137px">
+                                <input type="button" class="boton_Opcion" value="Retomar Orden" onclick="mostrarModalCodigoKiosko(true)" />
+                                <input type="button" class="boton_Opcion" value="Reimpresión" onclick="procesoReimpresion()" />
+                                <input type="button" class="boton_Opcion" value="Anular Orden" onclick="confirmarAnularOrdenKiosko()" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="deseleccionarOrdenKiosko()">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tecladoClientes"></div>
+        <div class="modal" id="ModalRegistroDatosDomicilio" style="display: none">
+            <div class="modal__container" style="width: 630px; box-shadow: 2px 2px black;">
+                <div class="modal__featured">
+
+                    <div class="modal__circle"></div>
+                    <img src="../imagenes/facturacion/logoMAxpointRegistro.PNG" class="modal__product" />
+                </div>
+                <div class="modal__content">
+                    <h4 id="tienda" style="color:rgb(19, 125, 232);font-weight: bold; margin: 0;padding: 0 ">-</h4> 
+                    <h3 style="margin: 0;padding-bottom: 5px;">Datos del cliente</h3> 
+
+                    <ul class="form-list">
+
+                        <div>
+
+                            <div class="form-list__input-inline">
+                                <label> Cédula/Ruc:</label>
+                                <input type="text" name="cc_month" id="pay_txtCedulaCliente" value="" class="input"  desc="Cédula/Ruc" onclick=" pay_numerico('#pay_txtCedulaCliente');"  onkeydown="odp_buscarCliente(event)"  placeholder=""   minlength="fn_numerico10" maxlength="13" required="" />
+                                <label> Teléfono: <span class="req">(*)</span></label>
+                                <input type="text" name="cc_year" id="pay_txtTelefono" class="input" desc="Teléfono" onclick=" pay_numerico('#pay_txtTelefono');"  placeholder=""  minlength="4" maxlength="12"  />
+                            </div>
+                        </div>
+
+
+                        <li class="form-list__row padding_top">
+                            <label>Nombres <span class="req">(*)</span></label>
+                            <input class="input" id="pay_txtNombres" onclick=" pay_alfaNumerico('#pay_txtNombres');" desc="Nombres" type="text" name=""   />
+                        </li>
+                        <li class="form-list__row padding_top">
+                            <label>Email <span class="req">(*)</span></label>
+                            <input class="input" id="pay_txtCorreo" onclick=" fn_alfaNumericoCorreo('#pay_txtCorreo');"  desc="Email" type="email" name=""   />
+                        </li>
+
+                        <div>
+
+                            <div class="form-list__input-inline1">
+                                <label class="ajustar" style="max-width: 100px;"> Calle Principal</label>
+                                <input type="text" name="cc_month"  desc="Calle Principal" id="pay_txtDireccion"  onclick=" pay_alfaNumerico('#pay_txtDireccion');"   class="input ajustar"   placeholder=""   minlength="2" maxlength="400"   />
+                                <label lass="ajustar"> #</label>
+                                <input type="text" name="cc_year" desc="Número Calle" id="pay_numeroCallePrincipal"   onclick=" pay_alfaNumerico('#pay_numeroCallePrincipal');"  style="width: 100px;" class="input ajustar"  placeholder=""    minlength="2" maxlength="100"   />
+                            </div>
+                        </div>
+
+                        <li class="form-list__row padding_top">
+
+                            <label>Calle secundaria</label>
+                            <input  class="input"  desc="Calle Secundaria" onclick=" pay_alfaNumerico('#pay_calleSecundaria');" id="pay_calleSecundaria" type="text" name=""   />
+                        </li>
+
+
+                        <div>
+
+                            <div class="form-list__input-inline1">
+                                <label class="ajustar" style="max-width: 100px;">Tipo Inmueble</label>
+
+                                <select id="selectTiposInmuebles" name="select" style="width: 200px;">
+
+                                </select>
+                                <label lass="ajustar"> #</label>
+                                <input type="text" id="pay_referenciaTipoInmueble"  onclick=" pay_alfaNumerico('#pay_referenciaTipoInmueble');"  desc="Tipo Inmueble" name="cc_year" style="width: 100px;" class="input ajustar"  placeholder=""    minlength="2" maxlength="10" required="" />
+                            </div>
+                        </div>
+
+                        <li class="form-list__row">
+
+                            <label>Referencia </label>
+                            <textarea id="pay_referencia"  onclick=" pay_alfaNumerico('#pay_referencia');" desc="Referencia" class="input" rows="1" cols="50"></textarea>
+                            <!--<input class="input" type="text" name="" required="" />-->
+                        </li>
+
+                        <li class="text-center">
+
+                            <button type="button" id="btn_opCancelar"   onclick="cancelar()" style="  background-color: rgb(193, 34, 34); display: none" class="button">Cancelar</button>
+
+                            <button type="button" id="btn_opciones"   onclick="ejecutarOpciones()" style=" background-color: rgb(19, 125, 232);" class="button">Cancelar</button>
+                            <button type="submit"   onclick="ejecutarOpcionesGuardar()" id="btn_opcionesGuardar" class="button">Guardar</button>
+                        </li>
+                    </ul>
+
+                </div> <!-- END: .modal__content -->
+            </div> <!-- END: .modal__container -->
+        </div> <!-- END: .modal -->
+
+    <div id="mdlFidelizacion" class="modal_cargando" style="display: none">
+        <div class="modal-dialog" style="margin: 280px auto">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Código de Seguridad</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="parrafoPromocion">Leer código de seguridad del cliente.</p>
+                    <br/>
+                    <input id="inpCodigoSeguridad" type="password" onchange="leerCodigoSeguridad(this.value)" class="codigoPromocion" value="" />
+                </div>
+                <div style="height: 90px">
+                    <button type="button" class="boton_Opcion" onclick="fn_modalFidelizacion(false)">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VITALITY   -->
+    <div class="container" id="ingresoVitality" style="display: none">
+        <div class="row">
+            <div class="col-md-2"></div>
+            <div class="col-md-8">
+                <div class="marco">
+                    <div id="tqtIngresoVT" class="titulo">LEA CODIGO DE SEGURIDAD
+                        <p style="font-size: 0.6em;" class="mensajePequeno">Lectura de código de seguridad.</p>
+                    </div>
+                    <div class="botones">
+                        <input type="password" class="text_codigoVitality" id="txtCodigoVitality"
+                            placeholder="Código QR"/>
+                    </div>
+                    <div class="botones">
+                        <input type="button" class="button_fdzn"
+                            onclick="flujo_seguimiento('pre1', 'ingresoVitality', true)" value="Cancelar" />
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2"></div>
+    </div>
+
+        <!--
+                <script src="https://www.gstatic.com/firebasejs/4.3.0/firebase-app.js"></script>
+                <script src="https://www.gstatic.com/firebasejs/4.3.0/firebase-auth.js"></script>
+                <script src="https://www.gstatic.com/firebasejs/4.3.0/firebase-database.js"></script>-->
+
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@9"></script>
+        <script src="https://cdn.jsdelivr.net/npm/promise-polyfill"></script>
+
+        <?php include 'ordenPedidoProductosUpSelling.php'; ?>
+<!--<script type="text/javascript" src="../js/ajax_ordePedidoProductosUpSelling.js"></script>-->
+<!--<script type="text/javascript" src="../js/ajax_ordePedidoProductosUpSelling.js"></script>-->
+
+<<<<<<< HEAD
+    <script src="../js/ajax_promociones.js"></script>
+    <script src="../js/socket.js"></script>
+    <script src="../js/socketClient.js"></script>
+    <script type="text/javascript">
+        //promocion.iniciar("cntIntegraciones", "btnPromocionesCodigo");
+    </script>
+    <script type="text/javascript" src="../js/ordenPedido/promociones/promociones.js"></script>
+    <script type="text/javascript" src="../js/validacionCodigoQR.js"></script>
+=======
+        <script src="../js/ajax_promociones.js"></script>
+        <script src="../js/socket.js"></script>
+        <script src="../js/socketClient.js"></script>
+        <script src="../js/ajax_payphoneEventosOrdenPedido.js"></script>
+        <script src="../js/tecladosDinamicos.js"></script>
+>>>>>>> origin/MXP_Version_1.9.10.6
+    </body>
+</html>
+<?php
+/*
+ * Función definida en el archivo sincronizacionCupones.php, para
+ * disparar el proceso de sincronización de los canjes de cupones
+ * tabla centralizada en el servidor MasterData
+ */
+$conexionTienda = $conexionDinamica->conexionTienda();
+$promocionesControllerObj = new PromocionesController($conexionTienda);
+$promocionesControllerObj->sincronizarCanjesPromociones();

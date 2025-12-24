@@ -1,0 +1,1952 @@
+/* global alertify */
+
+////////////////////////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: CHRISTIAN PINTO///////////////////////////////////////
+///////////DESCRIPCION: INICIO DE SESION INGRESO AL SISTEMA CON VALIDACIONES ///
+////////////////TABLAS: Control_Estacion, Estacion, Peridodo, User_Pos /////////
+////////FECHA CREACION: 12/08/2015//////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+////////MODIFICADO POR: CHRISTIAN PINTO/////////////////////////////////////////
+///////////DESCRIPCION: VALIDACION DE APERTURA DE PERIODOS QUE NO SEA LA FECHA //
+//////////////////////  ACTUAL CON HORARIOS DE ATENCION ////////////////////////
+////////////////TABLAS: Control_Estacion, Estacion, Peridodo, User_Pos /////////
+////////FECHA CREACION: 29/07/2016//////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+var myVar = '';
+var BANDERAFINDEDIA = 0; //bandera para dirigirse a fin del dia en el teclado de valida administrador cuando supero su horario de apertura
+var TRANSFERENCIAPERSONAL = 0; //bandera para saber si la transferencia personal esta correcta 
+var MENSAJE = '';
+
+$(document).ready(function() {
+    for (var x in jQuery.cache) {
+        delete jQuery.cache[x];
+    }
+
+    fn_consultarEstacionTomaPedido();
+
+    var accionboton = '';
+    $('#usr_clave').focus();
+    $('#usr_clave').val('');
+    fn_verificaIpEstacionConfigurada();
+    $("#credencialesAdmin").hide();
+    $("#credencialesAdminteclado").hide();
+    $("#IngresoFondos").hide();
+    $("#IngresoFondosteclado").hide();
+    fn_enter();
+    myVar = setInterval("fn_verificaIpEstacionConfigurada()", 5000);
+    if (GetEstacionTomaPedido() === "Si") {
+        $("#botonAsignarCaja").hide();
+    }
+
+    administracionPeriodoSecuencial();
+
+    localStorage.removeItem("id_menu");
+    localStorage.removeItem("id_cla");
+    localStorage.removeItem("es_menu_agregador");
+    localStorage.removeItem("id_menu_facturacion");
+    localStorage.removeItem('id_agregador');
+    localStorage.removeItem("id_cla_facturacion");
+    localStorage.removeItem("es_menu_agregador_facturacion");
+
+    removeConfiguracionesApiImpresion();
+
+    removeLocalStoragePedido();
+});
+
+function fn_verificaIpEstacionConfigurada() {
+    var validaIpConfigurada = { "validaIpConfigurada": 1 };
+    send = validaIpConfigurada;
+    send.ip = $("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            if (datos.existeip === 1) {
+                fn_validaEstacionActiva();
+            } else {
+                $("#Respuesta_Estacion").html('NO CONFIGURADA');
+                $("#btn_iniciarPeriodo").hide();
+                $("#btn_ingresarOk").hide();
+                $("#validar").hide();
+                $("#desmotar").hide();
+                $('#usr_clave').focus();
+                $("#btn_ingreso_Admin").hide();
+            }
+        }
+    });
+}
+
+function fn_validaEstacionActiva() {
+    var validaEstacionActiva = { "validaEstacionActiva": 1 };
+
+    send = validaEstacionActiva;
+    send.ip = $("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            if (datos.estacionActiva === 1) {
+                var nombreEstacion = datos.nombreEstacion;
+                fn_verificaUsuarioLogueado();
+                fn_validaPeriodoAbierto(nombreEstacion);
+            } else {
+                alertify.alert("Estacion no Activa");
+                $("#Respuesta_Estacion").html('NO ACTIVA');
+                $("#btn_nombreCaja").text('Iniciar Sesi\u00F3n');
+                $("#btn_iniciarPeriodo").hide();
+                $("#btn_ingresarOk").hide();
+                $("#validar").hide();
+                $("#desmotar").hide();
+                $('#usr_clave').focus();
+                $("#btn_ingreso_Admin").hide();
+            }
+        }
+    });
+}
+
+function fn_verificaUsuarioLogueado() {
+    let valida_usuario_logueado = { "valida_usuario_logueado": 1 };
+
+    let send = valida_usuario_logueado;
+    send.ip = $("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            $("#validar").hide();
+            $("#desmotar").show();
+            $("#Respuesta_Estacion").html(datos.usr_usuario);
+            $("#Respuesta_Estacion").attr("name", "" + datos.usr_id + "");
+            $("#hid_idusuario").val(datos.usr_id);
+            $("#txtEstacion").val(datos.Estacion);
+            $("#btn_ingresarOk").show();
+            $("#btn_ingresarOk_Visita").hide();
+            $("#btn_ingreso_Admin").hide();
+
+            accionboton = 2;
+            $('#usr_clave').focus();
+
+            if (datos.fondo === 0) {
+                $("#Respuesta_FondoAsignado").html('');
+                $("#desmotar").show();
+            } else {
+                $("#Respuesta_FondoAsignado").html("Fondo por Confirmar");
+                $("#desmotar").hide();
+            }
+
+        } else {
+            $("#desmotar").hide();
+            $("#btn_ingresarOk").hide();
+            $("#btn_ingresarOk_Visita").show();
+            accionboton = 1;
+            $("#Respuesta_Estacion").html("NO ASIGNADO");
+            $("#txtEstacion").val('');
+            $("#btn_regresar").hide();
+            $("#btn_periodo_secuencial").hide();
+        }
+    });
+}
+
+function fn_CierraCaja(ip) {
+    let send = { "CierraCaja": 1 ,"ip_estacion": ip};
+    $.getJSON("config_loguin.php", send, function(datos) {
+
+    });
+}
+
+function fn_validaPeriodoAbierto(nombreEstacion) {
+    let validaPeriodoAbierto = { "validaPeriodoAbierto": 1 };
+    let send = validaPeriodoAbierto;
+    send.ip = $("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            if (datos.periodoabierto === 1) {
+                $("#btn_nombreCaja").text(nombreEstacion + ' - ' + datos.prd_fechaapertura);
+                $("#btn_nombreCajaModal").text(nombreEstacion);
+                $("#btn_iniciarPeriodo").hide();
+                $("#fechaAperturaPeriodo").val(datos.prd_fechaapertura);
+                clearInterval(myVar);
+                fn_validaControlEstacion();
+                $('#usr_clave').focus();
+                let cod_periodo = datos.idperiodo;
+                let cod_estacion = datos.idestacion;
+                let cod_usuario = datos.idusuario;
+                fn_actualizarOrdenesPedido(cod_estacion,cod_usuario,cod_periodo);                
+            } else {
+                accionboton = 0;
+                if($("#txtEstacion").val()!=''){
+                    $("#Respuesta_Estacion").html("");
+                    $("#hid_idusuario").val("");
+                    $("#txtEstacion").val("");
+                    $("#Respuesta_Estacion").html("NO ASIGNADO");
+                    $("#desmotar").hide();
+                    $("#btn_ingresarOk").hide();
+                    $("#btn_ingresarOk_Visita").show();
+                    $("#btn_ingreso_Admin").hide();
+                    $("#Respuesta_FondoAsignado").html('');
+                    $("#desmotar").hide();
+                    accionboton = 1;
+                    $("#txtEstacion").val('');
+                    $("#btn_regresar").hide();
+                    $("#btn_periodo_secuencial").hide();
+                    fn_CierraCaja(send.ip);
+                }
+                $("#btn_iniciarPeriodo").show();
+                $("#btn_ingresarOk").hide();
+                $("#btn_ingresarOk_Visita").hide();
+                $("#validar").hide();
+                $("#desmotar").hide();
+                $('#usr_clave').focus();
+                $("#btn_ingreso_Admin").hide();
+                $("#btn_periodo_secuencial").show();
+            }
+        }
+    });
+}
+
+function fn_validaControlEstacion() {
+    var validaControlEstacion = { "validaControlEstacion": 1 };
+    send = validaControlEstacion;
+    send.accion = 5;
+    send.ip = $("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            if (datos.controlEstacionActivo === 1) {
+                $("#validar").hide();
+                $("#btn_periodo_secuencial").hide();
+            } else {
+                $("#validar").show();
+                $("#btn_ingreso_Admin").show();
+                $("#desmotar").hide();
+            }
+        }
+    });
+}
+
+function fn_validaPerfilUsuario() {
+    send = { "validaPerfilUsuario": 1 };
+    //send.ip=$("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            if (datos.existeip == 1) {
+                $("#usr_clave").focus();
+            }
+        }
+    });
+}
+
+/*----------------------------------------------------------------------------------------------------
+ Funci�n para agregar un n�mero
+ -----------------------------------------------------------------------------------------------------*/
+function fn_agregarNumero(valor) {
+    lc_cantidad = document.getElementById("usr_clave").value;
+    if (lc_cantidad == 0 && valor == ".") {
+        //si escribimos una coma al principio del n�mero
+        document.getElementById("usr_clave").value = "0."; //escribimos 0.
+        coma = 1;
+    } else {
+        //continuar escribiendo un n�mero
+        if (valor == "." && coma == 0) {
+            //si escribimos una coma decimal p�r primera vez
+            lc_cantidad = lc_cantidad + valor;
+            document.getElementById("usr_clave").value = lc_cantidad;
+            coma = 1; //cambiar el estado de la coma  
+        }
+        //si intentamos escribir una segunda coma decimal no realiza ninguna acci�n.
+        else if (valor == "." && coma == 1) {}
+        //Resto de casos: escribir un n�mero del 0 al 9: 	 
+        else {
+            $("#usr_clave").val('');
+            lc_cantidad = lc_cantidad + valor;
+            document.getElementById("usr_clave").value = lc_cantidad;
+        }
+    }
+    fn_focusPassword();
+}
+/*----------------------------------------------------------------------------------------------------
+ Funci�n para eliminar un n�mero
+ -----------------------------------------------------------------------------------------------------*/
+function fn_eliminarCantidad() {
+    var lc_cantidad = document.getElementById("usr_clave").value.substring(0, document.getElementById("usr_clave").value.length - 1);
+    if (lc_cantidad == "") {
+        lc_cantidad = "";
+        coma = 0;
+    }
+    if (lc_cantidad == ".") {
+        coma = 0;
+    }
+    document.getElementById("usr_clave").value = lc_cantidad;
+    fn_focusPassword();
+}
+/*----------------------------------------------------------------------------------------------------
+ Funci�n para eliminar todos los numeros ingresados
+ -----------------------------------------------------------------------------------------------------*/
+function fn_eliminarTodoI() {
+    document.getElementById("usr_clave").value = '';
+    fn_focusPassword();
+}
+/*----------------------------------------------------------------------------------------------------
+ Funci�n para poner el foco en el input para la lectora de barras
+ -----------------------------------------------------------------------------------------------------*/
+function fn_focusPassword() {
+    $("#usr_clave").focus();
+}
+
+function fn_validaUsuarioPerfil() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+
+    if (usr_clave == '') {
+        alertify.alert("Estimado usuario, usted debe digitar su clave");
+        $("#mdl_rdn_pdd_crgnd").hide();
+        return false;
+    }
+
+    var aplicaActualizacion = getActualizacionPendiente();
+    if (aplicaActualizacion){
+        buildAlertActualizacion();
+        return;
+    }
+
+    send = { "validaAperturaPeriodo": 1 };
+    send.accion = 2;
+    send.fechaAperturaPeriodo = '';
+    send.est_ip = est_ip;
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                if (datos.respuesta === 1) {
+                    if (datos.periodoAbiertoHeladeria == 1){
+                        alertify.alert(datos.mensajePeriodoAbiertoHeladeria);
+                        return;
+                    }
+                    usuarioAdministrador(usr_clave, est_ip, 1);
+                } else {
+                    alertify.set({ delay: 10000 });
+                    alertify.alert("No puede abrir un nuevo <b>Periodo</b>,</br> su Horario de Apertura es: " + datos.horaInicio);
+                    $("#usr_clave").val('');
+                }
+            } else {
+                var error = datos.str;
+                error = error.substr(54, 40);
+                alertify.error(error);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            alert(jqXHR);
+            alert(textStatus);
+            alert(errorThrown);
+        }
+    });
+}
+
+function fn_traerDatosCadena() {
+    est_ip = $("#hid_ip").val();
+
+    send = { "traerDatosCadena": 1 };
+    send.accion = 3;
+    send.est_ip = est_ip;
+
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str > 0) {
+            $("#hid_cadena").val(datos.cdn_id);
+            $("#hid_rest").val(datos.rst_id);
+            $("#hid_tiposervicio").val(datos.rst_tipo_servicio);
+        }
+    });
+}
+
+function fn_validaUsuarioPerfilAsignaCaja(element) {
+
+    var aplicaActualizacion = getActualizacionPendiente();
+    if (aplicaActualizacion){
+        buildAlertActualizacion();
+        return;
+    }
+
+    if (GetEstacionTomaPedido() !== "Si") {
+
+        $("#mdl_rdn_pdd_crgnd").show();
+        usr_clave = $("#usr_clave").val();
+        est_ip = $("#hid_ip").val();
+        if (usr_clave == '') {
+            alertify.alert("Estimado usuario, usted debe digitar su clave");
+            $('#usr_clave').focus();
+            $("#mdl_rdn_pdd_crgnd").hide();
+            return false;
+        }
+        send = { "validaIpConfigurada": 1 };
+        send.ip = est_ip;
+        $.getJSON("config_loguin.php", send, function(datos) {
+            if (datos.str > 0) {
+                if (datos.existeip == 1) {
+                    send = { "validaPeriodoAbierto": 1 };
+                    send.ip = est_ip;
+                    $.getJSON("config_loguin.php", send, function(datos) {
+                        if (datos.str > 0) {
+                            if (datos.periodoabierto == 1) {
+                                //$("#btn_iniciarPeriodo").hide();
+                                send = { "validaUsuarioPerfil": 1 };
+                                send.accion = 1;
+                                send.usr_clave = usr_clave;
+                                send.est_ip = est_ip;
+
+                                $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                    if (datos.str > 0) {
+                                        for (i = 0; i < datos.str; i++) {
+                                            if (datos[i]['existeusuario'] == 1) {
+                                                cedula_cajero = datos[i]['cedulaCajero'];
+                                                rst_id = datos[i]['rst_id'];
+                                                fecha = datos[i]['fecha'];
+
+                                                send = { "validaestacionenuso": 1 };
+                                                send.accion = 1;
+                                                send.est_ip = est_ip;
+                                                send.usr_clave = usr_clave;
+                                                $.ajax({
+                                                    async: false,
+                                                    type: "GET",
+                                                    dataType: "json",
+                                                    contentType: "application/x-www-form-urlencoded",
+                                                    url: "seguridades/config_usuario.php",
+                                                    data: send,
+                                                    success: function(datos) {
+                                                        if (datos.estacionenuso != 1) {
+                                                            //VALIDAR SI UN USUARIO LOGUEADO EN UNA ESTACION QUIERE INGRESAR EN OTRA ESTACION
+                                                            send = { "validaUsuarioLogueadoEstacion": 1 };
+                                                            send.accion = 3;
+                                                            send.usr_clave = usr_clave;
+                                                            send.est_ip = est_ip;
+                                                            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                                                if (datos.estacionusuariologueado != 0) {
+                                                                    alertify.alert("Usuario ya se encuentra logueado en otra Estaci\xf3n");
+                                                                    $("#usr_clave").val('');
+                                                                    $('#usr_clave').focus();
+                                                                    $("#mdl_rdn_pdd_crgnd").hide();
+                                                                    return false;
+                                                                } else {
+                                                                    fn_interfaceConsultaTransferencia(cedula_cajero, rst_id, fecha, usr_clave, est_ip);
+
+                                                                }
+                                                            });
+                                                        } else {
+                                                            alertify.alert("Estacion en uso");
+                                                        }
+                                                    }
+                                                });
+                                            } else {
+                                                $("#mdl_rdn_pdd_crgnd").hide();
+                                                alertify.alert("<b>Atenci&oacute;n..!!</b> Sus credenciales son incorrectas, vuelva a intentarlo");
+                                                $("#usr_clave").val('');
+                                                $('#usr_clave').focus();
+                                                return false;
+                                            }
+                                        }
+                                    }
+                                });
+                            } else {
+                                $("#btn_ingresarOk").hide();
+                                $("#validar").hide();
+                            }
+                        }
+                    });
+                } else {
+                    $("#Respuesta_Estacion").html('NO CONFIGURADA');
+                    $("#btn_iniciarPeriodo").hide();
+                    $("#btn_ingresarOk").hide();
+                    $("#validar").hide();
+                }
+            }
+        });
+
+    } else {
+        $("#btn_ingreso_Admin").focus();
+    }
+
+}
+
+//FUNCION PARA VALIDAR SI OTRO USUARIO QUIERE INGRESAR EN UNA ESTACION EN USO
+function fn_validaEstacionEnUsoUsuario() {
+    var aplicaActualizacion = getActualizacionPendiente();
+    if (aplicaActualizacion){
+        buildAlertActualizacion();
+        return;
+    }
+    fn_aplicarReplica();
+    var send;
+    var usr_clave = $("#usr_clave").val();
+    var est_ip = $("#hid_ip").val();
+
+    if (usr_clave == '') {
+        alertify.alert("Estimado usuario, usted debe digitar su clave");
+        $('#usr_clave').focus();
+        return false;
+    }
+
+    send = { "validaUsuarioPerfil": 1 };
+    send.accion = 1;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        for (var i = 0; i < datos.str; i++) {
+            if (datos[i]['existeusuario'] == 1) {
+                send = { "validaEstacionEnUsoUsuario": 1 };
+                send.accion = 2;
+                send.usr_clave = usr_clave;
+                send.est_ip = est_ip;
+                $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                    if (datos.estacionenusousuario == 0) {
+                        //VALIDAR SI UN USUARIO LOGUEADO EN UNA ESTACION QUIERE INGRESAR EN OTRA ESTACION
+                        send = { "validaUsuarioLogueadoEstacion": 1 };
+                        send.accion = 6;
+                        send.usr_clave = usr_clave;
+                        send.est_ip = est_ip;
+                        $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                            if (datos.estacionusuariologueado != 0) {
+                                alertify.alert("Usuario ya se encuentra logueado en otra Estaci\xf3n");
+                                $("#usr_clave").val('');
+                                $('#usr_clave').focus();
+                                $("#mdl_rdn_pdd_crgnd").hide();
+                                return false;
+                            } else {
+                                send = { "validafondo": 1 };
+                                send.accion = 1;
+                                send.usr_clave = usr_clave;
+                                send.est_ip = est_ip;
+                                $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                    var cantidad = datos.cantidad;
+                                    var simbolomoneda = datos.simbolo;
+                                    var tiene_venta = datos.tiene_venta;
+                                    
+                                    if (datos.fondo == 0) {
+                                        if ($("#Respuesta_FondoAsignado").text() === "Fondo por Confirmar") {
+                                            alertify.alert("<b>Atenci&oacute;n..!!</b> No puede ingresar, primero debe confirmar el fondo asignado.");
+                                            $("#usr_clave").val('');
+                                            $('#usr_clave').focus();
+                                            return false;
+                                        }
+                                        send = { "tiposervicio": 1 };
+                                        send.accion = 3;
+                                        send.est_ip = est_ip;
+                                        $.getJSON("seguridades/config_usuario.php", send, function(datosTipoServicio) {
+                                            //****VALIDA SI EXISTE UN PERIODO ABIERTO QUE NO SEA DE LA FECHA ACTUAL****//
+                                            fechaAperturaPeriodo = $("#fechaAperturaPeriodo").val();
+                                            send = { "validaAperturaPeriodo": 1 };
+                                            send.accion = 1;
+                                            send.fechaAperturaPeriodo = fechaAperturaPeriodo;
+                                            send.est_ip = est_ip;
+
+                                            $.ajax({
+                                                async: false,
+                                                type: "POST",
+                                                dataType: 'json',
+                                                contentType: "application/x-www-form-urlencoded",
+                                                url: "seguridades/config_usuario.php",
+                                                data: send,
+                                                success: function(datos) {
+                                                    if (datos.str > 0) {
+                                                        fechaAperturaPeriodo = datos.fechaAperturaPeriodo;
+
+                                                        if (datos.respuesta === 1) { //puede seguir facturando
+                                                            if (datosTipoServicio.rst_tipo_servicio == 1) {
+                                                                fn_inicioVariablesSesionTomaPedido();
+                                                            } else {
+                                                                if (datosTipoServicio.rst_tipo_servicio == 2) {
+                                                                    fn_inicioVariablesSesionUserMesas();
+                                                                }
+                                                            }
+                                                        } else { //pregunta si desea seguir facturando en el mismo periodo 
+                                                            alertify.set({
+                                                                labels: {
+                                                                    ok: "SI",
+                                                                    cancel: "NO"
+                                                                }
+                                                            });
+
+                                                            if (datos.cierrePeriodo === 1) { //Si la fecha de apertura del periodo se encuentra en la misma fecha del servidor
+                                                                mensajeCierrePeriodo = "Usted supero su horario de atenci&oacute;n. Est&aacute; seguro que desea seguir facturando en el periodo: <h3>" + fechaAperturaPeriodo + " </h3> ";
+                                                            } else { //Si la fecha del servidor no es la misma que la fecha de apertura del periodo
+                                                                mensajeCierrePeriodo = "Usted se encuentra en otro periodo. Est&aacute; seguro que desea seguir facturando en el periodo: <h3>" + fechaAperturaPeriodo + " </h3> ";
+                                                            }
+                                                            alertify.confirm(mensajeCierrePeriodo, function(e) {
+                                                                if (e) { //puede seguir facturando
+                                                                    if (datosTipoServicio.rst_tipo_servicio == 1) {
+                                                                        fn_inicioVariablesSesionTomaPedido();
+                                                                    } else {
+                                                                        if (datosTipoServicio.rst_tipo_servicio == 2) {
+                                                                            fn_inicioVariablesSesionUserMesas();
+                                                                        }
+                                                                    }
+                                                                } else { //fin de dia
+                                                                    send = { "validaAccesoPerfil": 1 };
+                                                                    send.accion = 4;
+                                                                    send.usr_clave = usr_clave;
+                                                                    send.est_ip = est_ip;
+                                                                    $.ajax({
+                                                                        async: false,
+                                                                        type: "GET",
+                                                                        dataType: "json",
+                                                                        contentType: "application/x-www-form-urlencoded",
+                                                                        url: "seguridades/config_usuario.php",
+                                                                        data: send,
+                                                                        success: function(datos) {
+                                                                            if (datos.accesoperfil != 0) {
+
+                                                                                fn_inicioVariablesSesionCorteCaja();
+                                                                            } else {
+                                                                                BANDERAFINDEDIA = 1;
+                                                                                $("#credencialesAdmin").show();
+                                                                                $("#credencialesAdmin").dialog({
+                                                                                    modal: true,
+                                                                                    width: 500,
+                                                                                    heigth: 500,
+                                                                                    resize: false,
+                                                                                    opacity: 0,
+                                                                                    show: "none",
+                                                                                    hide: "none",
+                                                                                    duration: 500,
+                                                                                    open: function(event, ui) {
+                                                                                        $(".ui-dialog-titlebar").hide();
+                                                                                        $("#credencialesAdminteclado").show();
+                                                                                    }
+                                                                                });
+                                                                            }
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        }
+                                                    }
+                                                }
+                                            });
+                                            //****FIN VALIDA SI EXISTE UN PERIODO ABIERTO QUE NO SEA DE LA FECHA ACTUAL******//
+                                        });
+                                    } else {
+                                        send = { "validaclaveadmin": 1 };
+                                        send.accion = 1;
+                                        send.est_ip = est_ip;
+                                        send.usr_clave = usr_clave;
+                                        $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                            if (datos.perfil == 1) {
+                                                alertify.alert("<b>Atenci&oacute;n..!!</b> No puede ingresar, primero debe confirmar el fondo asignado.");
+                                                $("#usr_clave").val('');
+                                                $('#usr_clave').focus();
+                                                return false;
+                                            } else {
+                                                alertify.set({
+                                                    labels: {
+                                                        ok: "SI",
+                                                        cancel: "NO"
+                                                    }
+                                                });
+
+                                                alertify.confirm("Est&aacute; usted seguro/a que el fondo asignado de <b><h3>" + simbolomoneda + +cantidad + "</h3></b> es correcto.?", function(e) {
+                                                    if (e) {
+                                                        send = { "confirmarfondo": 1 };
+                                                        send.accion = 'I';
+                                                        send.usr_clave = usr_clave;
+                                                        send.est_ip = est_ip;
+                                                        $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                                            send = { "tiposervicio": 1 };
+                                                            send.accion = 3;
+                                                            send.est_ip = est_ip;
+
+                                                            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                                                if (datos.rst_tipo_servicio == 1) {
+                                                                    fn_inicioVariablesSesionTomaPedido();
+                                                                } else {
+                                                                    if (datos.rst_tipo_servicio == 2) {
+                                                                        fn_inicioVariablesSesionUserMesas();
+                                                                    }
+
+                                                                }
+                                                            });
+                                                        });
+                                                    } else {
+                                                        if (tiene_venta == 'SI') {
+                                                            send = { "confirmarfondo": 1 };
+                                                            send.accion = 'D';
+                                                            send.usr_clave = usr_clave;
+                                                            send.est_ip = est_ip;
+                                                            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                                                window.location.reload();
+                                                            });
+                                                        } else {
+                                                            send = { "confirmarfondo": 1 };
+                                                            send.accion = 'C';
+                                                            send.usr_clave = usr_clave;
+                                                            send.est_ip = est_ip;
+                                                            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                                                                window.location.reload();
+                                                            });
+                                                        }                                                        
+                                                    }
+                                                });
+                                            }
+
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        alertify.alert("Estacion en uso");
+                        $("#usr_clave").val('');
+                        $('#usr_clave').focus();
+                        
+                        return false;
+                    }
+                });
+            } else {
+                $("#mdl_rdn_pdd_crgnd").hide();
+                alertify.alert("Sus credenciales son incorrectas, vuelva a intentarlo");
+                $("#usr_clave").val('');
+                $('#usr_clave').focus();
+
+                return false;
+            }
+        }
+    });
+}
+
+//FUNCION QUE VERIFICA SI LA CAJA ESTA ASIGNADA
+function fn_verificaCajaAsignada() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+
+    if (usr_clave == '') {
+        alertify.alert("Estimado usuario, usted debe digitar su clave");
+        return false;
+    }
+
+    var aplicaActualizacion = getActualizacionPendiente();
+    if (aplicaActualizacion){
+        buildAlertActualizacion();
+        return;
+    }
+
+    send = { "verificaCajaAsignada": 1 };
+    send.accion = 4;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.cajaasignada != 0) {
+            send = { "verificaUsuarioCorrecto": 1 };
+            send.accion = 5;
+            send.usr_clave = usr_clave;
+            send.est_ip = est_ip;
+            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                if (datos.mismousuario != 0) {
+                    send = { "validaAccesoPerfil": 1 };
+                    send.accion = 4;
+                    send.usr_clave = usr_clave;
+                    send.est_ip = est_ip;
+                    $.ajax({
+                        async: false,
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        url: "seguridades/config_usuario.php",
+                        data: send,
+                        success: function(datos) {
+                            if (datos.accesoperfil != 0) {
+                                fn_inicioVariablesSesionDesmontarCajero();
+                            } else {
+                                alertify.alert("Usuario no autorizado para desmontar Cajero");
+                                $("#alertify-ok").click(function() {
+                                    window.location.replace("index.php");
+                                    $('#usr_clave').focus();
+                                    $('#usr_clave').val('');
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    $("#mdl_rdn_pdd_crgnd").hide();
+                    alertify.alert("Sus credenciales son incorrectas, vuelva a intentarlo");
+                    $("#usr_clave").val('');
+                    $('#usr_clave').focus();
+                    return false;
+                }
+            });
+        } else {
+            alertify.alert("La caja no se encuentra en uso");
+            window.location.replace("index.php");
+        }
+    });
+}
+
+function fn_inicioVariablesSesionTomaPedido() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+    usr_id_asignado = $("#Respuesta_Estacion").attr("name");
+
+    send = { "inicioVariablesDeSesion": 1 };
+    send.accion = 1;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    send.usr_id_asignado = usr_id_asignado;
+    send.bandera = 'Inicio';
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str >= 0) {
+            
+            setConfiguracionesApiImpresion(datos.servicioApiImpresion);
+            localStoragePedido(datos.cdn_id, datos.rst_id);
+
+            if (datos.bloqueoacceso == 0) {
+                fn_obtenerMesa(datos['rst_id']);
+            } else {
+                //window.location.replace("ordenpedido/tomaPedido.php?numMesa=" + 0);
+                if (GetEstacionTomaPedido() === "Si") {
+                    fn_consultarEstacionTomaPedido();
+                    fn_consultarClavePerfil();
+
+                    if (fn_accesoValidaPerfilTomaPedido()) {
+                        window.location.replace("ordenpedido/userMesas.php");
+                    } else {
+                        alertify.error("No puede ingresar con este usuario a funciones gerente en estaciones configuradas como Toma Pedido");
+                        //  window.location.replace("index.php");
+                    }
+                } else {
+                    window.location.replace("funciones/funciones_gerente.php");
+                }
+
+            }
+        }
+    });
+}
+
+function fn_accesoValidaPerfilTomaPedido() {
+    var existe = "";
+    existe = GetEstacionTomaNivel().match(new RegExp(GetNivelUser()));
+    if (existe) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+var EstacionTomaPedido = "";
+
+function SetEstacionTomaPedido(val) {
+    EstacionTomaPedido = val;
+}
+
+function GetEstacionTomaPedido() {
+    return EstacionTomaPedido;
+}
+
+var EstacionTomaNivel = "";
+
+function SetEstacionTomaNivel(val) {
+    EstacionTomaNivel = val;
+}
+
+function GetEstacionTomaNivel() {
+    return EstacionTomaNivel;
+}
+
+var tipoUser;
+
+function setTipoUser(tipo) {
+    tipoUser = tipo;
+}
+
+function GetTipoUser() {
+    return tipoUser;
+}
+
+var nivelUser;
+
+function setNivelUser(nivel) {
+    nivelUser = nivel;
+}
+
+function GetNivelUser() {
+    return nivelUser;
+}
+
+function fn_consultarClavePerfil() {
+
+    send = { "consultarClavePerfil": 1 };
+    send.est_ip = $('#txtIp').val();
+    send.clave = $('#usr_clave').val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                setTipoUser(datos[0]["Perfil"]);
+                setNivelUser(datos[0]["nivel"])
+            } else {
+                setTipoUser('');
+                setNivelUser('');
+            }
+        }
+    });
+}
+
+function fn_consultarEstacionTomaPedido() {
+
+    let send = { "consultarEstacionTomaPedido": 1 };
+    send.est_ip = $('#txtIp').val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                SetEstacionTomaPedido(datos[0]["tomaPedido"]);
+                SetEstacionTomaNivel(datos[0]["perfilesAutorizados"]);
+
+            } else {
+                SetEstacionTomaPedido("No");
+            }
+        }
+    });
+}
+
+var FidelizacionActiva = 0;
+
+function fn_FidelizacionActiva() {
+    send = { "FidelizacionActiva": 1 };
+    send.est_ip = $('#hid_ip').val();
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                FidelizacionActiva = (datos[0]["estado"]);
+            } else {
+                FidelizacionActiva = 0;
+            }
+        }
+    });
+}
+
+function fn_ordenPedidoPuntos(op_id) {
+    send = { "ordenPedidoPuntos": 1 };
+    send.op_id = op_id;
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                if (datos[0]["grupoAmigos"] === "Si") {
+                    fn_consultaFB(datos[0]["documento"]);
+                }
+            }
+        }
+    });
+}
+
+function fn_obtenerMesa(rst_id) {
+
+    fn_FidelizacionActiva();
+
+    send = { "obtenerMesa": 1 };
+    send.rst_id = rst_id;
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str > 0) {
+            if (datos.respuesta === 3) {
+
+                fn_ordenPedidoPuntos(datos.IDOrdenPedido);
+
+                $('#cntFormulario').html('<form action="facturacion/factura.php" name="formulario" method="post" style="display:none;"><input type="text" name="odp_id" value="' + datos.IDOrdenPedido + '" /><input type="text" name="dop_cuenta" value="' + datos.numeroCuenta + '" /><input type="text" name="mesa_id" value="' + datos.IDMesa + '" /></form>');
+                document.forms['formulario'].submit();
+
+            } else if (datos.respuesta === -1) {
+                alertify.error("La estaci&oacute;n no tiene configurada una mesa.");
+                $("#usr_clave").val("");
+                return false;
+            } else {
+
+                if (FidelizacionActiva === 1) {
+                    window.location.replace("ordenpedido/tomaPedido.php?numMesa=" + datos.IDMesa);
+                } else {
+                    window.location.replace("ordenpedido/tomaPedido.php?numMesa=" + datos.IDMesa);
+                }
+
+            }
+        } else {
+            alertify.alert("Este establecimiento no tiene mesas disponibles");
+        }
+    });
+}
+
+
+var econtroDatos = -1;
+var fb_document = -1;
+var fb_name = -1;
+var fb_status = -1;
+var fb_points = -1;
+var fb_email = -1;
+var fb_phone = -1;
+
+function fn_consultaFB(documento) {
+
+    econtroDatos = -1;
+    fb_document = -1;
+    fb_name = -1;
+    fb_status = -1;
+    fb_points = -1;
+    fb_email = -1;
+    fb_phone = -1;
+    var send;
+    send = {};
+    send.metodo = "consultaEstadoFireBase";
+    send.documento = documento;
+    send.tipoDocumento = "CI";
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "facturacion/clienteWSClientes.php",
+        data: send,
+        success: function(datos) {
+
+            econtroDatos = 1;
+            fb_document = datos["data"]["document"];
+            fb_name = datos["data"]["name"];
+            fb_status = datos["data"]["status"];
+            fb_points = datos["data"]["points"];
+            fb_email = datos["data"]["email"];
+            fb_phone = datos["data"]["phone"];
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            econtroDatos = -1;
+        }
+    });
+}
+
+function fn_inicioVariablesSesionUserMesas() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+    usr_id_asignado = $("#Respuesta_Estacion").attr("name");
+
+    send = { "inicioVariablesDeSesion": 1 };
+    send.accion = 1;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    send.usr_id_asignado = usr_id_asignado;
+    send.bandera = 'Inicio';
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str >= 0) {
+
+            setConfiguracionesApiImpresion(datos.servicioApiImpresion);
+            localStoragePedido(datos.cdn_id, datos.rst_id);
+
+            fn_consultarClavePerfil();
+            if (GetTipoUser() !== 'Mesero') {
+                window.location.replace("ordenpedido/userMesas.php");
+            } else {
+                alertify.alert("No puede ingresar como mesero");
+                $('#usr_clave').val('');
+            }
+        }
+    });
+}
+
+function fn_inicioVariablesSesionDesmontarCajero() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+    usr_id_cajero = $("#hid_idusuario").val();
+
+    send = { "inicioVariablesSesionDesmontarCajero": 1 };
+    send.accion = 2;
+    send.usr_id_cajero = usr_id_cajero;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    send.bandera = 'Inicio';
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str >= 0) {
+
+            if(datos.aplicaDesmontadoCajeroV2 == 1){
+                setConfiguracionesApiImpresion(datos.servicioApiImpresion);
+                localStoragePedido(datos.cdn_id, datos.rst_id);
+                localStorage.setItem("estacionIP", datos.est_ip);           
+                window.location.replace("desmontadocajero/#/?user="+datos.userAdminPos);
+
+            }else{
+
+                setConfiguracionesApiImpresion(datos.servicioApiImpresion);
+                localStoragePedido(datos.cdn_id, datos.rst_id);
+                localStorage.setItem("estacionIP", datos.est_ip);
+                window.location.replace("corteCaja/desmontado_cajero.php");
+            }
+
+
+        }
+
+    });
+}
+
+function fn_inicioVariablesSesionCorteCaja() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+    usr_id_cajero = $("#hid_idusuario").val();
+
+    send = { "inicioVariablesSesionDesmontarCajero": 1 };
+    send.accion = 2;
+    send.usr_id_cajero = usr_id_cajero;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    send.bandera = 'FinDeDiaCierrePeriodo';
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str >= 0) {
+            setConfiguracionesApiImpresion(datos.servicioApiImpresion);
+            localStoragePedido(datos.cdn_id, datos.rst_id);
+
+            window.location.replace("corteCaja/corteCaja.php");
+        }
+    });
+}
+
+function fn_inicioVariablesSesionUserReportes() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+
+    send = { "inicioVariablesDeSesionUserReportes": 1 };
+    send.accion = 3;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    send.bandera = 'Inicio';
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str >= 0) {
+            setConfiguracionesApiImpresion(datos.servicioApiImpresion);
+            localStoragePedido(datos.cdn_id, datos.rst_id);
+
+            window.location.replace("funciones/funciones_gerente.php");
+        }
+    });
+}
+
+//FUNCION QUE PERMITE INGRESAR AL USUARIO VISITA PARA VER SOLO REPORTES
+function fn_ingresoUserVisitaReportes() {
+    usr_clave = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+
+    if (usr_clave == '') {
+        alertify.alert("Estimado usuario, usted debe digitar su clave");
+        return false;
+    }
+
+    send = { "verificaCajaAsignada": 1 };
+    send.accion = 4;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.cajaasignada == 0) {
+            send = { "verificaUsuarioCorrecto": 1 };
+            send.accion = 5;
+            send.usr_clave = usr_clave;
+            send.est_ip = est_ip;
+            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                if (datos.mismousuario == 0) {
+                    send = { "validaAccesoPerfil": 1 };
+                    send.accion = 4;
+                    send.usr_clave = usr_clave;
+                    send.est_ip = est_ip;
+                    $.ajax({
+                        async: false,
+                        type: "GET",
+                        dataType: "json",
+                        contentType: "application/x-www-form-urlencoded",
+                        url: "seguridades/config_usuario.php",
+                        data: send,
+                        success: function(datos) {
+                            if (datos.accesoperfil != 0) {
+                                fn_inicioVariablesSesionUserReportes();
+                            } else {
+                                alertify.alert("Usuario no autorizado para Visualizar Reportes");
+                                $("#alertify-ok").click(function() {
+                                    window.location.replace("index.php");
+                                    $('#usr_clave').focus();
+                                    $('#usr_clave').val('');
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    $("#mdl_rdn_pdd_crgnd").hide();
+                    alertify.alert("Sus credenciales son incorrectas, vuelva a intentarlo");
+                    $("#usr_clave").val('');
+                    $('#usr_clave').focus();
+                    return false;
+                }
+            });
+        } else {
+            alertify.alert("La caja no se encuentra en uso");
+            window.location.replace("index.php");
+        }
+    });
+}
+
+function fn_enter() {
+    $("#usr_clave").keyup(function(event) {
+        //alert(accionboton);
+        if (event.keyCode == '13') {
+            if (accionboton == 0) {
+                fn_validaUsuarioPerfil();
+            }
+            if (accionboton == 1) {
+                fn_validaUsuarioPerfilAsignaCaja();
+            }
+            if (accionboton == 2) {
+                fn_validaEstacionEnUsoUsuario();
+            }
+            if (accionboton == 3) {
+                fn_validaUsuarioPerfilAsignaCaja();
+            }
+        }
+    });
+
+}
+
+function actualiza_contenido() {
+    $("#div_botonesInicio").load("index.php");
+}
+
+function fn_cerrarValidaAdmin() {
+    if (BANDERAFINDEDIA === 1) {
+        $("#credencialesAdmin").dialog('close');
+        $("#credencialesAdminteclado").hide();
+        $("#usr_claveAdmin").val('');
+        $("#usr_clave").val('');
+    } else {
+        $("#credencialesAdmin").dialog('close');
+        $("#credencialesAdminteclado").hide();
+        $("#usr_claveAdmin").val('');
+        $("#usr_clave").val('');
+
+        $("#IngresoFondos").dialog('close');
+        $("#IngresoFondosteclado").hide();
+        $("#usr_admin_fondo").val('');
+    }
+}
+
+function fn_validaAdmin() {
+    var usr_clave = $("#usr_claveAdmin").val();
+
+    if (usr_clave.indexOf('%') >= 0) {
+        var old_usr_clave = usr_clave.split('?;')[0];
+        var new_usr_clave = old_usr_clave.replace(new RegExp("%", 'g'), "");
+        var usr_tarjeta = new_usr_clave;
+        usr_clave = 'noclave';
+    } else {
+        var usr_tarjeta = 0;
+    }
+
+    if ($("#usr_claveAdmin").val() == '') {
+        $("#usr_claveAdmin").focus();
+        alertify.alert("Ingrese una clave.");
+        return false;
+    }
+
+    send = { "validarUsuarioAdministrador": 1 };
+    send.accion = 1;
+    send.usr_claveAdmin = usr_clave;
+    send.usr_claveCajero = $("#usr_clave").val();
+    send.est_ip = $("#hid_ip").val();
+    send.tarjeta = usr_tarjeta;
+
+    $.getJSON("config_loguin.php", send, function(datos) {
+        $("#moneda").val(datos.moneda);
+        if (datos.admini == 1) {
+            if (BANDERAFINDEDIA === 1) //bandera para ir al fin de dia a cerrar periodo
+            {
+                clave_admin = $("#usr_claveAdmin").val();
+                //clave_cajero = 0;
+                $("#usr_clave").val(clave_admin);
+                //$("#hid_idusuario").val(clave_cajero);
+                fn_inicioVariablesSesionCorteCaja();
+            } else { //ingresa fondo a asignar 
+                usr_claveCajero = $("#usr_clave").val();
+                est_ip = $("#hid_ip").val();
+                $("#credencialesAdmin").dialog('close');
+                $("#credencialesAdminteclado").hide();
+
+                $("#IngresoFondos").show();
+                $("#IngresoFondos").dialog({
+                    modal: true,
+                    width: 500,
+                    heigth: 500,
+                    resize: false,
+                    opacity: 0,
+                    show: "none",
+                    hide: "none",
+                    duration: 500,
+                    open: function(event, ui) {
+                        $(".ui-dialog-titlebar").hide();
+                        $("#IngresoFondosteclado").show();
+                    }
+                });
+            }
+        } else {
+            if (BANDERAFINDEDIA === 1) //bandera para ir al fin de dia a cerrar periodo
+            {
+                alertify.alert("Usuario no autorizado para finalizar el d&iacutea.");
+                $("#usr_claveAdmin").val('');
+                return false;
+            } else {
+                alertify.alert("Usuario no autorizado para Asignar Caja.");
+                $("#usr_claveAdmin").val('');
+                return false;
+            }
+        }
+    });
+}
+
+function fn_IngresoFondo() {
+    //var usr_clave = $("#usr_claveAdmin").val();
+    var fondoasignado = $("#usr_admin_fondo").val();
+    var simbolomoneda = $("#moneda").val();
+
+    if ($("#usr_admin_fondo").val() == '') {
+        $("#usr_admin_fondo").focus();
+        alertify.alert("Ingrese un fondo para iniciar las ventas.");
+        return false;
+    }
+
+    usr_claveCajero = $("#usr_clave").val();
+    est_ip = $("#hid_ip").val();
+
+    alertify.set({
+        labels: {
+            ok: "SI",
+            cancel: "NO"
+        }
+    });
+
+    alertify.confirm("Est&aacute; usted seguro/a que desea asignar un fondo de <b><h3>" + simbolomoneda + +fondoasignado + "</b></h3>", function(e) {
+        if (e) {
+            send = { "grabacontrolestacion": 1 };
+            send.accion = 'i';
+            send.est_ip = est_ip;
+            send.usr_clave = usr_claveCajero;
+            send.fondo = fondoasignado;
+            send.usr_claveAdmin = $("#usr_claveAdmin").val();
+            $.ajax({
+                async: false,
+                type: "GET",
+                dataType: "json",
+                contentType: "application/x-www-form-urlencoded",
+                url: "seguridades/config_usuario.php",
+                data: send,
+                success: function(datos) {
+
+                // Aplicar apertura cajon
+                    fn_aperturaCajonApiImpresion()
+        
+                }
+            });
+        }
+    });
+}
+
+
+function fn_ingresoAdmin() {
+    var usr_clave = $("#usr_clave").val();
+
+    if (usr_clave.indexOf('%') >= 0) {
+        var old_usr_clave = usr_clave.split('?;')[0];
+        var new_usr_clave = old_usr_clave.replace(new RegExp("%", 'g'), "");
+        var usr_tarjeta = new_usr_clave;
+        usr_clave = 'noclave';
+    } else {
+        var usr_tarjeta = 0;
+    }
+
+    if ($("#usr_clave").val() == '') {
+        $("#usr_clave").focus();
+        alertify.alert("Ingrese una clave de Administrador.");
+        return false;
+    }
+
+    var aplicaActualizacion = getActualizacionPendiente();
+    if (aplicaActualizacion){
+        buildAlertActualizacion();
+        return;
+    }
+
+    send = { "IngresoAdministrador": 1 };
+    send.est_ip = $("#hid_ip").val();
+    send.usr_claveAdmin = usr_clave;
+    send.tarjeta = usr_tarjeta;
+    $.getJSON("config_loguin.php", send, function(datos) {
+        //alert(perfiladmin);
+        if (datos.administrador == 1) {
+            //****VALIDA SI EXISTE UN PERIODO ABIERTO QUE NO SEA DE LA FECHA ACTUAL****//
+            fechaAperturaPeriodo = $("#fechaAperturaPeriodo").val();
+            send = { "validaAperturaPeriodo": 1 };
+            send.accion = 1;
+            send.fechaAperturaPeriodo = fechaAperturaPeriodo;
+            send.est_ip = $("#hid_ip").val();
+
+            $.ajax({
+                async: false,
+                type: "POST",
+                dataType: 'json',
+                contentType: "application/x-www-form-urlencoded",
+                url: "seguridades/config_usuario.php",
+                data: send,
+                success: function(datos) {
+                    if (datos.str > 0) {
+                        fechaAperturaPeriodo = datos.fechaAperturaPeriodo;
+
+                        if (datos.respuesta === 1) { //puede seguir facturando
+                            send = { "InsertControlEstacionIngresoAdmin": 1 };
+                            send.est_ip = $("#hid_ip").val();
+                            send.usr_claveAdmin = usr_clave;
+                            send.tarjeta = usr_tarjeta;
+                            $.ajax({
+                                async: false,
+                                type: "GET",
+                                dataType: "json",
+                                contentType: "application/x-www-form-urlencoded",
+                                url: "config_loguin.php",
+                                data: send,
+                                success: function(datos) {
+                                    //fn_funcionesGerente();
+                                    fn_inicioVariablesSesionTomaPedido();
+                                }
+                            });
+
+                        } else { //pregunta si desea seguir facturando en el mismo periodo 
+                            alertify.set({
+                                labels: {
+                                    ok: "SI",
+                                    cancel: "NO"
+                                }
+                            });
+
+                            if (datos.cierrePeriodo === 1) //Si la fecha de apertura del periodo se encuentra en la misma fecha del servidor
+                            {
+                                mensajeCierrePeriodo = "Usted supero su horario de atenci&oacute;n. Est&aacute; seguro que desea seguir facturando en el periodo: <h3>" + fechaAperturaPeriodo + " </h3> ";
+                            } else //Si la fecha del servidor no es la misma que la fecha de apertura del periodo
+                            {
+                                mensajeCierrePeriodo = "Usted se encuentra en otro periodo. Est&aacute; seguro que desea seguir facturando en el periodo: <h3>" + fechaAperturaPeriodo + " </h3> ";
+                            }
+                            alertify.confirm(mensajeCierrePeriodo, function(e) {
+                                if (e) //puede seguir facturando
+                                {
+                                    send = { "InsertControlEstacionIngresoAdmin": 1 };
+                                    send.est_ip = $("#hid_ip").val();
+                                    send.usr_claveAdmin = usr_clave;
+                                    send.tarjeta = usr_tarjeta;
+                                    $.ajax({
+                                        async: false,
+                                        type: "GET",
+                                        dataType: "json",
+                                        contentType: "application/x-www-form-urlencoded",
+                                        url: "config_loguin.php",
+                                        data: send,
+                                        success: function(datos) {
+                                            //fn_funcionesGerente();
+                                            fn_inicioVariablesSesionTomaPedido();
+
+                                        }
+                                    });
+                                } else { //fin de dia
+                                    send = { "validaAccesoPerfil": 1 };
+                                    send.accion = 4;
+                                    send.usr_clave = usr_clave;
+                                    send.est_ip = $("#hid_ip").val();
+                                    $.ajax({
+                                        async: false,
+                                        type: "GET",
+                                        dataType: "json",
+                                        contentType: "application/x-www-form-urlencoded",
+                                        url: "seguridades/config_usuario.php",
+                                        data: send,
+                                        success: function(datos) {
+                                            if (datos.accesoperfil != 0) {
+                                                fn_inicioVariablesSesionCorteCaja();
+                                            } else {
+                                                BANDERAFINDEDIA = 1;
+                                                $("#credencialesAdmin").show();
+                                                $("#credencialesAdmin").dialog({
+                                                    modal: true,
+                                                    width: 500,
+                                                    heigth: 500,
+                                                    resize: false,
+                                                    opacity: 0,
+                                                    show: "none",
+                                                    hide: "none",
+                                                    duration: 500,
+                                                    open: function(event, ui) {
+                                                        $(".ui-dialog-titlebar").hide();
+                                                        $("#credencialesAdminteclado").show();
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+            //****FIN VALIDA SI EXISTE UN PERIODO ABIERTO QUE NO SEA DE LA FECHA ACTUAL******//  
+        } else {
+            alertify.alert("Usuario no autorizado.");
+            $("#usr_clave").val('');
+            $("#usr_clave").focus();
+            return false;
+        }
+    });
+}
+
+function fn_funcionesGerente() {
+    window.location.replace("../pos/funciones/funciones_gerente.php");
+}
+
+function fn_interfaceConsultaTransferencia(cedulaCajero, rst_id, fecha, usr_clave, est_ip) {
+    $("#mdl_rdn_pdd_crgnd").show();
+    //fn_cargando(1);
+    send = { "validaTransferencia": 1 };
+    send.cedulaCajero = cedulaCajero;
+    send.rst_id = rst_id;
+    send.fecha = fecha;
+    //alert(cedulaCajero)
+    var req = $.ajax({
+        async: false,
+        type: "POST",
+        dataType: "json",
+        contentType: "application/x-www-form-urlencoded",
+        url: "serviciosweb/interface/config_cliente_servicio.php",
+        data: send,
+        success: function(datos) {
+
+            if (!datos) {
+                alertify.error("Error al recuperar la información, por favor comuniquese con soporte");
+            } else {
+                if (datos['Respuesta'] == 1) {
+                    //Finalizar proceso 
+                    TRANSFERENCIAPERSONAL = datos['Respuesta'];
+                    MENSAJE = datos['mensaje'];
+                    fn_asignaCajero(est_ip, usr_clave);
+                } else if (datos['Respuesta'] == 2) {
+                    MENSAJE = datos['mensaje'];
+                    alertify.confirm(MENSAJE);
+                } else if (datos['Respuesta'] == 0) {
+                    //TRANSFERENCIAPERSONAL = datos['Respuesta'];
+                    MENSAJE = datos['mensaje'];
+                    alertify.confirm(MENSAJE, function(e) {
+                        if (e) //puede seguir facturando
+                        {
+                            fn_asignaCajero(est_ip, usr_clave);
+                        } else {
+                            $("#usr_clave").val('');
+                            $("#usr_clave").focus();
+                            $("#mdl_rdn_pdd_crgnd").hide();
+                            return false;
+                        }
+                    });
+                } else if (datos['Respuesta'] == -1) {
+                    //Cuando no existe conexion al servidor de Sistema Gerente
+                    //                    console.log(datos['mensaje']);
+                    //                    MENSAJE = 'Existe problemas al conectarse al servicio, se consultara posteriomente. Desea continuar ?';
+                    //
+                    alertify.alert(datos['mensaje']);
+                    //                    });
+                }
+                //numeroIntentos++;
+            }
+        }
+    }).error(function() {
+        MENSAJE = 'Existe problemas al conectarse al servicio, se consultara posteriomente. Desea continuar ?';
+        alertify.confirm(MENSAJE, function(e) {
+            if (e) //puede seguir facturando
+            {
+                fn_asignaCajero(est_ip, usr_clave);
+            } else {
+                $("#usr_clave").val('');
+                $("#usr_clave").focus();
+                $("#mdl_rdn_pdd_crgnd").hide();
+                $("#mdl_rdn_pdd_crgnd").hide();
+                return false;
+            }
+        });
+    }).complete(function() {
+        $("#mdl_rdn_pdd_crgnd").hide();
+    });
+
+    //fn_cargando(0);
+}
+/*
+ function fn_interfaceConsultaTransferencia(cedulaCajero, rst_id, fecha, usr_clave, est_ip) {
+ 
+ //fn_cargando(1);
+ send = {"validaTransferencia": 1};
+ send.cedulaCajero = cedulaCajero;
+ send.rst_id = rst_id;
+ send.fecha = fecha;
+ //alert(cedulaCajero)
+ $.ajax({async: false, type: "POST", dataType: "json", contentType: "application/x-www-form-urlencoded", url: "serviciosweb/interface/config_cliente_servicio.php", data: send, success: function (datos)
+ {
+ 
+ if (!datos)
+ {
+ alertify.error("Error al recuperar la información, por favor comuniquese con soporte");
+ } else {
+ 
+ if (datos['Respuesta'] == 1)
+ {
+ console.log(datos['mensaje']);
+ //Finalizar proceso 
+ TRANSFERENCIAPERSONAL = datos['Respuesta'];
+ MENSAJE = datos['mensaje'];
+ fn_asignaCajero(est_ip, usr_clave);
+ 
+ } else if (datos['Respuesta'] == 0)
+ {
+ console.log(datos['mensaje']);
+ //TRANSFERENCIAPERSONAL = datos['Respuesta'];
+ MENSAJE = datos['mensaje'];
+ alertify.confirm(MENSAJE, function (e) {
+ if (e) //puede seguir facturando
+ {
+ fn_asignaCajero(est_ip, usr_clave);
+ } else
+ {
+ $("#usr_clave").val('');
+ $("#usr_clave").focus();
+ return false;
+ }
+ });
+ 
+ } else
+ {
+ alertify.alert('Existe problemas al conectarse al servicio, se consultara posteriomente.');
+ console.log('ingreso a interface transferencia..');
+ }
+ //numeroIntentos++;
+ }
+ }
+ });
+ //fn_cargando(0);
+ }*/
+
+function fn_asignaCajero(est_ip, usr_clave) {
+
+    //****VALIDA SI EXISTE UN PERIODO ABIERTO QUE NO SEA DE LA FECHA ACTUAL****//
+
+    fechaAperturaPeriodo = $("#fechaAperturaPeriodo").val();
+    send = { "validaAperturaPeriodo": 1 };
+    send.accion = 1;
+    send.fechaAperturaPeriodo = fechaAperturaPeriodo;
+    send.est_ip = est_ip;
+
+    $.ajax({
+        async: false,
+        type: "POST",
+        dataType: 'json',
+        contentType: "application/x-www-form-urlencoded",
+        url: "seguridades/config_usuario.php",
+        data: send,
+        success: function(datos) {
+            if (datos.str > 0) {
+                fechaAperturaPeriodo = datos.fechaAperturaPeriodo;
+
+                if (datos.respuesta === 1) { //puede seguir facturando
+
+                    $("#credencialesAdmin").show();
+                    $("#credencialesAdmin").dialog({
+                        modal: true,
+                        width: 500,
+                        heigth: 500,
+                        resize: false,
+                        opacity: 0,
+                        show: "none",
+                        hide: "none",
+                        duration: 500,
+                        open: function(event, ui) {
+                            $(".ui-dialog-titlebar").hide();
+                            $("#credencialesAdminteclado").show();
+                        }
+                    });
+                } else { //pregunta si desea seguir facturando en el mismo periodo 
+                    alertify.set({
+                        labels: {
+                            ok: "SI",
+                            cancel: "NO"
+                        }
+                    });
+
+                    if (datos.cierrePeriodo === 1) //Si la fecha de apertura del periodo se encuentra en la misma fecha del servidor
+                    {
+                        mensajeCierrePeriodo = "Usted supero su horario de atenci&oacute;n. Est&aacute; seguro que desea seguir facturando en el periodo: <h3>" + fechaAperturaPeriodo + " </h3> ";
+                    } else //Si la fecha del servidor no es la misma que la fecha de apertura del periodo
+                    {
+                        mensajeCierrePeriodo = "Usted se encuentra en otro periodo. Est&aacute; seguro que desea seguir facturando en el periodo: <h3>" + fechaAperturaPeriodo + " </h3> ";
+                    }
+                    alertify.confirm(mensajeCierrePeriodo, function(e) {
+                        if (e) //puede seguir facturando
+                        {
+                            BANDERAFINDEDIA = 0;
+                            $("#credencialesAdmin").show();
+                            $("#credencialesAdmin").dialog({
+                                modal: true,
+                                width: 500,
+                                heigth: 500,
+                                resize: false,
+                                opacity: 0,
+                                show: "none",
+                                hide: "none",
+                                duration: 500,
+                                open: function(event, ui) {
+                                    $(".ui-dialog-titlebar").hide();
+                                    $("#credencialesAdminteclado").show();
+                                }
+                            });
+                        } else { //fin de dia
+                            send = { "validaAccesoPerfil": 1 };
+                            send.accion = 4;
+                            send.usr_clave = usr_clave;
+                            send.est_ip = est_ip;
+                            $.ajax({
+                                async: false,
+                                type: "GET",
+                                dataType: "json",
+                                contentType: "application/x-www-form-urlencoded",
+                                url: "seguridades/config_usuario.php",
+                                data: send,
+                                success: function(datos) {
+                                    if (datos.accesoperfil != 0) {
+                                        fn_inicioVariablesSesionCorteCaja();
+                                    } else {
+                                        BANDERAFINDEDIA = 1;
+                                        $("#credencialesAdmin").show();
+                                        $("#credencialesAdmin").dialog({
+                                            modal: true,
+                                            width: 500,
+                                            heigth: 500,
+                                            resize: false,
+                                            opacity: 0,
+                                            show: "none",
+                                            hide: "none",
+                                            duration: 500,
+                                            open: function(event, ui) {
+                                                $(".ui-dialog-titlebar").hide();
+                                                $("#credencialesAdminteclado").show();
+                                            }
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+        }
+    });
+    //****FIN VALIDA SI EXISTE UN PERIODO ABIERTO QUE NO SEA DE LA FECHA ACTUAL******/// 
+}
+
+function administracionPeriodoSecuencial() {
+    var html = '';
+
+    var send = { "periodo_secuencial": 1 };
+    send.ip_estacion = $("#hid_ip").val();
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {
+            var periodo_secuencial = datos['periodo_secuencial'];
+            var class_button = 'type="button" class="btn btn-warning btn-lg btn-block" style="font-size: 20px;"';
+            var onclick_periodo = 'onclick="validarAperturaPeriodoSecuencial();"';
+            var label_boton = 'Abrir Per&iacute;odo Secuencial';
+
+            if (periodo_secuencial == 1) {
+                html = html +   '<div class="form-group">';
+                html = html +       '<button '+class_button+' id="btn_periodo_secuencial" '+onclick_periodo+'>'+label_boton+'</button>';
+                html = html +   '</div>';
+            }
+
+            $("#div_periodo_secuencial").html(html);
+        }
+    });
+}
+
+function validarAperturaPeriodoSecuencial() {
+    var credenciales_usuario = $("#usr_clave").val();
+    var ip_estacion = $("#hid_ip").val();
+
+    if (credenciales_usuario == '') {
+        alertify.alert("Estimado usuario, usted debe digitar su clave");
+        $("#mdl_rdn_pdd_crgnd").hide();
+
+        return false;
+    }
+
+    var send = { "existe_periodo": 1 };
+    send.ip_estacion = $("#hid_ip").val();    
+    $.getJSON("config_loguin.php", send, function(datos) {
+        if (datos.str > 0) {                
+            var existe_periodo = datos['existe_periodo'];
+            var fecha_secuencial = datos['fecha_secuencial'];
+
+            if (existe_periodo == 0) {
+                usuarioAdministrador(credenciales_usuario, ip_estacion, 2);    
+            } else {
+                alertify.set({ delay: 10000 });
+                alertify.alert("No puede abrir un nuevo <b>Periodo Secuencial</b>,</br> para la fecha : <b>" + fecha_secuencial + "</b> porqu&eacute ya existe!!");
+                $("#usr_clave").val('');
+                
+                return false;
+            }
+        }
+    });
+}
+
+function usuarioAdministrador(usr_clave, est_ip, opcion) {
+	var send = { "traerUsuario": 1 };
+    send.accion = 3;
+    send.usr_clave = usr_clave;
+    send.est_ip = est_ip;
+    $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+        if (datos.str > 0) {
+            usr_id = datos.usr_id;
+            send = { "validaUsuarioPerfil": 1 };
+            send.accion = 1;
+            send.usr_clave = usr_clave;
+            send.est_ip = est_ip;
+            $.getJSON("seguridades/config_usuario.php", send, function(datos) {
+                if (datos.str > 0) {
+                    for (var i = 0; i < datos.str; i++) {
+                        if (datos[i]['existeusuario'] == 1) {
+                            send = { "validaAccesoPerfil": 1 };
+                            send.accion = 4;
+                            send.usr_clave = usr_clave;
+                            send.est_ip = est_ip;
+                            $.ajax({
+                                async: false,
+                                type: "GET",
+                                dataType: "json",
+                                contentType: "application/x-www-form-urlencoded",
+                                url: "seguridades/config_usuario.php",
+                                data: send,
+                                success: function(datos) {
+                                    if (datos.accesoperfil != 0) {
+                                        var cadena = (datos.transferencia === 1) ? 'cdn=' + datos.cadena + '&rst=' + datos.restaurante + '&b_des=' + datos.bd_destino + "&transf=" + datos.transferencia : "transf=0";
+                                        window.location.replace("cierre/apertura.php?est_ip=" + est_ip + "&usr_usuario= " + usr_id + "&" + cadena + "&opcion_apertura=" + opcion);
+
+                                    } else {
+                                        alertify.alert("<b>Atenci&oacute;n..!!</b> Permisos insuficientes para abrir un periodo");
+                                        $("#usr_clave").val('');
+                                        $('#usr_clave').focus();
+                                        $("#mdl_rdn_pdd_crgnd").hide();
+
+                                        return false;
+                                    }
+                                }
+                            });
+                        } else {
+                            $("#mdl_rdn_pdd_crgnd").hide();
+                            alertify.alert("<b>Atenci&oacute;n..!!</b> Sus credenciales son incorrectas, vuelva a intentarlo.");
+                            $("#usr_clave").val('');
+                            $('#usr_clave').focus();
+
+                            return false;
+                        }
+                    }
+                }
+            });
+        } else {
+            alertify.alert("<b>Atenci&oacute;n..!!</b> Sus credenciales son incorrectas, vuelva a intentarlo");
+            $("#usr_clave").val('');
+            $('#usr_clave').focus();
+            $("#mdl_rdn_pdd_crgnd").hide();
+
+            return false;
+        }
+    });
+}
+
+function validarPassword() {
+	let password = $("#userPassword").val();
+	if (password) {
+		$("#usr_clave").val(password);
+	}
+}
+
+//función que actualiza todas las ordenes de pedido de la estación a "odp_total=0" para poder retomarlas
+function fn_actualizarOrdenesPedido(cod_estacion,cod_usuario,cod_periodo){
+
+    var send;
+    var actualizaOdp = { "actualizaTodasOdp": 1 };
+    send = actualizaOdp;
+    send.opcion = '2';
+    send.id_odp = '0';
+    send.estacion = cod_estacion;
+    send.usuario = cod_usuario;
+    send.periodo = cod_periodo;    
+    $.ajax({
+      async: false,
+      type: "POST",
+      dataType: "json",
+      contentType: "application/x-www-form-urlencoded",
+      url: "config_loguin.php",
+      data: send,
+      success: function (datos) {
+        if (datos.str > 0) {              
+          console.log(datos[0]["mensaje"])          
+        }
+      }
+    });
+}
+
+function fn_aperturaCajonApiImpresion() {
+    var send;
+    send = {"infoAplicaApiImpresion": 1};
+    IDEstacion = $("#hid_ip").val();
+    send.estacion = IDEstacion;
+
+    $.ajax({async: false, type: "GET", dataType: "json", contentType: "application/x-www-form-urlencoded",
+        url: "test_impresion/config_infoestacion.php", data: send, success: function (datos) {
+
+            if(datos.aplicaTienda == 1 && datos.asignacion_retiro_fondo == 1){
+                    
+                send = { "servicioApiAperturaCajon": 1 };
+                send.idFormaPago = '';
+                send.SinSession = datos;
+
+                $.getJSON("facturacion/config_servicioApiAperturaCajon.php", send, function (datos) {
+                        console.log(datos) 
+                        alertify.alert("Se asigno de manera correcta la caja");
+                        location.reload();
+                });
+
+            }else{
+
+                alertify.alert("Se asigno de manera correcta la caja");
+                location.reload();
+
+            }
+
+        }
+
+        });
+
+
+
+}

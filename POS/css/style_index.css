@@ -1,0 +1,91 @@
+  
+*{
+  -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+#login {
+    background-color: /*rgba(0, 0, 0, 0.5)*/ #303946;
+    margin-top: 15px;
+    border-radius: 10px;
+	border:7px solid rgba #033;
+	-webkit-background-clip: padding-box; /* for Safari */
+	-moz-background-clip: padding-box; /* for old Firefox */
+	-o-background-clip: padding-box; /* for old Firefox */
+    background-clip: padding-box; /* for IE9+, Firefox 4+, Opera, Chrome */
+	-webkit-border-radius: 15px;
+	-moz-border-radius: 15px;
+	padding-bottom: 20px;
+}
+
+.numeros{
+	font-size:50px;
+	width:100px;
+	height:80px;
+}
+
+#btn_borrarTodo{
+	font-size:30px;
+	width:100px;
+	height:80px;
+	}
+#btn_ingresarOk{
+	height:365px;
+	}
+#btn_iniciarPeriodo{
+	height:365px;
+	font-size:30px;
+	}
+#btn_ingreso_Admin{
+	height:365px;
+	font-size:30px;
+	}	
+.iniciarsesion{
+	height:60px;
+	}
+.btn_ingresarDesmontar{
+	height:60px;
+	font-size:30px;
+	
+	}	
+#IngresoFondosteclado{
+	left:35%; 
+	top:450px; 
+	position:absolute; 
+	display:block;
+	z-index:99999;
+}
+#credencialesAdminteclado{
+	left:35%; 
+	top:450px; 
+	position:absolute; 
+	display:block; 
+	z-index:99999;
+}
+
+.preguntasTitulo{background:#0E98B6;padding:8px 5px;color:#fff;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;font-size:20px;font-weight:700}
+.anulacionesSeparador{padding:25px 5px;color:#000;margin:0;-moz-user-select:none;-khtml-user-select:none;-webkit-user-select:none;user-select:none;float:left;width:100%}
+.anulacionesInput input[type="text"],.anulacionesInput input[type="password"]{height:40px;width:300px}
+
+@media screen and (max-width:1280px) and (max-height:800px) {
+    #login .panel-body #contenedorTeclado .form-group{
+		margin-bottom: 0;
+	}
+	#login{
+		margin-top: 0;
+	}
+	.nombremax{
+		margin: 0;
+	}
+	#btn_ingreso_Admin, #btn_iniciarPeriodo, #btn_ingresarOk{
+		height: 32rem;
+	}
+	#IngresoFondosteclado{
+		top: 36rem;
+	}
+	#credencialesAdminteclado{
+		top: 36rem;
+	}
+}

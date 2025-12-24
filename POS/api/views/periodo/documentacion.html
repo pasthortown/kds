@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Documentación de la API - Periodo</title>
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    h2 { color: #007bff; }
+    pre { background: #f4f4f4; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+
+<h1>📘 Documentación API - Periodo</h1>
+
+<h2>1️⃣ POST api/periodo/aperturaPeriodo</h2>
+<p>Crea una apertura de periodo</p>
+
+<b>📤 Parámetros Esquema (JSON en el cuerpo):</b>
+<pre>{
+  "est_ip": "string",
+  "usr_clave": "int"
+}</pre>
+
+
+<b>📤 JSON de Ejemplo:</b>
+<pre>{
+  "est_ip": "192.168.1.10",
+  "usr_clave": "12345"
+}</pre>
+
+<b>📥 Respuesta Ejemplo (JSON):</b>
+<pre>{
+  "success": true,
+  "message": "Periodo creado correctamente"
+  "data": ""
+}</pre>
+
+</body>
+</html>

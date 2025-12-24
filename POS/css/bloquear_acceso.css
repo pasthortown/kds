@@ -1,0 +1,16 @@
+@charset "utf-8";
+/* CSS Document */
+
+
+.boton_accion_disabled {	
+	border: 1px solid #4b8f29;
+	pointer-events: none;
+    opacity: 0.55;
+}
+
+.contenedor_productos_disabled {	
+	pointer-events: none;
+	opacity: 0.55;	
+}
+
+

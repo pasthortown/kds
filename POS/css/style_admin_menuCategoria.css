@@ -1,0 +1,17 @@
+@charset "utf-8";
+/* CSS Document */
+body
+{
+}
+button
+{
+	height:60px;
+	width: 120px;
+}
+
+#cadena, #cadmenu
+{
+	font-family:Tahoma, Geneva, sans-serif;
+	font-size:14px;
+	width:195px;
+}

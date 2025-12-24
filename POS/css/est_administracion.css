@@ -1,0 +1,47 @@
+/*******************************
+Estilos Tablas Administracion
+********************************/
+table.adminTabla {
+	font: 100% Arial, Helvetica, sans-serif; 
+	width: 480px;
+	border-collapse: collapse;
+	padding: 0;
+}
+
+table.adminTabla tr{
+	cursor: pointer;
+}
+
+table.adminTabla th, td {
+	text-align: left;
+	padding: 8px;
+	border: 1px solid #fff;
+	font-size: 15px;
+}
+
+table.adminTabla th {
+	background: #328aa4;
+	color:#fff;
+	text-align: center;
+}
+
+table.adminTabla td {
+	padding: 3px;
+	background: #e5f1f4;
+}
+
+table.adminTabla input {
+	height: 30px;
+	font-size: 17px;
+}
+
+table.adminTabla select {
+	height: 36px;
+	font-size: 17px;
+}
+
+tr.seleccionado td {
+	background: #FFFF97;
+	color: #5b9dd0;
+	font-size: 15px;
+}

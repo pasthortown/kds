@@ -1,0 +1,213 @@
+.no-titlebar .ui-dialog-titlebar { 
+    display: none;
+}
+
+.rp_div_btn_reporte{
+    position: absolute;
+    bottom: 0;
+}
+
+.rp_cabecera_principal{
+    background-color: #2f353a !important;
+    border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 0;
+    color: white;
+    font-size: 2.09375rem;
+    font-weight: 500;
+    line-height: 1.2;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.rp_cabecera_centro{
+    font-size: 1.49375rem !important;
+}
+
+.rp_cuerpo_principal{
+    background-color: #ffffff96;
+    border-radius: 15px;
+    width: 110%;
+}
+
+.rp_titulo_estado{
+    height: 56px;
+    display: flex;
+    align-items: center;
+    font-size: xx-large;
+}
+
+.rp_div_alinear_izquierda{
+	float: left;
+}
+
+.rp_div_alinear_derecha {
+	float: right;
+}
+
+.rp_div_alinear_centro {
+	float: inherit;
+}
+
+.rp_fila_alinear_centro_vertical{
+    vertical-align: bottom !important;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    color: white;
+}
+
+.rp_fondo_verde{
+    background-color: #4dbd74 !important;
+}
+
+.rp_fondo_rojo{
+    background-color:#f86c6b !important;
+}
+
+.rp_fondo_amarillo{
+    background-color: #ffc107 !important;
+}
+
+.rp_fondo_azul{
+    background-color: #0cadf3 !important;
+}
+
+.rp_fondo_morado{
+    background-color: #D7BDE2 !important;
+}
+
+.rp_fondo_naranja{
+    background-color: #f8b06b !important;
+}
+
+.rp_boton_busqueda{
+    width: 100%;
+    height: 50%;
+}
+
+.rp_boton_refrescar{
+    height: 50%;
+    width: 15%;
+    color: black;
+}
+
+
+.rp_boton_filtro{
+    height: 50%;
+    width: 15%;
+    color: black;
+    margin-right: 15px;
+}
+
+.seleccionRegistro{
+    background-color: rgba(79, 152, 18, 0.2) !important;
+}
+
+.sin_registros{
+    background-color: #f2dede;
+}
+
+.rp_boton_detalle{
+    height: 35px !important;
+    width: 50px !important;
+}
+
+.rp_encabezado_detalle{
+    background-color: black;
+    height: 45px;
+    color: white;
+    line-height: 45px;
+    padding-left: 10px;
+    font-size: 11px;
+}
+
+.rp_label_numero_pedidos{
+    background-color: white;
+    color: black;
+    border-radius: 50%;
+    font-size: 14px;
+    padding: 2px 8px;
+}
+
+.rp_cuerpo_tabla_principal{
+    background-color: white;
+    width: 100%;
+    border-top-right-radius: 0px;
+    border-top-right-radius: 0px;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+.rp_boton_paginador{
+    width: 85px;
+    height: 35px;
+}
+
+.rp_color_ingresado{
+    background-color: #ffc107;
+}
+.rp_color_transferido{
+    background-color: #D7BDE2;
+}
+
+.rp_color_preparando{
+    background-color: #f8b06b;
+}
+.rp_color_listo{
+    background-color: #4dbd74;
+}
+.rp_color_entregado{
+    background-color: #0cadf3;
+}
+
+.rp_color_rechazado{
+    background-color:#f86c6b;
+}
+
+
+.rp_color_letra_ingresado{
+    color: #ffc107;
+}
+
+.rp_color_letra_preparando{
+    color: #f8b06b;
+}
+.rp_color_letra_listo{
+    color: #4dbd74;
+}
+.rp_color_letra_entregado{
+    color: #0cadf3;
+}
+.rp_color_letra_rechazado{
+    color: #f86c6b;
+}
+
+.rp_color_letra_blanco{
+    color: #ffffff;
+}
+
+
+
+
+.rp_celda_estado{
+    font-weight: bold;
+    color: white;
+    /*border-radius: 40px;*/
+}
+
+
+.ui-tabs .ui-tabs-nav
+{
+background: white;
+}
+
+
+.rp_label_error_pedidos{
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    font-size: 14px;
+    padding: 5px 7px;
+}
+
+th.fitwidth {
+    width:auto;
+}

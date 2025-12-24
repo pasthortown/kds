@@ -1,0 +1,207 @@
+
+.contenedor {
+    margin: 0 auto 0 auto;
+    padding: 0;
+}
+
+.superior {
+    width: 100%;
+    margin: 0 auto 0 auto;
+    position: fixed;
+    top: 0;
+    left: 580px;
+    margin-left: -300px;
+    margin-right: 10%;
+    height: 20px;
+    border-radius: 0 0 8px 8px;
+    z-index: 1000;
+}
+
+.menu {
+    margin: 0 auto;
+    text-align: right;
+    padding-right: 100px;
+}
+
+.menu ul li {
+    list-style: none;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.botonbloqueado {
+    color: #000;
+    background-color: #303946;
+    border: none;
+    border-radius: 4px;
+    width: 45px;
+    height: 40px;
+    margin: 2px 2px 0 2px;
+    padding-top: 36px;
+    border: 0;
+    font-size: 10px;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: 12px;
+}
+
+.botonhabilitado {
+    color: #000;
+    background-color: #303946;
+    border: none;
+    border-radius: 8px;
+    width: 45px;
+    height: 40px;
+    margin: 0 2px 0 2px;
+    padding-top: 36px;
+    border: 0;
+    font-size: 10px;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.botonhabilitado:hover {
+    box-shadow: inset 0 0 0 0 #27496d, 0 3px 10px #fff;
+}
+
+.botonhabilitado:active {
+    box-shadow: inset 0 0 0 0 #27496d, inset 0 3px 10px #fff;
+}
+
+.menu img {
+    margin: 4px 0 4px 0;
+    width: 28px;
+    height: 28px;
+}
+
+.tituloPantalla h1 {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    margin: 4px auto 0 auto;
+    text-align: center;
+    font-family: "Microsoft Yi Baiti";
+    font-style: normal;
+    color: #FFFFFF;
+    font-size: 28px;
+    font-weight: 550;
+    text-decoration: blink;
+}
+
+.tabla {
+    /*	margin: 16px auto 0px auto;
+            padding: 0px;
+            width: 94%;
+            border: 1px solid #000000;*/
+}
+
+/* estilo para el div que se muestra una vez se abre la ventana modal */
+.overlayCargando {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+
+.modalCargandoImagen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 80%;
+    height: 80%;
+    z-index: 9999;
+}
+
+/* estilo para lo q este dentro de la ventana modal */
+.modalCargando {
+    position: fixed;
+    top: 45%;
+    left: 45%;
+    z-index: 9999;
+    overflow: auto;
+}
+
+.profile-ava img {
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    border: 2px solid #688a7e;
+    display: inline-block;
+}
+
+.profile-ava img.simple {
+    border-radius: 50%;
+    -webkit-border-radius: 50%;
+    border: 2px solid rgba(0, 112, 255, 0.4);
+    display: inline-block;
+}
+
+.username {
+    font-size: 12px;
+    color: #5D7A9E;
+}
+
+.caret {
+    color: #5D7A9E;
+}
+
+.botonMnSpr {
+    color: #fff;
+    background-color: #303946;
+    border-radius: 8px;
+    width: 45px;
+    height: 40px;
+    margin: 6px 2px 0 2px;
+    padding-top: 6px;
+    border: 1px;
+    font-size: 11px;
+    font-family: Helvetica, Arial, sans-serif;
+}
+
+.botonMnSpr span {
+    margin: 0;
+    padding: 0;
+}
+
+.botonMnSpr:hover {
+    box-shadow: inset 0 0 0 0 #27496d, 0 0 4px #fff;
+}
+
+.botonMnSpr:active {
+    box-shadow: inset 0 0 0 0 #27496d, inset 0 3px 8px #000;
+}
+
+.magla {
+    -webkit-filter: blur(5px);
+    -moz-filter: blur(5px);
+    -o-filter: blur(5px);
+    -ms-filter: blur(5px);
+    filter: blur(5px);
+
+}
+
+.modal_cargando {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    z-index: 999999;
+    margin: 0;
+    padding: 0
+}
+
+.modal_cargando_contenedor {
+    margin: 300px auto;
+    width: 234px;
+    height: 40px;
+    color: #333;
+    z-index: 9999999;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    background: #fff;
+    -webkit-box-shadow: 0 0 37px 4px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 0 0 37px 4px rgba(0, 0, 0, 0.75);
+    box-shadow: 0 0 2px 4px rgba(0, 0, 0, 0.75);
+    border-radius: 8px 8px 8px 8px;
+}

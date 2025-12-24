@@ -1,0 +1,1296 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////DESARROLLADO POR: PIERRE QUITIAQUEZ///////////////////////////////////////////////////////////////
+///////////DESCRIPCION: /////////////////////////////////////////////////////////
+////////////////TABLAS:  ////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+var html;
+$(document).ready(function () {
+    carga();
+    cargarCadena();
+
+    var navListItems = $('div.setup-panel div a'),
+        allWells = $('.setup-content'),
+        allNextBtn = $('.nextBtn'),
+        allPrevBtn = $('.prevBtn');
+
+    allWells.hide();
+
+    navListItems.click(function (e) {
+        e.preventDefault();
+        var $target = $($(this).attr('href')),
+            $item = $(this);
+
+        if (!$item.hasClass('disabled')) {
+            navListItems.removeClass('btn-primary').addClass('btn-default');
+            $item.addClass('btn-primary');
+            allWells.hide();
+            $target.show();
+            $target.find('input:eq(0)').focus();
+        }
+    });
+
+    allPrevBtn.click(function(){
+        var curStep = $(this).closest(".setup-content"),
+            curStepBtn = curStep.attr("id"),
+            prevStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().prev().children("a");
+
+        prevStepWizard.removeAttr('disabled').trigger('click');
+    });
+
+    allNextBtn.click(function(){
+        var curStep = $(this).closest(".setup-content"),
+            curStepBtn = curStep.attr("id"),
+            nextStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().next().children("a"),
+            curInputs = curStep.find("input[type='text'],input[type='url']"),
+            isValid = true;
+
+        $(".form-group").removeClass("has-error");
+        for(var i=0; i<curInputs.length; i++){
+            if (!curInputs[i].validity.valid){
+                isValid = false;
+                $(curInputs[i]).closest(".form-group").addClass("has-error");
+            }
+        }
+
+        if (isValid)
+            nextStepWizard.removeAttr('disabled').trigger('click');
+    });
+
+    $('div.setup-panel div a.btn-primary').trigger('click');
+});
+
+
+
+function ejecutarScript1(){
+    $("#cargandoi").show();
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"CreardbVersions": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+
+        if(datos==1){
+            alertify.success('DbVersions creado correctamente');
+            $('#Instalacion tbody tr:eq(0) td:eq(1)').html('Correcto');
+            $('#Instalacion tbody tr:eq(0) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#Instalacion tbody tr:eq(0) td:eq(3)').prepend('Creado Correctamente');
+              $("#avanzar1").prop('disabled', false);
+            ejecutarScript2();
+        }else{
+            alertify.error('Ya existe el trigger DbVersions en la base de datos');
+            $('#Instalacion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#Instalacion tbody tr:eq(0) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#Instalacion tbody tr:eq(0) td:eq(3)').prepend('Ya existe');
+            ejecutarScript2();
+        }
+    });
+}
+
+function verificarInstalacion(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+<<<<<<< HEAD
+    send = {"Verificar": 1};
+=======
+    send = {"VerificarIns": 1};
+>>>>>>> 7eb044c9c12b24efc52e590b5ca7348760eb7218
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            alertify
+                .alert("Existe una replica instalada en este servidor", function(){
+                    alertify.message('OK');
+                });
+             $("#avanzar0").prop('disabled', true);
+            $("#test").css("background-color","red");
+
+        }else{
+             $("#avanzar0").prop('disabled', false);
+            $("#test").css("background-color","#04B431");
+
+        }
+    });
+}
+
+
+function conexion(){
+    $("#cargandoi").show();
+    var send;
+    var srv=$("#server").val();
+    var usr=$("#usr").val();
+    var pass=$("#contrasena").val();
+    if(srv!='' && usr!='' && pass!=''){
+        send = {"Conexion": 1};
+        send.srv=srv;
+        send.usr=usr;
+        send.pass=pass;
+        $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+            if(datos==1){
+                $("#cargandoi").hide();
+                alertify
+                    .alert("Conexión establecida", function(){
+                        alertify.message('OK');
+                    });
+                verificarInstalacion();
+
+            }else{
+                $("#cargandoi").hide();
+                alertify
+                    .alert("Error al conectarse. Por favor revise que la informacion ingresada sea correcta.", function(){
+                        alertify.message('OK');
+                    });
+
+
+            }
+        });
+    }else{
+        alertify.error('Los campos no pueden estar en blanco');
+        $("#cargandoi").hide();
+    }
+}
+function ejecutarScript2(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    send = {"DbVersionsSqlcmd": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+
+    })
+        .done(function() {
+            alertify.success("Proceso de Versiones ejecutado correctamente");
+            $('#Instalacion tbody tr:eq(1) td:eq(1)').html('Correcto');
+            $('#Instalacion tbody tr:eq(1) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#Instalacion tbody tr:eq(1) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script2respuesta.php">Ver</a>');
+            $("#cargandoi").hide();
+              $("#avanzar1").prop('disabled', false);
+        })
+        .fail(function() {
+            alertify.error("Error en proceso de Versiones ejecutado correctamente");
+            $('#Instalacion tbody tr:eq(1) td:eq(1)').html('Error');
+            $('#Instalacion tbody tr:eq(1) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#Instalacion tbody tr:eq(1) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script2respuesta.php">Ver</a>');
+             $("#avanzar1").prop('disabled', true);
+            $("#cargandoi").hide();
+        })
+}
+
+function ejecutarScript3(){
+    $("#cargandoi").show();
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    send = {"Maxpoint_log": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+
+    })
+        .done(function() {
+            alertify.success("Base MaxpointLog creada");
+            $("#cargandoi").hide();
+            $('#Fase tbody tr:eq(0) td:eq(1)').html('Correcto');
+            $('#Fase tbody tr:eq(0) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#Fase tbody tr:eq(0) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script3respuesta.php">Ver</a>');
+             $("#avanzar3").prop('disabled', false);
+            $("#cargandoi").hide();
+
+        })
+        .fail(function() {
+            alertify.error("Error en proceso de creacion  MaxpointLog ");
+            $('#Fase tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#Fase tbody tr:eq(0) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#Fase tbody tr:eq(0) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script3respuesta.php">Ver</a>');
+            $("#cargandoi").hide();
+        })
+
+
+}
+
+function carga(){
+    $("#avanzar0").prop('disabled', true);
+     $("#avanzar3").prop('disabled', true);
+
+}
+
+function continuaReplica(){
+    var rdata=$('#data4').val();
+    borrarArchivos();
+
+    validarCamposReplica(rdata);
+}
+
+function validarCamposReplica(directorio){
+    var rhistoVers=$("#log4").val();
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"VerificarExistenciaDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            crearDirectorio(directorio);
+            VReplicaI(rhistoVers);
+        }else{
+            alertify
+                .alert("El disco "+directorio.substring(0,2)+" no existe en el servidor.", function(){
+                    alertify.message('OK');
+                });
+            $("#regresa").click();
+        }
+
+    });
+}
+function VReplicaI(directorio){
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    var send;
+    send = {"VerificarExistenciaDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+                        crearDirectorio(directorio);
+                        $('#JSON tbody tr:eq(0) td:eq(0)').html(globalsrv);
+                        $('#JSON tbody tr:eq(0) td:eq(1)').html(nb);
+                        $('#JSON tbody tr:eq(0) td:eq(2)').html(globalusr);
+                        $('#JSON tbody tr:eq(0) td:eq(3)').html(globalpass);
+                        drawCanvas();
+                       ejecutarScript4();
+        }else{
+            alertify
+                .alert("El disco "+directorio.substring(0,2)+" no existe en el servidor.", function(){
+                    alertify.message('OK');
+                });
+            $("#regresa").click();
+        }
+
+    });
+}
+
+function ejecutarScript4(){
+    var cadena=$("#cadena4").val();
+    var tienda=$("#tienda4").val();
+    var base=$("#base4").val();
+    var data=$('#data4').val();
+    var log=$('#log4').val();
+    if(cadena!='' && tienda!=''&&data!=''&&log!=''&&base!=''){
+        if(fn_validarSoloNumeros(cadena)){
+            if(fn_validarSoloNumeros(tienda)){
+                modificar();
+            }else{
+                alertify.error('El código de la tienda solo debe contener numeros');
+                $("#timer1").hide();
+            }
+        }else{
+            alertify.error('El código de la cadena solo debe contener numeros');
+            $("#timer1").hide();
+        }
+    }else{
+        alertify.error( "Error los campos no pueden estar vacios" );
+        $('#regresa').click();
+        $("#timer1").hide();
+    }
+}
+
+function modificar(){
+    var cadena=$("#cadena4").val();
+    var tienda=$("#tienda4").val();
+    var nb=$("#base4").val();
+    var rdataVer=$('#data4').val();
+    var rhistoVer=$('#log4').val();
+    send = {"abrirArchivo": 1};
+    send.cadena=cadena;
+    send.tienda=tienda;
+    send.nb=nb;
+    send.rdataVer=rdataVer;
+    send.rhistoVer=rhistoVer;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            execute4();
+        }else{
+            alert('Error');
+        }
+    });
+
+}
+
+function verificarVersion(directorio){
+    var rhistoVers=$("#log1").val();
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"VerificarExistenciaDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            crearDirectorio(directorio);
+            verificarDVersionI(rhistoVers);
+        }else{
+            alertify
+                .alert("El disco "+directorio.substring(0,2)+" no existe en el servidor.", function(){
+                    alertify.message('OK');
+                    alert('button clicked');
+                });
+
+        }
+
+    });
+}
+
+function verificarDVersionI(directorio){
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    var rdataVers=$('#data1').val();
+    send = {"VerificarExistenciaDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            crearDirectorio(directorio);
+            $('#atras1').prop('disabled', true);
+            modificarScript2(rdataVers,directorio);
+            ejecutarScript1();
+        }else{
+            alertify
+                .alert("El disco "+directorio.substring(0,2)+" no existe en el servidor.", function(){
+                    alertify.message('OK');
+                });
+        }
+
+    });
+}
+
+function validarCampos(){
+    borrarArchivosInicio();
+    $('#Instalacion tbody tr:eq(0) td:eq(1)').html('');
+    $('#Instalacion tbody tr:eq(0) td:eq(2)').html('');
+    $('#Instalacion tbody tr:eq(0) td:eq(3)').html('');
+    $('#Instalacion tbody tr:eq(1) td:eq(1)').html('');
+    $('#Instalacion tbody tr:eq(1) td:eq(2)').html('');
+    $('#Instalacion tbody tr:eq(1) td:eq(3)').html('');
+    var rdataVers=$('#data1').val();
+    var rhistoVers=$('#log1').val();
+    if(rdataVers==''|| rhistoVers==''){
+        alertify.alert("Ingrese los campos solicitados",
+            function(e){
+                if(e){
+
+                }
+            });
+    }else{
+        verificarVersion(rdataVers);
+    }
+}
+
+function execute4(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    send = {"CreacionBasePrueba": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+        alertify.success("Base de datos creada correctamente");
+    })
+        .done(function() {
+            fn_correr41();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class=" glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            alertify.error( "Error de ejecución de creacion de base" );
+        })
+}
+
+function fn_correr41(){
+    var nb=$("#base4").val();
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"Schemas": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        alertify.success("Schemas y Tablas creados correctamente");
+    })
+        .done(function() {
+            fn_correr42();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class=" glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            $('#b').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Esquemasytablas.php">Ver Esquemas y Tablas</a>');
+            alertify.error( "Error de creación de Schemas y tablas de base" );
+        })
+
+}
+
+function fn_correr42(){
+    var nb=$("#base4").val();
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"Funciones": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        alertify.success("Funciones creados");
+    })
+        .done(function() {
+            fn_correr43();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class=" glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            $('#b').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Esquemasytablas.php">Ver Esquemas y Tablas</a>');
+            $('#c').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Funciones_resp.php">Ver Funciones</a>');
+            alertify.error( "Error de creación funciones de base" );
+
+        })
+}
+
+function fn_correr43(){
+    var nb=$("#base4").val();
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    send = {"Vistas": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        alertify.success("Vistas creadas");
+    })
+        .done(function() {
+            fn_correr44();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class=" glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            $('#b').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Esquemasytablas.php">Ver Esquemas y Tablas</a>');
+            $('#c').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Funciones_resp.php">Ver Funciones</a>');
+            $('#d').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Vistas_Resp.php">Ver Vistas</a>');
+            alertify.error( "Error de creación de Vistas " );
+        })
+
+
+}
+
+function fn_correr44(){
+    var nb=$("#base4").val();
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    send = {"Sps": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        alertify.success("Stores creados");
+    })
+        .done(function() {
+            fn_correr45();
+        })
+        .fail(function() {
+            fn_correr45();
+        })
+}
+
+function fn_correr45(){
+    var send;
+    var cadena=$("#cadena4").val();
+    var tienda=$("#tienda4").val();
+    var nb=$("#base4").val();
+    var rdataVer=$('#data4').val();
+    var rhistoVer=$('#log4').val();
+    send = {"Users": 1};
+    send.cadena=cadena;
+    send.tienda=tienda;
+    send.nb=nb;
+    send.rdataVer=rdataVer;
+    send.rhistoVer=rhistoVer;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+    })
+        .done(function() {
+            Ejecutar4();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class=" glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            $('#b').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Esquemasytablas.php">Ver Esquemas y Tablas</a>');
+            $('#c').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Funciones_resp.php">Ver Funciones</a>');
+            $('#d').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Vistas_Resp.php">Ver Vistas</a>');
+            $('#e').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Stores_resp.php">Ver Procedimientos Almacenados</a>');
+            alertify.error( "Error de creación Script Usuarios" );
+        })
+
+
+}
+
+function Ejecutar4(){
+    var nb=$("#base4").val();
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    send = {"Ejecutar4": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+    })
+        .done(function() {
+            alertify.success("Usuarios Creados");
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(1) td:eq(1)').html(' En Ejecución...');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class=" glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            $('#b').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Esquemasytablas.php">Ver Esquemas y Tablas</a>');
+            $('#c').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Funciones_resp.php">Ver Funciones</a>');
+            $('#d').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Vistas_Resp.php">Ver Vistas</a>');
+            $('#e').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Stores_resp.php">Ver Procedimientos Almacenados</a>');
+            $('#f').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Users_resp.php">Ver Usuarios</a>');
+            progreso(0);
+            ejecutarScript5();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de creación de base" );
+            $('#ejecucion tbody tr:eq(0) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(0) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(0) td:eq(3)').prepend('<span class="glyphicon glyphicon-collapse-down"></span>');
+            $('#a').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/base.php">Ver Creación de la Base</a>');
+            $('#b').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Esquemasytablas.php">Ver Esquemas y Tablas</a>');
+            $('#c').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Funciones_resp.php">Ver Funciones</a>');
+            $('#d').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Vistas_Resp.php">Ver Vistas</a>');
+            $('#e').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Stores_resp.php">Ver Procedimientos Almacenados</a>');
+            $('#f').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/4/Respuestas4/Users_resp.php">Ver Usuarios</a>');
+
+        })
+}
+
+function crearDirectorio(directorio){
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"crearDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            alertify
+                .alert("El directorio "+directorio+" creado.", function(){
+                    alertify.message('OK');
+                });
+        }else{
+            alertify
+                .alert("El directorio "+directorio+" no se creo en el servidor.", function(){
+                    alertify.message('OK');
+                });
+        }
+    })
+}
+
+function validarCamposMaxp(){
+    borrarArchivos3();
+    $('#Fase tbody tr:eq(0) td:eq(1)').html('');
+    $('#Fase tbody tr:eq(0) td:eq(2)').html('');
+    $('#Fase tbody tr:eq(0) td:eq(3)').html('');
+    var rdataVers=$('#data2').val();
+    var rhistoVers=$('#log2').val();
+    if(rdataVers==''|| rhistoVers==''){
+        alertify.alert("Ingrese los campos solicitados",
+            function(e){
+                if(e){
+
+                }
+            });
+    }else{
+        verificarMaxp(rdataVers);
+    }
+}
+
+function verificarMaxp(directorio) {
+    var rhistoVers=$("#log2").val();
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    send = {"VerificarExistenciaDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            crearDirectorio(directorio);
+            verificarMaxpI(rhistoVers);
+
+        }else{
+            alertify
+                .alert("El disco "+directorio.substring(0,2)+" no existe en el servidor.", function(){
+                    alertify.message('OK');
+                });
+
+        }
+
+    });
+}
+function verificarMaxpI(directorio) {
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    var rdataVers=$('#data2').val();
+    send = {"VerificarExistenciaDirectorio": 1};
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    send.directorio=directorio;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            crearDirectorio(directorio);
+            modificarScript3(rdataVers,directorio);
+
+        }else{
+            alertify
+                .alert("El disco "+directorio.substring(0,2)+" no existe en el servidor.", function(){
+                    alertify.message('OK');
+                });
+        }
+
+    });
+}
+
+function modificarScript2(rdataVers,rhistoVers){
+    var send;
+    send = {"modificarS2": 1};
+    send.rdataVers=rdataVers;
+    send.rhistoVers=rhistoVers;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function(datos) {
+
+    })
+        .done(function() {
+            return 1;
+        })
+        .fail(function() {
+            return 0;
+        })
+}
+
+function modificarScript3(rdataVer,rhistoVer){
+    var send;
+    send = {"modificarS3": 1};
+    send.rdataVer=rdataVer;
+    send.rhistoVer=rhistoVer;
+    $.getJSON( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function(datos) {
+    })
+        .done(function() {
+            ejecutarScript3();
+        })
+        .fail(function() {
+            return 0;
+        })
+}
+
+function borrarArchivos(){
+    var send;
+    send = {"BorrarTodos": 1};
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+    });
+}
+
+function continuarInicio(){
+    $("#avanzar1").prop('disabled', true)
+
+}
+
+function borrarTArchivos(){
+    var send;
+    send = {"BorrarTArchivos": 1};
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+    });
+}
+function borrarArchivos3(){
+    var send;
+    send = {"BorrarArchivos3": 1};
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+    });
+}
+
+
+function borrarArchivosInicio(){
+    var send;
+    send = {"borrarArchivosInicio": 1};
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+    });
+}
+
+function verificarJson(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    send = {"verificarjson": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.getJSON("../adminReplicaInicial/config_adminReplicaInicial.php", send, function (datos) {
+        if(datos==1){
+            alertify.alert("Replicación Finalizada con éxito",
+                function(e){
+                    if(e){
+                        progreso(0);
+                        location.reload();
+                    }
+                });
+        }else{
+            alertify.alert(" No se puede finalizar la instalación. Por favor, Instale Json Select ",
+                function(e){
+                    if(e){
+
+                    }
+                });
+        }
+    });
+}
+
+function ejecutarScript5(){
+    var send;
+    var cadena=$("#cadena4").val();
+    var tienda=$("#tienda4").val();
+    var nb=$("#base4").val();
+    send = {"replicaInicial": 1};
+    send.cadena=cadena;
+    send.tienda=tienda;
+    send.nb=nb;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            ejecutarBajada();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución" );
+        })
+
+}
+
+function abrirOculto(){
+    $("#mostrar").show();
+}
+
+function ejecutarScript6() {
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var send;
+    var nb=$("#base4").val();
+    send = {"datareportes": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            alertify.success("Proceso de Verificación de Reportes ejecutado correctamente");
+            $('#ejecucion tbody tr:eq(3) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(3) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(3) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script6respuesta.php">Ver</a>');
+            ejecutarScript7();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución" );
+            $('#ejecucion tbody tr:eq(3) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(3) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(3) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script6respuesta.php">Ver</a>');
+
+        })
+
+}
+
+function ejecutarScript7(){
+    var send;
+    var tienda=$("#tienda4").val();
+    var nb=$("#base4").val();
+    send = {"PeriodoInicial": 1};
+    send.tienda=tienda;
+    send.nb=nb;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            ejecutarPeriodoIni();
+
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución" );
+        })
+}
+
+function ejecutarPeriodoIni(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    send = {"EjecutaPeriodoIni": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            alertify.success('Proceso Periodo Inicial-ejecutado correctamente ');
+            $('#ejecucion tbody tr:eq(4) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(4) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(4) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script7respuesta.php">Ver</a>');
+            ejecutarScript9();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución de Periodo Inicial" );
+            $('#ejecucion tbody tr:eq(4) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(4) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(4) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script7respuesta.php">Ver</a>');
+
+        })
+}
+
+function ejecutarBajada(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    send = {"BajarDatos": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            alertify.success('Replica Inicial realizada correctamente');
+            $('#ejecucion tbody tr:eq(2) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(2) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(2) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script5respuesta.php">Ver</a>');
+            ejecutarScript6();
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución del proceso de replicación" );
+            $('#ejecucion tbody tr:eq(2) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(2) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(2) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script5respuesta.php">Ver</a>');
+
+        })
+}
+
+function ejecutarScript9(){
+    var send;
+    var nb=$("#base4").val();
+    send = {"CreacionUreportes": 1};
+    send.nb=nb;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+    })
+        .done(function() {
+            ejecutarCreacionUsuario();
+
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de creacion de reportes de usuarios" );
+        })
+}
+
+function ejecutarCreacionUsuario(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    send = {"CorrerUreportes": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            $('#ejecucion tbody tr:eq(5) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(5) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(5) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script9respuesta.php">Ver</a>');
+            permisos(nb);
+
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución-Proceso de reportes Usuarios" );
+            $('#ejecucion tbody tr:eq(5) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(5) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(5) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script9respuesta.php">Ver</a>');
+        })
+}
+
+function permisos(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    send = {"CorrerPermisos": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            $('#ejecucion tbody tr:eq(6) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(6) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(6) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script10respuesta.php">Ver</a>');
+            controlestacion();
+
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución-Permisos de Reportes" );
+            $('#ejecucion tbody tr:eq(6) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(6) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(6) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script10respuesta.php">Ver</a>');
+        })
+}
+
+function controlestacion(){
+    var send;
+    var globalsrv=$("#server").val();
+    var globalusr=$("#usr").val();
+    var globalpass=$("#contrasena").val();
+    var nb=$("#base4").val();
+    send = {"CorrerEstacion": 1};
+    send.nb=nb;
+    send.globalsrv=globalsrv;
+    send.globalusr=globalusr;
+    send.globalpass=globalpass;
+    $.get( "../adminReplicaInicial/config_adminReplicaInicial.php",send,function() {
+
+    })
+        .done(function() {
+            $("#timer1").hide();
+            alertify.success( "Proceso Control Estación Realizado Correctamente" );
+            $('#ejecucion tbody tr:eq(7) td:eq(1)').html('Correcto');
+            $('#ejecucion tbody tr:eq(7) td:eq(2)').prepend('<span class="glyphicon glyphicon-ok"></span>').css("color", "#04B431");
+            $('#ejecucion tbody tr:eq(7) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script11respuesta.php">Ver</a>');
+
+        })
+        .fail(function() {
+            $("#timer1").hide();
+            alertify.error( "Error de ejecución de proceso control estación" );
+            $('#ejecucion tbody tr:eq(7) td:eq(1)').html('Error');
+            $('#ejecucion tbody tr:eq(7) td:eq(2)').prepend('<span class="glyphicon glyphicon-remove"></span>').css("color", "red");
+            $('#ejecucion tbody tr:eq(7) td:eq(3)').prepend('<span class=" glyphicon glyphicon-open"></span><a href="../../scripts/Respuestas/script11respuesta.php">Ver</a>');
+        })
+}
+
+function fn_validarNumeros(e){
+    var tecla = (document.all) ? e.keyCode : e.which; // 2
+    if (tecla == 8){
+        return true;
+    }
+    var patron = /[0-9]/; // 4
+    var te = String.fromCharCode(tecla); // 5
+    return patron.test(te); // 6
+}
+
+function fn_validarSoloNumeros(cadena){
+    var patt = new RegExp("^[0-9]+$");
+    var res = patt.test(cadena);
+    if(res==false){
+        return false;
+    }else{
+        return true;
+    }
+}
+
+function fn_validarEspacios(e){
+    var tecla = (document.all) ? e.keyCode : e.which; // 2
+    if (tecla == 8 || tecla==9) return true; // 3
+
+    var patron = /[a-zA-Z0-9\_]/; // 4
+    var te = String.fromCharCode(tecla); // 5
+    return patron.test(te); // 6
+}
+
+
+function drawCanvas(){
+    $('#timer1').show();
+    var canvas=document.getElementById('mycanvas');
+    var ctx=canvas.getContext('2d');
+    var cWidth=canvas.width;
+    var cHeight=canvas.height;
+
+    var countTo=599;
+
+    var min=Math.floor(countTo/60);
+    var sec=countTo-(min*60);
+    var counter=0;
+    var angle=270;
+    var inc=360/countTo;
+
+
+    function drawScreen() {
+        //======= reset canvas
+        ctx.fillStyle="#252728";
+        ctx.fillRect(0,0,cWidth,cHeight);
+        //========== base arc
+        ctx.beginPath();
+        ctx.strokeStyle="#5F9EA0";
+        ctx.lineWidth=14;
+        ctx.arc(cWidth/2,cHeight/2,100,(Math.PI/180)*0,(Math.PI/180)*360,false);
+        ctx.stroke();
+        ctx.closePath();
+        //========== dynamic arc
+        ctx.beginPath();
+        ctx.strokeStyle="#00FFFF";
+        ctx.lineWidth=14;
+        ctx.arc(cWidth/2,cHeight/2,100,(Math.PI/180)*270,(Math.PI/180)*angle,false);
+        ctx.stroke();
+        ctx.closePath();
+        //======== inner shadow arc
+        grad=ctx.createRadialGradient(cWidth/2,cHeight/2,80,cWidth/2,cHeight/2,115);
+        grad.addColorStop(0.0,'rgba(0,0,0,.2)');
+        grad.addColorStop(0.5,'rgba(0,0,0,0)');
+        grad.addColorStop(1.0,'rgba(0,0,0,0.2)');
+
+        ctx.beginPath();
+        ctx.strokeStyle=grad;
+        ctx.lineWidth=14;
+        ctx.arc(cWidth/2,cHeight/2,100,(Math.PI/180)*0,(Math.PI/180)*360,false);
+        ctx.stroke();
+        ctx.closePath();
+        //======== bevel arc
+        grad=ctx.createLinearGradient(cWidth/2,0,cWidth/2,cHeight);
+        grad.addColorStop(0.0,'#6c6f72');
+        grad.addColorStop(0.5,'#252424');
+        ctx.beginPath();
+        ctx.strokeStyle=grad;
+        ctx.lineWidth=1;
+        ctx.arc(cWidth/2,cHeight/2,93,(Math.PI/180)*0,(Math.PI/180)*360,true);
+        ctx.stroke();
+        ctx.closePath();
+
+        //====== emboss arc
+
+        grad=ctx.createLinearGradient(cWidth/2,0,cWidth/2,cHeight);
+        grad.addColorStop(0.0,'transparent');
+        grad.addColorStop(0.98,'#6c6f72');
+        ctx.beginPath();
+        ctx.strokeStyle=grad;
+        ctx.lineWidth=1;
+        ctx.arc(cWidth/2,cHeight/2,107,(Math.PI/180)*0,(Math.PI/180)*360,true);
+        ctx.stroke();
+        ctx.closePath();
+
+        //====== Labels
+        var textColor='#ffff';
+        var textSize="12";
+        var fontFace="helvetica, arial, sans-serif";
+
+        ctx.fillStyle=textColor;
+        ctx.font=textSize+"px "+fontFace;
+        ctx.fillText('MIN',cWidth/2-46,cHeight/2-40);
+        ctx.fillText('SEC',cWidth/2+25,cHeight/2-15);
+
+        //====== Values
+        ctx.fillStyle='#00FFFF';
+        if (min>9) {
+            ctx.font='84px '+fontFace;
+            ctx.fillText('9' ,cWidth/2-55,cHeight/2+35);
+
+
+        }
+        else {
+            ctx.font='84px '+fontFace;
+            ctx.fillText(min ,cWidth/2-60,cHeight/2+35);
+        }
+
+        ctx.font='50px '+fontFace;
+        if (sec<10) {
+            ctx.fillText('0'+sec,cWidth/2+10,cHeight/2+35);
+        }
+        else {
+            ctx.fillText(sec,cWidth/2+10,cHeight/2+35);
+        }
+
+
+        if (sec<=0 && counter<countTo) {
+            min--;
+            sec=59;
+        } else
+        if (counter>=countTo) {
+            sec=0;
+            min=0;
+            angle=-90;
+        } else {
+            angle+=inc;
+            counter++;
+            sec--;
+        }
+    }
+    setInterval(drawScreen,1000);
+}
+
+function cargarRestaurante(tienda){
+    var send;
+    send = {"cargarRestaurante": 1};
+    send.tienda=tienda;
+    $.ajax({
+        type: "GET",
+        contentType: "application/json",
+        dataType: 'json',
+        url: "../adminReplicaInicial/config_adminReplicaInicial.php",
+        data: send, // convert array to JSON
+        success: function (datos) {
+            $("#cargandoi").hide();
+            $("#tienda4").html("");
+            $('#tienda4').html("<option selected value=''>--------------Seleccione Restaurante--------------</option>");
+            for(var i in datos.restaurantes) {
+                var html = "<option value='" + datos.restaurantes[i]['codRestaurante'] + "'>" + datos.restaurantes[i]['codTienda'] + "</option>";
+                $("#tienda4").append(html);
+            }
+        }});
+
+}
+
+function cargarCadena(){
+    var send;
+    $("#tienda4").html("");
+    $('#tienda4').html("<option selected value=''>--------------Seleccione Restaurante--------------</option>");
+    send = {"cargarCadena": 1};
+    $.ajax({
+        type: "GET",
+        contentType: "application/json",
+        dataType: 'json',
+        url: "../adminReplicaInicial/config_adminReplicaInicial.php",
+        data: send, // convert array to JSON
+        success: function (datos) {
+            $("#cadena4").html("");
+            $('#cadena4').html("<option selected value=''>--------------Seleccione Cadena--------------</option>");
+            for(var i in datos.cadenas) {
+                var html = "<option value='" + datos.cadenas[i]['codCadena'] + "'>" + datos.cadenas[i]['descripcion'] + "</option>";
+                $("#cadena4").append(html);
+            }
+            $("#cadena4").change(function () {
+                var lc_cadena = $("#cadena4").val();
+                $("#cargandoi").show();
+                cargarRestaurante(lc_cadena);
+            });
+        }});
+
+}
+var current_progress = 0;
+function progreso(resta){
+    $("#progresar").show();
+    if(resta==0){
+            current_progress += 20;
+            $("#dynamic")
+                .css("width", current_progress + "%")
+                .attr("aria-valuenow", current_progress)
+                .text(current_progress + "% Completado");
+            if (current_progress >= 100){
+                return false;
+            }
+    }else{
+        if (current_progress == 100){
+            return false;
+        }
+        current_progress -= 20;
+        $("#dynamic")
+            .css("width", current_progress + "%")
+            .attr("aria-valuenow", current_progress)
+            .text(current_progress + "% Completado");
+
+    }
+}
+
+function mostrar(){
+    $('#progresar').hide();
+}
+
