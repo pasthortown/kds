@@ -23,3 +23,4 @@ una clase
 una funcion en el ajax correspondiente que devuelve las politicas configuradas toma el objeto lo pasa a json y envia al KDS si el objeto resultante dice no enviar entonces no remite.
 
 Impresion Netcore (completar) - EN EL LOCAL
+Implementacion KDS API Kiosko, Pickup y Delivery

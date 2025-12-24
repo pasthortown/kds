@@ -376,7 +376,9 @@ async function main() {
   for (const screenConf of screensConfig) {
     const screen = await prisma.screen.upsert({
       where: { name: screenConf.name },
-      update: {},
+      update: {
+        queueId: screenConf.queueId, // Actualizar cola si la pantalla ya existe
+      },
       create: {
         name: screenConf.name,
         queueId: screenConf.queueId,
