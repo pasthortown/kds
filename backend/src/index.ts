@@ -26,11 +26,12 @@ const httpServer = createServer(app);
 // Seguridad
 app.use(helmet());
 
-// CORS
+// CORS - Permitir cualquier origen
 app.use(
   cors({
-    origin: env.CORS_ORIGINS.split(','),
-    credentials: true,
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   })
 );
 

@@ -14,6 +14,8 @@ class kdsRegional extends sql {
       if ($row = $this->fn_leerarreglo()) {
         return json_encode(array(
           "url" => $row['URL'],
+          "email" => $row['EMAIL'],
+          "password" => $row['PASSWORD'],
           "activo" => (int)$row['ACTIVO'],
           "impresion_a_tiempo_real" => (int)$row['IMPRESION_A_TIEMPO_REAL']
         ));
