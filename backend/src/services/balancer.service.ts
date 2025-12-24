@@ -124,7 +124,14 @@ export class BalancerService {
   }
 
   /**
-   * Filtra órdenes según los filtros de la cola
+   * Filtra órdenes y sus items según los filtros de la cola
+   *
+   * Lógica de filtrado:
+   * - suppress: true → OCULTAR items que coinciden con el patrón (ej: LINEAS oculta S.)
+   * - suppress: false → MOSTRAR SOLO items que coinciden con el patrón (ej: SANDUCHE muestra S.)
+   *
+   * Una orden se incluye si tiene al menos un item después del filtrado.
+   * La misma orden puede aparecer en múltiples colas con diferentes items visibles.
    */
   private filterOrders(
     orders: Order[],
@@ -134,20 +141,63 @@ export class BalancerService {
       return orders;
     }
 
-    return orders.filter((order) => {
-      // Verificar si algún item coincide con los filtros
-      const hasMatchingItem = order.items.some((item) =>
-        filters.some((filter) => {
-          const matches = item.name
-            .toLowerCase()
-            .includes(filter.pattern.toLowerCase());
-          // Si suppress es true, excluir items que coinciden
-          // Si suppress es false, incluir items que coinciden
-          return filter.suppress ? !matches : matches;
-        })
-      );
+    const filteredOrders: Order[] = [];
 
-      return hasMatchingItem;
+    for (const order of orders) {
+      // Filtrar items según los filtros de la cola
+      const filteredItems = this.filterItemsByQueueFilters(order.items, filters);
+
+      // Solo incluir la orden si tiene al menos un item después del filtrado
+      if (filteredItems.length > 0) {
+        filteredOrders.push({
+          ...order,
+          items: filteredItems,
+        });
+      }
+    }
+
+    return filteredOrders;
+  }
+
+  /**
+   * Filtra items según los filtros de la cola
+   *
+   * @param items - Items de la orden
+   * @param filters - Filtros de la cola
+   * @returns Items filtrados
+   */
+  private filterItemsByQueueFilters(
+    items: Order['items'],
+    filters: Array<{ pattern: string; suppress: boolean }>
+  ): Order['items'] {
+    // Separar filtros por tipo
+    const suppressFilters = filters.filter(f => f.suppress);
+    const showOnlyFilters = filters.filter(f => !f.suppress);
+
+    return items.filter((item) => {
+      const itemNameLower = item.name.toLowerCase();
+
+      // Si hay filtros de "mostrar solo" (suppress: false), el item DEBE coincidir con al menos uno
+      if (showOnlyFilters.length > 0) {
+        const matchesShowFilter = showOnlyFilters.some(filter =>
+          itemNameLower.includes(filter.pattern.toLowerCase())
+        );
+        if (!matchesShowFilter) {
+          return false; // No coincide con ningún filtro de "mostrar solo"
+        }
+      }
+
+      // Si hay filtros de "ocultar" (suppress: true), el item NO debe coincidir con ninguno
+      if (suppressFilters.length > 0) {
+        const matchesSuppressFilter = suppressFilters.some(filter =>
+          itemNameLower.includes(filter.pattern.toLowerCase())
+        );
+        if (matchesSuppressFilter) {
+          return false; // Coincide con un filtro de "ocultar"
+        }
+      }
+
+      return true;
     });
   }
 
@@ -167,8 +217,14 @@ export class BalancerService {
   }
 
   /**
-   * Obtiene órdenes asignadas a una pantalla
+   * Obtiene órdenes para una pantalla, aplicando filtros de la cola
    * Si el Mirror está conectado, obtiene órdenes del KDS2 remoto
+   *
+   * Lógica:
+   * - Para colas SINGLE: Obtiene TODAS las órdenes pendientes y filtra items
+   * - Para colas DISTRIBUTED: Obtiene órdenes asignadas a la pantalla y filtra items
+   *
+   * Esto permite que una misma orden aparezca en múltiples colas con items filtrados.
    */
   async getOrdersForScreen(screenId: string): Promise<Order[]> {
     // Si el Mirror está conectado, obtener órdenes del KDS2 remoto
@@ -176,21 +232,57 @@ export class BalancerService {
       return this.getOrdersFromMirror(screenId);
     }
 
-    // Si no hay Mirror, obtener de la BD local
-    const orders = await prisma.order.findMany({
-      where: {
-        screenId,
-        status: { in: ['PENDING', 'IN_PROGRESS'] },
-      },
+    // Obtener información de la pantalla y su cola
+    const screen = await prisma.screen.findUnique({
+      where: { id: screenId },
       include: {
-        items: true,
-      },
-      orderBy: {
-        createdAt: 'asc',
+        queue: {
+          include: {
+            filters: { where: { active: true } },
+          },
+        },
       },
     });
 
-    return orders.map((order) => ({
+    if (!screen || !screen.queue) {
+      return [];
+    }
+
+    const { queue } = screen;
+    let orders;
+
+    // Si la cola es SINGLE, obtener TODAS las órdenes pendientes
+    // Esto permite que la pantalla de SANDUCHE vea órdenes que están asignadas a otras pantallas
+    if (queue.distribution === 'SINGLE') {
+      orders = await prisma.order.findMany({
+        where: {
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+        },
+        include: {
+          items: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+    } else {
+      // DISTRIBUTED: obtener solo las órdenes asignadas a esta pantalla
+      orders = await prisma.order.findMany({
+        where: {
+          screenId,
+          status: { in: ['PENDING', 'IN_PROGRESS'] },
+        },
+        include: {
+          items: true,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+    }
+
+    // Convertir a formato Order
+    const mappedOrders: Order[] = orders.map((order) => ({
       id: order.id,
       externalId: order.externalId,
       screenId: order.screenId || undefined,
@@ -214,6 +306,13 @@ export class BalancerService {
       valuesHTML: order.valuesHTML || undefined,
       statusPos: order.statusPos || undefined,
     }));
+
+    // Aplicar filtros de la cola a nivel de items
+    if (queue.filters.length > 0) {
+      return this.filterOrders(mappedOrders, queue.filters);
+    }
+
+    return mappedOrders;
   }
 
   /**

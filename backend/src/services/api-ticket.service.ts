@@ -92,8 +92,12 @@ export class ApiTicketService {
       }
 
       // Obtener colas activas y distribuir
+      // Solo distribuir a colas DISTRIBUTED (las colas SINGLE obtienen órdenes dinámicamente)
       const queues = await prisma.queue.findMany({
-        where: { active: true },
+        where: {
+          active: true,
+          distribution: 'DISTRIBUTED',
+        },
       });
 
       for (const queue of queues) {
@@ -105,6 +109,25 @@ export class ApiTicketService {
         // Enviar a pantallas via WebSocket
         if (distributions.length > 0) {
           await websocketService.distributeOrdersToScreens(distributions);
+        }
+      }
+
+      // Notificar a pantallas de colas SINGLE que hay nuevas órdenes
+      const singleQueues = await prisma.queue.findMany({
+        where: {
+          active: true,
+          distribution: 'SINGLE',
+        },
+        include: {
+          screens: {
+            where: { status: 'ONLINE' },
+          },
+        },
+      });
+
+      for (const queue of singleQueues) {
+        for (const screen of queue.screens) {
+          await websocketService.broadcastOrdersUpdate(screen.id);
         }
       }
 

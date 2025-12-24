@@ -370,7 +370,7 @@ async function main() {
   const screensConfig = [
     { name: 'Pantalla1', queueId: queueLineas.id },
     { name: 'Pantalla2', queueId: queueLineas.id },
-    { name: 'Pantalla3', queueId: queueLineas.id },
+    { name: 'Pantalla3', queueId: queueSanduche.id }, // Pantalla para sanduches
   ];
 
   for (const screenConf of screensConfig) {
