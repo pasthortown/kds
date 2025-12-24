@@ -1,0 +1,3 @@
+vamos a corregir el funcionamiento de algunas cosas que estan fallando:
+
+ahora vamos a corregir el flujo de las ordenes, si apago una pantalla y esta pertenece a una cola con mas de una pantalla las ordenes de esta se deben balancear entre las otras de la cola. Y si la enciendo el balanceo debe volver a pasar distribuyendo las ordenes de forma equitativa entre las pantallas activas de la cola

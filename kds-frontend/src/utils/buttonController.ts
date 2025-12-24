@@ -24,7 +24,7 @@ export class ButtonController {
 
   // Para evitar que teclas de combo ejecuten acciones simples
   private pendingComboCheck: ReturnType<typeof setTimeout> | null = null;
-  private comboCheckDelay: number = 800; // Esperar 800ms para ver si llega otra tecla del combo
+  private comboCheckDelay: number = 250; // Esperar 250ms para ver si llega otra tecla del combo
 
   constructor(
     actions: ButtonAction[],
@@ -75,6 +75,9 @@ export class ButtonController {
         return; // Combo ejecutado, no hacer nada más
       }
 
+      // Guardar la tecla actual para ejecutar si el combo no se completa
+      const pendingKey = key;
+
       // Si no se completó el combo, esperar un poco por si llega otra tecla
       this.pendingComboCheck = setTimeout(() => {
         this.pendingComboCheck = null;
@@ -84,11 +87,14 @@ export class ButtonController {
           return;
         }
 
-        // No se completó combo, limpiar secuencia
+        // No se completó combo, ejecutar la acción simple de la tecla original
+        this.executeSimpleAction(pendingKey);
+
+        // Limpiar secuencia
         this.keySequence = [];
       }, this.comboCheckDelay);
 
-      return; // No ejecutar acción simple aún
+      return; // No ejecutar acción simple aún, esperar timeout
     }
 
     // Tecla que NO es parte de combo - ejecutar inmediatamente
