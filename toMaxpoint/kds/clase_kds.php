@@ -17,7 +17,8 @@ class kdsRegional extends sql {
           "email" => $row['EMAIL'],
           "password" => $row['PASSWORD'],
           "activo" => (int)$row['ACTIVO'],
-          "impresion_a_tiempo_real" => (int)$row['IMPRESION_A_TIEMPO_REAL']
+          "impresion_a_tiempo_real" => (int)$row['IMPRESION_A_TIEMPO_REAL'],
+          "canales_excluidos" => $row['CANALES_EXCLUIDOS']
         ));
       }
 

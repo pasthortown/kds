@@ -215,11 +215,23 @@ function fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService) {
     });
 
     // Determinar el canal/tipo de servicio
-    var channelName = "POS";
-    var channelType = isFullService ? "FULL SERVICE" : "FAST FOOD";
+    var channelName = "MXP";
 
-    if (mesaId && mesaId !== "" && mesaId !== "0") {
-        channelType = "SALON";
+    // Obtener el channelType del botón visible en cntdr_mn_dnmc_stcn
+    var visibleButton = $("#cntdr_mn_dnmc_stcn").find('input[style*="display: block"], input[style*="display:block"]');
+    var channelType = visibleButton.length > 0 ? visibleButton.val() : "";
+
+    // Fallback si no se encuentra el botón visible
+    if (!channelType) {
+        channelType = isFullService ? "FULL SERVICE" : "FAST FOOD";
+        if (mesaId && mesaId !== "" && mesaId !== "0") {
+            channelType = "SALON";
+        }
+    }
+
+    // Eliminar prefijo "KFC " si existe
+    if (channelType.toUpperCase().indexOf("KFC ") === 0) {
+        channelType = channelType.substring(4);
     }
 
     // Construir el objeto ApiComanda
@@ -289,6 +301,14 @@ function fn_send_to_kds(tomando_pedido, pedido_finalizado) {
     var activo = politicas.activo;
     var impresion_a_tiempo_real = politicas.impresion_a_tiempo_real;
 
+    // Obtener canales excluidos y convertir a array
+    var canalesExcluidos = [];
+    if (politicas.canales_excluidos && politicas.canales_excluidos.trim() !== "") {
+        canalesExcluidos = politicas.canales_excluidos.split(",").map(function(canal) {
+            return canal.trim().toUpperCase();
+        });
+    }
+
     if (activo != 1) return;
     if (!kds_url) {
         console.error("[KDS] URL no configurada en políticas");
@@ -300,12 +320,24 @@ function fn_send_to_kds(tomando_pedido, pedido_finalizado) {
     if (tomando_pedido == true && impresion_a_tiempo_real == true) {
         toSendKDS = fn_get_orden_pedido("TOMANDO PEDIDO");
         if (toSendKDS) {
+            // Verificar si el canal está excluido
+            var channelType = (toSendKDS.channel && toSendKDS.channel.type) ? toSendKDS.channel.type.toUpperCase() : "";
+            if (canalesExcluidos.indexOf(channelType) !== -1) {
+                console.log("[KDS] Canal excluido, no se envía al KDS:", channelType);
+                return;
+            }
             fn_communication_with_kds(toSendKDS);
         }
     }
     if (pedido_finalizado) {
         toSendKDS = fn_get_orden_pedido("PEDIDO TOMADO");
         if (toSendKDS) {
+            // Verificar si el canal está excluido
+            var channelType = (toSendKDS.channel && toSendKDS.channel.type) ? toSendKDS.channel.type.toUpperCase() : "";
+            if (canalesExcluidos.indexOf(channelType) !== -1) {
+                console.log("[KDS] Canal excluido, no se envía al KDS:", channelType);
+                return;
+            }
             fn_communication_with_kds(toSendKDS);
         }
     }
