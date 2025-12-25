@@ -2858,6 +2858,11 @@ function fn_listaPendiente() {
 
             seleccionarPluPicada();
             mostrarNombrePicada();
+
+            // Enviar al KDS en tiempo real
+            if (typeof fn_send_to_kds === 'function') {
+                fn_send_to_kds(true, false);
+            }
         }
     });
     fn_focusLector();
@@ -4732,6 +4737,9 @@ function fn_guardarRespuestasPreguntasSugeridas(total_preguntas, plu_id, idProdu
             }
         }
 
+        if (typeof fn_send_to_kds === 'function') {
+            fn_send_to_kds(true, false);
+        }
         if (descontarPuntos) {
             fn_eliminarPuntosPreguntaSegerida(0, true);
             $("#puntosPorPluNoAgrupado").val(puntosDelPlu);
@@ -5665,6 +5673,9 @@ function fn_verificarElemnto(magp_id, plu_id, codigoValidado, idProductoBase) {
             lc_cantidad = 1;
         }
 
+        if (typeof fn_send_to_kds === 'function') {
+            fn_send_to_kds(true, false);
+        }
     }
 
     else if (fn_numeroPlusListaPendientePayCard() == 1 && fn_obtenerProductoPayCard(fn_datosPlusListaPendientePayCard()) != 0 && fn_obtenerProductoPayCard(plu_id) != 0) {
@@ -5694,6 +5705,10 @@ function fn_verificarElemnto(magp_id, plu_id, codigoValidado, idProductoBase) {
 function fn_kds() {
     send = { "kds": 1 };
     $.getJSON("config_ordenPedido.php", send, function (datos) { });
+    // Enviar al KDS en tiempo real
+    if (typeof fn_send_to_kds === 'function') {
+        fn_send_to_kds(true, false);
+    }
 }
 
 function fnDirectDeleteAllProduct() {
@@ -6045,6 +6060,10 @@ function fn_eliminarElemento(beneficioProducto = '', odp_id_beneficio = '') {
             }
         });
     }
+
+    if (typeof fn_send_to_kds === 'function') {
+        fn_send_to_kds(true, false);
+    }
     fn_focusLector();
 }
 
@@ -6182,6 +6201,9 @@ function fn_cobrar(dop_cuenta) {
     if (!$("#listadoPedido li").length) {
         alertify.alert("No ha seleccionado un producto para cobrar");
     } else {
+        if (typeof fn_send_to_kds === 'function') {
+            fn_send_to_kds(false, true);
+        }
         if (fn_validarCupones(dop_cuenta)) {
             var orden_pedido = $("#hide_odp_id").val();
             var hidVitality = $("#hidVitality").val();
@@ -7349,6 +7371,9 @@ function fn_agregarComentario(comentario, dop_id) {
                 $('[ancestro="' + dop_id + '"]').addClass("focus");
             } else {
                 $("#" + dop_id).addClass("focus");
+            }
+            if (typeof fn_send_to_kds === 'function') {
+                fn_send_to_kds(true, false);
             }
             document.getElementById("cantidad").value = "";
             lc_cantidad = 1;
@@ -10362,6 +10387,9 @@ function fn_obtenerBeneficioCliente() {
         alertify.error(
             "Por favor, escanee la cédula del cliente."
         );
+    }
+    if (typeof fn_send_to_kds === 'function') {
+        fn_send_to_kds(true, false);
     }
 }
 

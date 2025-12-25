@@ -17,17 +17,24 @@ function get_politicas_kds() {
 
 function fn_get_orden_pedido(statusPos) {
     var send;
+    var tipoServicio = $("#txtTipoServicio").val() || "1";
+    var isFullService = tipoServicio === "2"; // 1 = FAST FOOD, 2 = FULL SERVICE
+
+    // Usar siempre el mismo endpoint
+    var endpoint = "cargar_ordenPedidoPendiente";
+
     if ($("#hide_numSplit").val() === "undefined") {
         send = {
-            cargar_ordenPedidoPendiente: 1,
             numSplit: 0
         };
     } else {
         send = {
-            cargar_ordenPedidoPendiente: 1,
             numSplit: $("#hide_numSplit").val()
         };
     }
+
+    // Agregar el endpoint dinámico
+    send[endpoint] = 1;
     send.odp_id = document.getElementById("hide_odp_id").value;
     send.cat_id = rst_categoria;
     data_to_kds = null;
@@ -38,7 +45,7 @@ function fn_get_orden_pedido(statusPos) {
         dataType: "json",
         success: function (datos) {
             if (datos.str > 0) {
-                data_to_kds = fn_prepare_data_to_kds_from_order(datos, statusPos);
+                data_to_kds = fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService);
             }
         }
     });
@@ -50,9 +57,10 @@ function fn_get_orden_pedido(statusPos) {
  * Convierte el formato de MaxPoint al formato ApiComanda esperado por el backend
  * @param {Object} datos - Datos crudos de la orden del POS
  * @param {string} statusPos - Estado del pedido: "TOMANDO PEDIDO" o "PEDIDO TOMADO"
+ * @param {boolean} isFullService - Indica si es Full Service (true) o Fast Food (false)
  * @returns {Object} - Objeto ApiComanda listo para enviar al backend
  */
-function fn_prepare_data_to_kds_from_order(datos, statusPos) {
+function fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService) {
     // Obtener datos del contexto del POS
     var orderId = $("#hide_odp_id").val() || "";
     var customerName = $("#hide_cli_nombres").val() || "";
@@ -97,7 +105,7 @@ function fn_prepare_data_to_kds_from_order(datos, statusPos) {
                 productId: String(item.plu_id),
                 name: item.magp_desc_impresion,
                 amount: item.dop_cantidad || 1,
-                content: [],
+                content: item.notasKDS ? [item.notasKDS] : [],
                 modifier: null,
                 comments: null,
                 _dop_id: item.dop_id,
@@ -171,7 +179,7 @@ function fn_prepare_data_to_kds_from_order(datos, statusPos) {
 
     // Determinar el canal/tipo de servicio
     var channelName = "POS";
-    var channelType = tipoServicio || "MOSTRADOR";
+    var channelType = isFullService ? "FULL SERVICE" : "FAST FOOD";
 
     if (mesaId && mesaId !== "" && mesaId !== "0") {
         channelType = "SALON";
@@ -237,6 +245,9 @@ function fn_send_to_kds(tomando_pedido, pedido_finalizado) {
     kds_url = politicas.url;
     kds_email = politicas.email;
     kds_password = politicas.password;
+
+    if (!kds_email) return;
+    if (!kds_password) return;
 
     var activo = politicas.activo;
     var impresion_a_tiempo_real = politicas.impresion_a_tiempo_real;
