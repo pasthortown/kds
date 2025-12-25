@@ -25,42 +25,55 @@ export class OrderService {
         });
 
         if (existing) {
-          // Ya existe, actualizar la orden y sus items
-          // Primero eliminar items existentes
-          await prisma.orderItem.deleteMany({
-            where: { orderId: existing.id },
-          });
+          // Ya existe, verificar si viene vacía (sin items) para eliminarla
+          if (!order.items || order.items.length === 0) {
+            // Orden vacía - eliminar del sistema
+            await prisma.orderItem.deleteMany({
+              where: { orderId: existing.id },
+            });
+            await prisma.order.delete({
+              where: { id: existing.id },
+            });
+            orderLogger.debug(`Order deleted (empty items): ${existing.identifier}`);
+            // NO agregar a newOrders
+          } else {
+            // Actualizar la orden y sus items
+            // Primero eliminar items existentes
+            await prisma.orderItem.deleteMany({
+              where: { orderId: existing.id },
+            });
 
-          // Actualizar orden y crear nuevos items
-          // NO cambiar screenId para mantener la asignación original
-          await prisma.order.update({
-            where: { externalId: order.externalId },
-            data: {
-              channel: order.channel,
-              customerName: order.customerName,
-              identifier: order.identifier,
-              // No cambiar status ni screenId
-              // Campos opcionales para impresión/visualización
-              comments: order.comments || null,
-              templateHTML: order.templateHTML || null,
-              valuesHTML: order.valuesHTML || null,
-              statusPos: order.statusPos || null,
-              items: {
-                create: order.items.map((item) => ({
-                  name: item.name,
-                  quantity: item.quantity,
-                  notes: item.notes,
-                  modifier: item.modifier,
-                  comments: item.comments,
-                })),
+            // Actualizar orden y crear nuevos items
+            // NO cambiar screenId para mantener la asignación original
+            await prisma.order.update({
+              where: { externalId: order.externalId },
+              data: {
+                channel: order.channel,
+                customerName: order.customerName,
+                identifier: order.identifier,
+                // No cambiar status ni screenId
+                // Campos opcionales para impresión/visualización
+                comments: order.comments || null,
+                templateHTML: order.templateHTML || null,
+                valuesHTML: order.valuesHTML || null,
+                statusPos: order.statusPos || null,
+                items: {
+                  create: order.items.map((item) => ({
+                    name: item.name,
+                    quantity: item.quantity,
+                    notes: item.notes,
+                    modifier: item.modifier,
+                    comments: item.comments,
+                  })),
+                },
               },
-            },
-            include: {
-              items: true,
-            },
-          });
+              include: {
+                items: true,
+              },
+            });
 
-          orderLogger.debug(`Order updated (no rebalancing): ${existing.identifier}`);
+            orderLogger.debug(`Order updated (no rebalancing): ${existing.identifier}`);
+          }
           // NO agregar a newOrders - las actualizaciones no se redistribuyen
         } else {
           // Crear nueva orden

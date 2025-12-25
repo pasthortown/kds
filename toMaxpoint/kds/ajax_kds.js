@@ -46,10 +46,47 @@ function fn_get_orden_pedido(statusPos) {
         success: function (datos) {
             if (datos.str > 0) {
                 data_to_kds = fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService);
+            } else {
+                // Orden vacía - enviar con products vacío para que el KDS la elimine
+                data_to_kds = fn_prepare_empty_order_to_kds(statusPos);
             }
         }
     });
     return data_to_kds;
+}
+
+/**
+ * Prepara una orden vacía para enviar al KDS cuando se eliminan todos los productos
+ * @param {string} statusPos - Estado del pedido
+ * @returns {Object} - Objeto ApiComanda con products vacío
+ */
+function fn_prepare_empty_order_to_kds(statusPos) {
+    var orderId = $("#hide_odp_id").val() || "";
+    var estacionId = $("#hide_est_id").val() || "";
+
+    return {
+        id: orderId,
+        orderId: orderId,
+        createdAt: new Date().toISOString(),
+        channel: {
+            id: 1,
+            name: "POS",
+            type: "FAST FOOD"
+        },
+        cashRegister: {
+            cashier: estacionId,
+            name: "Estación " + estacionId
+        },
+        products: [],
+        otrosDatos: {
+            turno: -1,
+            nroCheque: "1",
+            llamarPor: "",
+            Fecha: new Date().toLocaleString(),
+            Direccion: ""
+        },
+        statusPos: statusPos || "TOMANDO PEDIDO"
+    };
 }
 
 /**
