@@ -177,6 +177,7 @@ docker-data/
 *.sqlite3
 *.sql
 !prisma/migrations/**/*.sql
+!toMaxpoint/**/*.sql
 *.dump
 *.bak
 *.backup
