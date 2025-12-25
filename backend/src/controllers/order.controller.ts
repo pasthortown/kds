@@ -626,3 +626,45 @@ export const deleteTestOrders = asyncHandler(
     });
   }
 );
+
+/**
+ * PATCH /api/orders/:externalId/identifier
+ * Actualiza el identificador (número de orden) de una orden existente
+ * Usado desde factura.php para actualizar el número mostrado con los últimos 2 dígitos del cfac_id
+ */
+export const updateOrderIdentifier = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { externalId } = req.params;
+    const { identifier } = req.body;
+
+    if (!identifier) {
+      throw new AppError(400, 'El campo identifier es requerido');
+    }
+
+    // Buscar la orden por externalId
+    const order = await prisma.order.findUnique({
+      where: { externalId },
+    });
+
+    if (!order) {
+      throw new AppError(404, `Orden no encontrada: ${externalId}`);
+    }
+
+    // Actualizar solo el identifier
+    const updatedOrder = await prisma.order.update({
+      where: { externalId },
+      data: { identifier },
+      include: { items: true },
+    });
+
+    res.json({
+      success: true,
+      message: 'Identificador actualizado',
+      order: {
+        id: updatedOrder.id,
+        externalId: updatedOrder.externalId,
+        identifier: updatedOrder.identifier,
+      },
+    });
+  }
+);

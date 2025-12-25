@@ -258,6 +258,11 @@ router.delete(
   authorize('ADMIN'),
   orderController.deleteTestOrders
 );
+router.patch(
+  '/orders/:externalId/identifier',
+  authenticate,
+  orderController.updateOrderIdentifier
+);
 
 // ============================================
 // CONFIG ROUTES

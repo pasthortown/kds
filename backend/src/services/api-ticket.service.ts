@@ -98,7 +98,15 @@ export class ApiTicketService {
           active: true,
           distribution: 'DISTRIBUTED',
         },
+        include: {
+          screens: {
+            orderBy: { number: 'asc' },
+            take: 1,
+          },
+        },
       });
+
+      let orderAssigned = false;
 
       for (const queue of queues) {
         const distributions = await balancerService.distributeOrders(
@@ -109,6 +117,18 @@ export class ApiTicketService {
         // Enviar a pantallas via WebSocket
         if (distributions.length > 0) {
           await websocketService.distributeOrdersToScreens(distributions);
+          orderAssigned = true;
+        }
+      }
+
+      // FALLBACK: Si no se asignó a ninguna pantalla, asignar a la primera pantalla de la primera cola
+      if (!orderAssigned && queues.length > 0 && queues[0].screens.length > 0) {
+        const fallbackScreenId = queues[0].screens[0].id;
+        for (const order of savedOrders) {
+          if (order.id) {
+            await balancerService.assignOrderToScreen(order.id, fallbackScreenId);
+            logger.info(`[API-TICKET] Orden ${order.id} asignada a pantalla fallback ${fallbackScreenId}`);
+          }
         }
       }
 

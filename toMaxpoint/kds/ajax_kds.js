@@ -107,7 +107,7 @@ function fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService) {
     var tipoServicio = $("#txtTipoServicio").val() || "";
     var mesaId = $("#hide_mesa_id").val() || "";
     var estacionId = $("#hide_est_id").val() || "";
-    var numeroCuenta = $("#hide_numeroCuenta").val() || "1";
+    var numeroCuenta = "--";
 
     // Convertir datos a array para procesar
     var itemsArray = [];
@@ -456,4 +456,97 @@ function fn_refresh_kds_token(callback) {
 
     // Re-autenticar usando variables globales
     fn_authenticate_kds(callback);
+}
+
+/**
+ * Actualiza el número de orden (identifier) en el KDS
+ * Usado desde factura.php para mostrar los últimos 2 dígitos del cfac_id
+ * @param {string} orderId - ID externo de la orden (externalId/odp_id)
+ * @param {string} cfac_id - Número de factura del cual se extraen los últimos 2 dígitos
+ */
+function fn_update_order_id_kds(orderId, cfac_id) {
+    if (!orderId || !cfac_id) {
+        console.warn("[KDS] fn_update_order_id_kds: orderId y cfac_id son requeridos");
+        return;
+    }
+
+    // Obtener políticas si no están cargadas
+    if (!kds_url || !kds_email || !kds_password) {
+        var politicas = get_politicas_kds();
+        if (!politicas) return;
+
+        kds_url = politicas.url;
+        kds_email = politicas.email;
+        kds_password = politicas.password;
+
+        if (!kds_url || !kds_email || !kds_password) {
+            console.error("[KDS] Configuración KDS incompleta");
+            return;
+        }
+
+        if (politicas.activo != 1) {
+            console.log("[KDS] KDS no está activo");
+            return;
+        }
+    }
+
+    // Calcular los últimos 2 dígitos del cfac_id
+    var cfacStr = String(cfac_id);
+    var identifier = cfacStr.slice(-2);
+
+    console.log("[KDS] Actualizando identifier de orden " + orderId + " a: " + identifier);
+
+    // Función interna para enviar la actualización
+    function sendUpdate() {
+        var updateUrl = kds_url + "/orders/" + encodeURIComponent(orderId) + "/identifier";
+
+        $.ajax({
+            url: updateUrl,
+            type: "PATCH",
+            contentType: "application/json",
+            headers: {
+                "Authorization": "Bearer " + kds_auth_token
+            },
+            data: JSON.stringify({ identifier: identifier }),
+            success: function(response) {
+                if (response && response.success) {
+                    console.log("[KDS] Identifier actualizado exitosamente:", response.order);
+                } else {
+                    console.warn("[KDS] Respuesta inesperada:", response);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("[KDS] Error actualizando identifier:", error);
+
+                // Si el error es 401, re-autenticar e intentar de nuevo
+                if (xhr.status === 401) {
+                    console.log("[KDS] Token expirado, re-autenticando...");
+                    kds_auth_token = null;
+                    kds_token_timestamp = null;
+
+                    fn_authenticate_kds(function(success) {
+                        if (success) {
+                            sendUpdate();
+                        }
+                    });
+                } else {
+                    console.error("[KDS] Status:", xhr.status);
+                    console.error("[KDS] Response:", xhr.responseText);
+                }
+            }
+        });
+    }
+
+    // Verificar token y enviar
+    if (!fn_is_token_valid()) {
+        fn_authenticate_kds(function(success) {
+            if (success) {
+                sendUpdate();
+            } else {
+                console.error("[KDS] Error de autenticación, no se pudo actualizar el identifier");
+            }
+        });
+    } else {
+        sendUpdate();
+    }
 }
