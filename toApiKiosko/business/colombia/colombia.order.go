@@ -10,6 +10,7 @@ import (
 	"lib-shared/protos/lib_gen_proto"
 	"lib-shared/utils"
 	"lib-shared/utils/logger"
+	"new-order-store/internals/domain/business"
 	"new-order-store/internals/domain/business/colombia/masterdataclient"
 	"new-order-store/internals/domain/business/colombia/printservice"
 	"new-order-store/internals/domain/execute"
@@ -264,6 +265,11 @@ func (o *OrderStore) CreateOrderKioskEfectivo() (err error) {
 		order.CfacId = *cfacId
 		o.SendOrderResponse(order)
 		o.SendOrderTurner(*cfacId)
+
+		// Enviar orden al KDS Regional
+		kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+		kdsService.SendOrderToKDSAsync()
+
 		defer func() {
 			errPrintService := o.WsPrintService(connection, *cfacId, idCabeceraOrdenPedido, *idUserPos, nil, resultStation)
 			if errPrintService != nil {
@@ -873,6 +879,10 @@ func (o *OrderStore) CreateOrderKioskTarjeta() (err error) {
 		o.regionalKiosk.GetSurvey(dataTypeDocument, *cfacId, *idClient)
 	}
 
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
+
 	//procesos de impresion de tarjeta
 	defer func() {
 		errPrintService := o.WsPrintService(connection,
@@ -1046,6 +1056,11 @@ func (o *OrderStore) CreateOrderKioskPaid() (err error) {
 	} else {
 		return fmt.Errorf("[colombia.order.go]marshal factura SP PAID: %w", err)
 	}
+
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
+
 	//procesos de impresion de tarjeta
 	defer func() {
 		errPrintService := o.WsPrintService(connection,

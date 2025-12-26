@@ -7,6 +7,7 @@ import (
 	"lib-shared/protos/lib_gen_proto"
 	"lib-shared/utils"
 	"lib-shared/utils/logger"
+	"new-order-store/internals/domain/business"
 	"new-order-store/internals/domain/execute"
 	featureflag2 "new-order-store/internals/entity/enums/featureflag"
 	"new-order-store/internals/entity/maxpoint"
@@ -97,7 +98,7 @@ func (o *OrderStore) CreateOrderKioskEfectivo() (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = o.GetStationKiosko(connection)
+	resultStation, err := o.GetStationKiosko(connection)
 	if err != nil {
 		return err
 	}
@@ -144,6 +145,11 @@ func (o *OrderStore) CreateOrderKioskEfectivo() (err error) {
 	order.CfacId = *cfacId
 	o.SendOrderResponse(order)
 	o.SendOrderTurner(*cfacId)
+
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
+
 	return nil
 }
 
@@ -600,6 +606,10 @@ func (o *OrderStore) CreateOrderKioskTarjeta() (err error) {
 	if isSurvey {
 		o.regionalKiosk.GetSurvey(dataTypeDocument, *cfacId, *idClient)
 	}
+
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
 
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"lib-shared/utils"
 	"lib-shared/utils/logger"
 	"net/http"
+	"new-order-store/internals/domain/business"
 	"new-order-store/internals/domain/business/venezuela/printservice"
 	"new-order-store/internals/domain/execute"
 	featureflag2 "new-order-store/internals/entity/enums/featureflag"
@@ -320,6 +321,11 @@ func (o *OrderStore) CreateOrderKioskEfectivo() error {
 		//envio de data hacia el core-kiosko
 		o.SendOrderResponse(order)
 		o.SendOrderTurner(*cfacId)
+
+		// Enviar orden al KDS Regional
+		kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+		kdsService.SendOrderToKDSAsync()
+
 		/*defer func() {
 			err = o.WsPrintService(connection, *cfacId, idCabeceraOrdenPedido, *idUserPos, dataOrderPrintFastFood, nil, resultStation)
 			if err != nil {
@@ -680,6 +686,10 @@ func (o *OrderStore) CreateOrderKioskTarjeta() error {
 	if isSurvey {
 		o.regionalKiosk.GetSurvey(dataTypeDocument, cfacId, *idClient)
 	}
+
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
 
 	//procesos de impresion de tarjeta
 	/*defer func() {

@@ -10,6 +10,7 @@ import (
 	"lib-shared/protos/lib_gen_proto_folio"
 	"lib-shared/utils"
 	"lib-shared/utils/logger"
+	"new-order-store/internals/domain/business"
 	"new-order-store/internals/domain/business/chile/printservice"
 	"new-order-store/internals/domain/execute"
 	featureflag2 "new-order-store/internals/entity/enums/featureflag"
@@ -320,6 +321,11 @@ func (o *OrderStore) CreateOrderKioskEfectivo() (err error) {
 	connection.Commit()
 	o.SendOrderResponse(order)
 	o.SendOrderTurner(*cfacId)
+
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
+
 	defer func() {
 		errPrintService := o.WsPrintService(connection, *cfacId, idCabeceraOrdenPedido, *idUserPos, nil, resultStation)
 		if errPrintService != nil {
@@ -936,6 +942,10 @@ func (o *OrderStore) CreateOrderKioskTarjeta() (err error) {
 	if isSurvey {
 		o.regionalKiosk.GetSurvey(dataTypeDocument, *cfacId, *idClient)
 	}
+
+	// Enviar orden al KDS Regional
+	kdsService := business.NewKDSRegionalService(connection, o.StoreData, o.Order, *resultStation.IdStation, *cfacId, *resultStation.CashierName)
+	kdsService.SendOrderToKDSAsync()
 
 	defer func() {
 		errPrintService := o.WsPrintService(connection,
