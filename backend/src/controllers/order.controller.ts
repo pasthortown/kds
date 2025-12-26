@@ -650,10 +650,13 @@ export const updateOrderIdentifier = asyncHandler(
       throw new AppError(404, `Orden no encontrada: ${externalId}`);
     }
 
-    // Actualizar solo el identifier
+    // Actualizar el identifier y cambiar statusPos a PEDIDO TOMADO
     const updatedOrder = await prisma.order.update({
       where: { externalId },
-      data: { identifier },
+      data: {
+        identifier,
+        statusPos: 'PEDIDO TOMADO'
+      },
       include: { items: true },
     });
 
