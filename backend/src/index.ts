@@ -23,6 +23,9 @@ const httpServer = createServer(app);
 // MIDDLEWARES
 // ============================================
 
+// Confiar en proxy (nginx)
+app.set('trust proxy', 1);
+
 // Seguridad
 app.use(helmet());
 
