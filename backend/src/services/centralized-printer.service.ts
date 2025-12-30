@@ -262,14 +262,24 @@ export class CentralizedPrinterService {
     }
 
     try {
-      // Intentar conectar al servicio (puede ser un health check o simplemente verificar la URL)
-      const response = await axios.get(config.url.replace('/Impresion', ''), {
+      // Hacer POST con payload mínimo para verificar que el servicio responde
+      const response = await axios.post(config.url, {}, {
         timeout: 5000,
+        headers: { 'Content-Type': 'application/json' },
+        validateStatus: () => true, // Aceptar cualquier código de respuesta
       });
 
+      // Si responde (aunque sea con error de validación), el servicio está activo
+      if (response.status < 500) {
+        return {
+          success: true,
+          message: `Servicio activo. Respuesta: ${response.data?.mensaje || response.status}`,
+        };
+      }
+
       return {
-        success: true,
-        message: `Conexión exitosa. Estado: ${response.status}`,
+        success: false,
+        message: `Error del servidor: ${response.status}`,
       };
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)

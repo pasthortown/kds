@@ -171,32 +171,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # ---------------------------------------------------------------------------
-  # Sync Service - Sincronizacion MaxPoint -> KDS2 (.NET)
-  # ---------------------------------------------------------------------------
-  sync:
-    build:
-      context: ..
-      dockerfile: infra/Dockerfile.sync
-    container_name: kds-sync
-    restart: unless-stopped
-    environment:
-      TZ: ${TZ:-America/Bogota}
-      ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8100
-    volumes:
-      # Logs persistentes
-      - sync_logs:/app/logs
-    ports:
-      - "${SYNC_PORT:-8100}:8100"
-    networks:
-      - kds-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "5"
-
 # -----------------------------------------------------------------------------
 # Volumenes persistentes
 # -----------------------------------------------------------------------------
@@ -207,9 +181,6 @@ volumes:
   redis_data:
     driver: local
     name: kds-redis-data
-  sync_logs:
-    driver: local
-    name: kds-sync-logs
 
 # -----------------------------------------------------------------------------
 # Red interna

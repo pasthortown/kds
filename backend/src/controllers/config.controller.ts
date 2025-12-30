@@ -5,6 +5,7 @@ import { pollingService } from '../services/polling.service';
 import { printerService } from '../services/printer.service';
 import { centralizedPrinterService } from '../services/centralized-printer.service';
 import { apiTicketService, ApiComanda } from '../services/api-ticket.service';
+import { websocketService } from '../services/websocket.service';
 import { AuthenticatedRequest } from '../types';
 import { asyncHandler, AppError } from '../middlewares/error.middleware';
 
@@ -156,11 +157,10 @@ export const forcePoll = asyncHandler(
  */
 export const healthCheck = asyncHandler(
   async (_req: Request, res: Response) => {
-    const pollingStatus = await pollingService.getStatus();
     const checks = {
       database: false,
       redis: false,
-      polling: pollingStatus.running,
+      websocket: false,
     };
 
     // Check database
@@ -177,6 +177,14 @@ export const healthCheck = asyncHandler(
       checks.redis = pong === 'PONG';
     } catch {
       checks.redis = false;
+    }
+
+    // Check WebSocket
+    try {
+      const io = websocketService.getIO();
+      checks.websocket = io !== null;
+    } catch {
+      checks.websocket = false;
     }
 
     const healthy = checks.database && checks.redis;

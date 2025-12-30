@@ -14,6 +14,7 @@ import { screenService } from './services/screen.service';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
 import { logger } from './utils/logger';
+import { setupSwagger } from './config/swagger';
 
 // Crear aplicación Express
 const app = express();
@@ -64,6 +65,12 @@ app.use((req, _res, next) => {
   }
   next();
 });
+
+// ============================================
+// SWAGGER DOCUMENTATION
+// ============================================
+
+setupSwagger(app);
 
 // ============================================
 // ROUTES

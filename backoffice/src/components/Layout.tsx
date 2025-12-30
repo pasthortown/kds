@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, theme, Switch, Tooltip, Space, Badge, Modal, Form, Input, InputNumber, message } from 'antd';
+import { Layout as AntLayout, Menu, Button, Avatar, Dropdown, theme, Space, Badge } from 'antd';
 import type { MenuProps } from 'antd';
 import {
   DashboardOutlined,
@@ -14,8 +14,6 @@ import {
   MenuUnfoldOutlined,
   OrderedListOutlined,
   TeamOutlined,
-  ApiOutlined,
-  DisconnectOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../store/authStore';
@@ -25,70 +23,18 @@ const { Header, Sider, Content } = AntLayout;
 
 export function Layout() {
   const [collapsed, setCollapsed] = useState(false);
-  const [configModalOpen, setConfigModalOpen] = useState(false);
-  const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
   const { token } = theme.useToken();
 
-  const {
-    isTestMode,
-    isConnected,
-    isConnecting,
-    savedConnection,
-    connectionError,
-    enableTestMode,
-    disableTestMode,
-    connect,
-  } = useTestModeStore();
+  // Modo prueba DESACTIVADO permanentemente
+  const { isTestMode, isConnected } = useTestModeStore();
+  void isTestMode; void isConnected; // Suppress unused warnings
 
   const isAdmin = user?.role === 'ADMIN';
   const isOperator = user?.role === 'OPERATOR';
   const isViewer = user?.role === 'VIEWER';
-
-  // Manejar toggle de modo prueba
-  const handleTestModeToggle = async (checked: boolean) => {
-    if (checked) {
-      if (savedConnection) {
-        const success = await enableTestMode();
-        if (success) {
-          message.success('Modo prueba activado - Conectado a SQL Server del local');
-        } else {
-          message.error(connectionError || 'Error al conectar');
-          setConfigModalOpen(true);
-        }
-      } else {
-        setConfigModalOpen(true);
-      }
-    } else {
-      await disableTestMode();
-      message.info('Modo prueba desactivado');
-    }
-  };
-
-  // Guardar configuración y conectar
-  const handleConfigSave = async () => {
-    try {
-      const values = await form.validateFields();
-      const success = await connect({
-        host: values.host,
-        port: values.port || 1433,
-        user: values.user,
-        password: values.password,
-        database: values.database,
-      });
-
-      if (success) {
-        message.success('Conectado exitosamente');
-        setConfigModalOpen(false);
-      } else {
-        message.error(connectionError || 'Error al conectar');
-      }
-    } catch {
-      // Validación falló
-    }
-  };
 
   // Menu items filtrados por rol
   const menuItems: MenuProps['items'] = [
@@ -264,7 +210,7 @@ export function Layout() {
           </div>
 
           <Space size="middle">
-            {/* Toggle de Modo Prueba - Solo para ADMIN */}
+            {/* Toggle de Modo Prueba - DESACTIVADO PERMANENTEMENTE
             {isAdmin && (
               <Tooltip
                 title={
@@ -298,6 +244,7 @@ export function Layout() {
                 </Space>
               </Tooltip>
             )}
+            */}
 
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Button type="text" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -320,65 +267,7 @@ export function Layout() {
         </Content>
       </AntLayout>
 
-      {/* Modal de configuración de conexión */}
-      <Modal
-        title="Configurar Conexión SQL Server"
-        open={configModalOpen}
-        onCancel={() => setConfigModalOpen(false)}
-        onOk={handleConfigSave}
-        okText="Conectar"
-        cancelText="Cancelar"
-        confirmLoading={isConnecting}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            host: savedConnection?.host || '',
-            port: savedConnection?.port || 1433,
-            user: savedConnection?.user || '',
-            password: savedConnection?.password || '',
-            database: savedConnection?.database || 'KDS2',
-          }}
-        >
-          <Form.Item
-            name="host"
-            label="Host / IP"
-            rules={[{ required: true, message: 'Ingrese el host' }]}
-          >
-            <Input placeholder="192.168.1.100" />
-          </Form.Item>
-          <Form.Item name="port" label="Puerto">
-            <InputNumber style={{ width: '100%' }} min={1} max={65535} />
-          </Form.Item>
-          <Form.Item
-            name="user"
-            label="Usuario"
-            rules={[{ required: true, message: 'Ingrese el usuario' }]}
-          >
-            <Input placeholder="sa" />
-          </Form.Item>
-          <Form.Item
-            name="password"
-            label="Contraseña"
-            rules={[{ required: true, message: 'Ingrese la contraseña' }]}
-          >
-            <Input.Password placeholder="********" />
-          </Form.Item>
-          <Form.Item
-            name="database"
-            label="Base de datos"
-            rules={[{ required: true, message: 'Ingrese la base de datos' }]}
-          >
-            <Input placeholder="KDS2" />
-          </Form.Item>
-        </Form>
-        {connectionError && (
-          <div style={{ color: '#ff4d4f', marginTop: 8 }}>
-            Error: {connectionError}
-          </div>
-        )}
-      </Modal>
+      {/* Modal de configuración de conexión - DESACTIVADO */}
     </AntLayout>
   );
 }

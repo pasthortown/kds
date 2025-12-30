@@ -9,7 +9,7 @@ import * as queueController from '../controllers/queue.controller';
 import * as channelController from '../controllers/channel.controller';
 import * as orderController from '../controllers/order.controller';
 import * as configController from '../controllers/config.controller';
-import * as mirrorController from '../controllers/mirror.controller';
+// import * as mirrorController from '../controllers/mirror.controller'; // DESACTIVADO
 import * as reportController from '../controllers/report.controller';
 
 const router = Router();
@@ -357,25 +357,16 @@ router.post(
 );
 
 // ============================================
-// MIRROR ROUTES (Espejo de KDS remoto - SOLO LECTURA)
+// MIRROR ROUTES - DESACTIVADO
+// El modo mirror ha sido deshabilitado permanentemente
 // ============================================
-router.post(
-  '/mirror/configure',
-  authenticate,
-  authorize('ADMIN'),
-  mirrorController.configureMirror
-);
-router.get('/mirror/test', authenticate, mirrorController.testMirrorConnection);
-router.get('/mirror/stats', authenticate, mirrorController.getMirrorStats);
-router.get('/mirror/orders', authenticate, mirrorController.getMirrorOrders);
-router.get('/mirror/screens', authenticate, mirrorController.getMirrorScreens);
-router.get('/mirror/queues', authenticate, mirrorController.getMirrorQueues);
-router.post(
-  '/mirror/disconnect',
-  authenticate,
-  authorize('ADMIN'),
-  mirrorController.disconnectMirror
-);
+// router.post('/mirror/configure', authenticate, authorize('ADMIN'), mirrorController.configureMirror);
+// router.get('/mirror/test', authenticate, mirrorController.testMirrorConnection);
+// router.get('/mirror/stats', authenticate, mirrorController.getMirrorStats);
+// router.get('/mirror/orders', authenticate, mirrorController.getMirrorOrders);
+// router.get('/mirror/screens', authenticate, mirrorController.getMirrorScreens);
+// router.get('/mirror/queues', authenticate, mirrorController.getMirrorQueues);
+// router.post('/mirror/disconnect', authenticate, authorize('ADMIN'), mirrorController.disconnectMirror);
 
 // ============================================
 // REPORT ROUTES

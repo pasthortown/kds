@@ -238,7 +238,9 @@ async function main() {
   // =====================================================
   await prisma.generalConfig.upsert({
     where: { id: 'general' },
-    update: {},
+    update: {
+      ticketMode: 'API',  // Forzar modo API por defecto
+    },
     create: {
       id: 'general',
       testMode: false,
@@ -256,7 +258,7 @@ async function main() {
       countProducts: false,
     },
   });
-  console.log('GeneralConfig created');
+  console.log('GeneralConfig created/updated with ticketMode: API');
 
   // =====================================================
   // CANALES GLOBALES

@@ -165,22 +165,20 @@ export const configApi = {
   testCentralizedPrint: () => api.post('/config/print/test-centralized'),
 };
 
-// Mirror KDS (Espejo de órdenes del local - SOLO LECTURA)
+// Mirror KDS - DESACTIVADO
+// El modo mirror ha sido deshabilitado permanentemente
 export const mirrorApi = {
-  configure: (data: {
-    host: string;
-    port?: number;
-    user: string;
-    password: string;
-    database: string;
-  }) => api.post('/mirror/configure', data),
-  test: () => api.get('/mirror/test'),
-  stats: () => api.get('/mirror/stats'),
-  getOrders: (params?: { screen?: string; queue?: string }) =>
-    api.get('/mirror/orders', { params }),
-  getScreens: () => api.get('/mirror/screens'),
-  getQueues: () => api.get('/mirror/queues'),
-  disconnect: () => api.post('/mirror/disconnect'),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  configure: (_data: { host: string; port?: number; user: string; password: string; database: string }) =>
+    Promise.resolve({ data: { success: false, message: 'Modo mirror deshabilitado permanentemente' } }),
+  test: () => Promise.resolve({ data: { success: false, message: 'Modo mirror deshabilitado' } }),
+  stats: () => Promise.resolve({ data: { connected: false, ordersOnScreen: 0, screens: [] as string[], queues: [] as string[], mode: 'local-postgresql' as const } }),
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getOrders: (_params?: { screen?: string; queue?: string }) =>
+    Promise.resolve({ data: { success: true, orders: [], total: 0 } }),
+  getScreens: () => Promise.resolve({ data: { success: true, screens: [] as string[] } }),
+  getQueues: () => Promise.resolve({ data: { success: true, queues: [] as string[] } }),
+  disconnect: () => Promise.resolve({ data: { success: true, message: 'Desconectado' } }),
 };
 
 // Reports (Reportes del Dashboard)

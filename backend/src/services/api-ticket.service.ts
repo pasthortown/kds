@@ -297,7 +297,7 @@ export class ApiTicketService {
       customerName: comanda.customer?.name || comanda.otrosDatos?.llamarPor || '',
       identifier: comanda.otrosDatos?.nroCheque || comanda.orderId,
       items,
-      createdAt: comanda.createdAt ? new Date(comanda.createdAt) : new Date(),
+      createdAt: new Date(), // Siempre usar hora del servidor (el createdAt del cliente no es confiable)
     };
 
     // Agregar campos opcionales solo si tienen valor
