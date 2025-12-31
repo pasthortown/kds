@@ -286,7 +286,7 @@ export class CentralizedPrinterService {
         transaccion: transaccion,
         fecha: this.formatDate(createdAt),
         cajero: '',
-        observacion: order.comments || '',
+        observacion: [order.customerName, order.channel, order.comments].filter(Boolean).join(', '),
         numeroCuenta: '1',
         fecha_ingresa: this.formatDate(createdAt),
         fecha_hasta: this.formatDate(now),
