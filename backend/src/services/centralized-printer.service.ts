@@ -1,60 +1,38 @@
 import axios from 'axios';
 import { prisma } from '../config/database';
-import { Order, PrinterConfig } from '../types';
+import { Order, OrderItem } from '../types';
 import { printerLogger } from '../utils/logger';
 
 /**
  * Interface para el payload de impresión centralizada
- * Compatible con el servicio .NET anterior
+ * Compatible con el servicio de impresión .NET
  */
 export interface CentralizedPrintPayload {
-  comanda: {
-    id: string;
-    orderId: string;
-    createdAt: string;
-    channel: {
-      id: number;
-      name: string;
-      type: string;
-    };
-    cashRegister: {
-      cashier: string;
-      name: string;
-    };
-    customer: {
-      name: string;
-    };
-    products: CentralizedProduct[];
-    otrosDatos: {
-      turno: number | string;
-      nroCheque: string;
-      llamarPor: string;
-      Fecha: string;
-      Direccion: string;
-    };
+  idImpresora: string;
+  aplicaBalanceo: string;
+  impresorasBalancear: string;
+  idPlantilla: string;
+  idMarca: string;
+  data: {
+    num_ficha: string;
+    empresaDelivery: string;
+    transaccion: string;
+    fecha: string;
+    cajero: string;
+    observacion: string;
+    numeroCuenta: string;
+    fecha_ingresa: string;
+    fecha_hasta: string;
   };
-  configuracion: {
-    columnas: number;
-    impresora: string;
-    impresoraIP: string;
-    impresoraPuerto: number;
-  };
+  registros: RegistroDetalle[];
+  footer: string[];
 }
 
-interface CentralizedProduct {
-  productId: string;
-  name: string;
-  amount: number;
-  category?: string;
-  content: string[];
-  products: CentralizedSubProduct[];
-}
-
-interface CentralizedSubProduct {
-  productId: string;
-  name: string;
-  amount: number;
-  content: string[];
+interface RegistroDetalle {
+  registrosDetalle: Array<{
+    producto: string;
+    cantidad: string;
+  }>;
 }
 
 /**
@@ -78,7 +56,11 @@ export class CentralizedPrinterService {
   /**
    * Obtiene la configuración del servicio centralizado
    */
-  async getCentralizedConfig(): Promise<{ url: string; port: number } | null> {
+  async getCentralizedConfig(): Promise<{
+    url: string;
+    port: number;
+    printTemplate: string;
+  } | null> {
     const config = await prisma.generalConfig.findUnique({
       where: { id: 'general' },
     });
@@ -90,28 +72,51 @@ export class CentralizedPrinterService {
     return {
       url: config.centralizedPrintUrl,
       port: config.centralizedPrintPort || 5000,
+      printTemplate: config.printTemplate || '',
     };
+  }
+
+  /**
+   * Obtiene el nombre de la impresora configurada para una pantalla
+   */
+  async getPrinterNameForScreen(screenId: string): Promise<string> {
+    const screen = await prisma.screen.findUnique({
+      where: { id: screenId },
+      select: { printerName: true, name: true },
+    });
+
+    // Usar printerName si está configurado, sino usar el nombre de la pantalla
+    return screen?.printerName || screen?.name || 'default';
   }
 
   /**
    * Imprime una orden usando el servicio centralizado
    */
-  async printOrder(
-    order: Order,
-    printerConfig: PrinterConfig
-  ): Promise<boolean> {
-    if (!printerConfig.enabled) {
-      printerLogger.debug(`Printer ${printerConfig.name} is disabled`);
-      return false;
-    }
-
+  async printOrder(order: Order, screenId: string): Promise<boolean> {
     const centralConfig = await this.getCentralizedConfig();
     if (!centralConfig) {
       printerLogger.error('Centralized print service not configured');
       return false;
     }
 
-    const payload = this.formatOrderForCentralizedPrint(order, printerConfig);
+    if (!centralConfig.printTemplate) {
+      printerLogger.error('Print template (formatoXML) not configured');
+      return false;
+    }
+
+    const printerName = await this.getPrinterNameForScreen(screenId);
+    if (!printerName) {
+      printerLogger.warn(`No printer configured for screen ${screenId}`);
+      return false;
+    }
+
+    const payload = this.formatOrderForCentralizedPrint(
+      order,
+      printerName,
+      centralConfig.printTemplate
+    );
+
+    printerLogger.debug('Centralized print payload:', { payload });
 
     for (let attempt = 1; attempt <= this.retries; attempt++) {
       try {
@@ -124,7 +129,7 @@ export class CentralizedPrinterService {
         });
 
         printerLogger.info(
-          `Order ${order.identifier} sent to centralized print service for ${printerConfig.name}`
+          `Order ${order.identifier} sent to centralized print service (printer: ${printerName})`
         );
         return true;
       } catch (error) {
@@ -156,6 +161,11 @@ export class CentralizedPrinterService {
     payload: CentralizedPrintPayload
   ): Promise<void> {
     try {
+      // Log del payload que se envía
+      printerLogger.info('=== CENTRALIZED PRINT REQUEST ===');
+      printerLogger.info(`URL: ${url}`);
+      printerLogger.info(`Payload: ${JSON.stringify(payload, null, 2)}`);
+
       const response = await axios.post(url, payload, {
         timeout: this.timeout,
         headers: {
@@ -163,93 +173,155 @@ export class CentralizedPrinterService {
         },
       });
 
+      // Log de la respuesta completa
+      printerLogger.info('=== CENTRALIZED PRINT RESPONSE ===');
+      printerLogger.info(`Status: ${response.status}`);
+      printerLogger.info(`Data: ${JSON.stringify(response.data)}`);
+
+      // Verificar error HTTP
       if (response.status >= 400) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      printerLogger.debug('Centralized print response:', { data: response.data });
+      // Verificar error en la respuesta del servicio
+      if (response.data?.error === true) {
+        throw new Error(`Print service error: ${response.data.mensaje || 'Unknown error'}`);
+      }
     } catch (error: unknown) {
+      printerLogger.error('=== CENTRALIZED PRINT ERROR ===');
       if (axios.isAxiosError(error)) {
+        printerLogger.error(`Axios Error: ${error.message}`);
+        printerLogger.error(`Response Status: ${error.response?.status}`);
+        printerLogger.error(`Response Data: ${JSON.stringify(error.response?.data)}`);
         throw new Error(
-          `Centralized print service error: ${error.message} - ${error.response?.data || ''}`
+          `Centralized print service error: ${error.message} - ${JSON.stringify(error.response?.data) || ''}`
         );
       }
+      printerLogger.error(`Unknown Error: ${error}`);
       throw error;
     }
   }
 
   /**
+   * Formatea una fecha al formato dd/MM/yyyy HH:mm:ss
+   */
+  private formatDate(date: Date): string {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const d = new Date(date);
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  /**
+   * Construye los registros de productos para impresión
+   * Formato: producto principal, modificadores con " - ", comentarios
+   */
+  private buildRegistros(items: OrderItem[]): RegistroDetalle[] {
+    const registrosDetalle: Array<{ producto: string; cantidad: string }> = [];
+
+    for (const item of items) {
+      // 1. Producto principal
+      registrosDetalle.push({
+        producto: item.name,
+        cantidad: item.quantity.toString(),
+      });
+
+      // 2. Modificadores (si existen) - separados por coma
+      if (item.modifier) {
+        const modifiers = item.modifier.split(',').map(m => m.trim());
+        for (const mod of modifiers) {
+          if (mod) {
+            registrosDetalle.push({
+              producto: ` - ${mod}`,
+              cantidad: ' ',
+            });
+          }
+        }
+      }
+
+      // 3. Comentarios del item (si existen)
+      if (item.comments) {
+        registrosDetalle.push({
+          producto: `>> ${item.comments}`,
+          cantidad: ' ',
+        });
+      }
+
+      // NOTA: item.notes NO se imprime según especificación
+    }
+
+    // Retornar como array con un objeto que contiene registrosDetalle
+    return [{ registrosDetalle }];
+  }
+
+  /**
    * Formatea una orden para el servicio centralizado
-   * Compatible con el formato del sistema .NET anterior
    */
   private formatOrderForCentralizedPrint(
     order: Order,
-    printerConfig: PrinterConfig
+    printerName: string,
+    printTemplate: string
   ): CentralizedPrintPayload {
-    const [channelName, channelType] = (order.channel || '-').split('-');
+    const now = new Date();
+    const createdAt = new Date(order.createdAt);
 
-    // Convertir items a formato de productos
-    const products: CentralizedProduct[] = [];
-    let currentProduct: CentralizedProduct | null = null;
+    // Obtener últimos 2 dígitos del identifier para transaccion
+    const transaccion = order.identifier.slice(-2);
 
-    for (const item of order.items) {
-      // Si el nombre empieza con espacios, es un subproducto
-      if (item.name.startsWith('  ')) {
-        if (currentProduct) {
-          currentProduct.products.push({
-            productId: item.id || '',
-            name: item.name.trim(),
-            amount: item.quantity,
-            content: item.notes ? [item.notes] : [],
-          });
-        }
-      } else {
-        // Es un producto principal
-        currentProduct = {
-          productId: item.id || '',
-          name: item.name,
-          amount: item.quantity,
-          category: '',
-          content: item.notes ? [item.notes] : [],
-          products: [],
-        };
-        products.push(currentProduct);
-      }
-    }
+    // Determinar empresaDelivery basado en el canal
+    const empresaDelivery = this.getEmpresaDelivery(order.channel);
 
     return {
-      comanda: {
-        id: order.id,
-        orderId: order.externalId,
-        createdAt: order.createdAt.toISOString(),
-        channel: {
-          id: 1,
-          name: channelName || order.channel,
-          type: channelType || '',
-        },
-        cashRegister: {
-          cashier: '',
-          name: '',
-        },
-        customer: {
-          name: order.customerName || '',
-        },
-        products,
-        otrosDatos: {
-          turno: -1,
-          nroCheque: order.identifier,
-          llamarPor: order.customerName || '',
-          Fecha: order.createdAt.toLocaleString('es-EC'),
-          Direccion: '',
-        },
+      idImpresora: printerName,
+      aplicaBalanceo: '',
+      impresorasBalancear: '',
+      idPlantilla: printTemplate,  // XML completo de la plantilla
+      idMarca: '',
+      data: {
+        num_ficha: order.identifier,
+        empresaDelivery: empresaDelivery,
+        transaccion: transaccion,
+        fecha: this.formatDate(createdAt),
+        cajero: '',
+        observacion: order.comments || '',
+        numeroCuenta: '1',
+        fecha_ingresa: this.formatDate(createdAt),
+        fecha_hasta: this.formatDate(now),
       },
-      configuracion: {
-        columnas: 42, // Se obtendrá de la configuración general
-        impresora: printerConfig.name,
-        impresoraIP: printerConfig.ip,
-        impresoraPuerto: printerConfig.port,
-      },
+      registros: this.buildRegistros(order.items),
+      footer: [],
     };
+  }
+
+  /**
+   * Determina el código de empresa delivery basado en el canal
+   */
+  private getEmpresaDelivery(channel: string): string {
+    const channelLower = (channel || '').toLowerCase();
+
+    if (channelLower.includes('pedidosya') || channelLower.includes('pya')) {
+      return 'pya';
+    }
+    if (channelLower.includes('uber')) {
+      return 'uber';
+    }
+    if (channelLower.includes('rappi')) {
+      return 'rappi';
+    }
+    if (channelLower.includes('didi')) {
+      return 'didi';
+    }
+    if (channelLower.includes('delivery') || channelLower.includes('domicilio')) {
+      return 'del';
+    }
+    if (channelLower.includes('llevar') || channelLower.includes('para llevar')) {
+      return 'llv';
+    }
+    if (channelLower.includes('salon') || channelLower.includes('salón')) {
+      return 'sal';
+    }
+
+    // Por defecto, usar primeras 3 letras del canal
+    return channel ? channel.substring(0, 3).toLowerCase() : 'ped';
   }
 
   /**

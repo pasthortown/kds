@@ -241,15 +241,13 @@ export class WebSocketService {
       if (order) {
         socket.emit('order:finished', { orderId: data.orderId });
 
-        // Imprimir la orden en la impresora asignada a la pantalla
+        // Imprimir la orden según el modo configurado (LOCAL o CENTRALIZED)
         const printerConfig = await printerService.getPrinterForScreen(data.screenId);
-        if (printerConfig && printerConfig.enabled) {
-          const printed = await printerService.printOrder(order, printerConfig);
-          if (printed) {
-            wsLogger.info(`Order ${order.identifier} printed successfully`);
-          } else {
-            wsLogger.warn(`Failed to print order ${order.identifier}`);
-          }
+        const printed = await printerService.printOrder(order, data.screenId, printerConfig);
+        if (printed) {
+          wsLogger.info(`Order ${order.identifier} printed successfully`);
+        } else {
+          wsLogger.debug(`Order ${order.identifier} not printed (no printer or disabled)`);
         }
 
         // Actualizar órdenes de la pantalla

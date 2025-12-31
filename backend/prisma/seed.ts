@@ -136,7 +136,7 @@ const baseAppearance = {
   // Comentarios
   commentsFontFamily: 'monospace',
   commentsFontSize: 'large',
-  commentsFontWeight: 'normal',
+  commentsFontWeight: '600',  // Semi-Bold
   commentsFontStyle: 'italic',
   commentsTextColor: '#4b824d',
   commentsBgColor: '',
@@ -199,6 +199,15 @@ const baseKeyboard = {
   debounceTime: 200,
 };
 
+// Configuración de impresión centralizada
+const centralizedPrintConfig = {
+  printMode: 'CENTRALIZED',
+  centralizedPrintUrl: 'http://10.101.27.21:5000/api/ImpresionTickets/Impresion',
+  centralizedPrintPort: 5000,
+  printTemplateType: 'orden_pedido',
+  printTemplate: `<?xml version="1.0" encoding="utf-8"?><plantilla id="impresionOrdenPedidoLocal"><salto/><parametro alineacion="centrado" estilo="bold|fontB">datafono</parametro><salto/><etiqueta estilo="bold|fontB" tamano="2" alineacion="izquierda">    #Medio     #Pedido       #Paquete     #Bebidas </etiqueta><salto/><etiqueta estilo="default" alineacion="izquierda">_________ _________ _________ _________</etiqueta><salto/><etiqueta estilo="default" alineacion="izquierda">| </etiqueta><parametro estilo="fontB" alineacion="izquierda">medio</parametro><etiqueta estilo="default" alineacion="izquierda">    | |       | |       | |       |</etiqueta><salto/><etiqueta estilo="default">----------------------------------------</etiqueta><salto/><parametro alineacion="centrado" estilo="bold|fontB">tituloPickup</parametro><salto/><parametro alineacion="centrado" estilo="bold|fontB">tipoPickup</parametro><salto/><etiqueta estilo="bold" alineacion="izquierda">MESA: </etiqueta><parametro estilo="bold" alineacion="izquierda">mesa</parametro><salto/><etiqueta estilo="bold" alineacion="izquierda">TRANSACIÓN #: </etiqueta><parametro estilo="bold" alineacion="izquierda">transaccion</parametro><salto/><etiqueta estilo="bold" alineacion="izquierda"># Cuenta:</etiqueta><parametro estilo="bold" alineacion="izquierda">numeroCuenta</parametro><salto/><parametro alineacion="izquierda" estilo="bold" sizeToMultiply="1">observacion</parametro><salto/><etiqueta estilo="default" alineacion="izquierda">Canal: </etiqueta><parametro estilo="default" alineacion="izquierda">canal</parametro><salto/><etiqueta estilo="default" alineacion="izquierda">Cajero/a: </etiqueta><parametro estilo="default" alineacion="izquierda">cajero</parametro><salto/><etiqueta estilo="default" alineacion="izquierda">FECHA: </etiqueta><parametro estilo="default" alineacion="izquierda">fecha</parametro><salto/><salto/><etiqueta estilo="default">------------------------------------------</etiqueta><etiquetaCentrada estilo="bold" tamano="5">CANT</etiquetaCentrada><etiquetaCentrada estilo="bold" tamano="1"/><etiquetaIzquierda estilo="bold" tamano="32">DESCRIPCIÓN</etiquetaIzquierda><salto/><etiqueta estilo="default">------------------------------------------</etiqueta><salto/><registrosDetalle estilo="bold"><item alineacion="centrado" tamano="5">cantidad</item><espacio alineacion="izquierda" tamano="1"/><item alineacion="izquierda" tamano="32">producto</item></registrosDetalle><salto/><etiqueta estilo="default" alineacion="centrado">------------------------------------------</etiqueta><salto/><salto/><parametro alineacion="izquierda" estilo="default">qrDireccionTitulo</parametro><salto/><qr alineacion="centrado">qrDireccion</qr><qr alineacion="centrado">qrPedido</qr><salto/><salto/><salto/><salto/><salto/></plantilla>`,
+};
+
 async function main() {
   console.log('Seeding database...');
 
@@ -234,18 +243,19 @@ async function main() {
   console.log(`User ${adminEmail} created`);
 
   // =====================================================
-  // CONFIGURACION GENERAL
+  // CONFIGURACION GENERAL (con impresión centralizada)
   // =====================================================
   await prisma.generalConfig.upsert({
     where: { id: 'general' },
     update: {
       ticketMode: 'API',  // Forzar modo API por defecto
+      // Configuración de impresión centralizada
+      ...centralizedPrintConfig,
     },
     create: {
       id: 'general',
       testMode: false,
       ticketMode: 'API',
-      printMode: 'LOCAL',
       pollingInterval: 2000,
       orderLifetime: 4,
       logRetentionDays: 5,
@@ -256,9 +266,11 @@ async function main() {
       printFontSize: 'small',
       showOrdersAndCounters: true,
       countProducts: false,
+      // Configuración de impresión centralizada
+      ...centralizedPrintConfig,
     },
   });
-  console.log('GeneralConfig created/updated with ticketMode: API');
+  console.log('GeneralConfig created/updated with ticketMode: API, printMode: CENTRALIZED');
 
   // =====================================================
   // CANALES GLOBALES
@@ -367,23 +379,25 @@ async function main() {
   console.log('Queue SANDUCHE created with channels and filters');
 
   // =====================================================
-  // PANTALLAS
+  // PANTALLAS (con nombres de impresoras para impresión centralizada)
   // =====================================================
   const screensConfig = [
-    { name: 'Pantalla1', queueId: queueLineas.id },
-    { name: 'Pantalla2', queueId: queueLineas.id },
-    { name: 'Pantalla3', queueId: queueSanduche.id }, // Pantalla para sanduches
+    { name: 'Pantalla1', queueId: queueLineas.id, printerName: 'linea' },
+    { name: 'Pantalla2', queueId: queueLineas.id, printerName: 'linea2' },
+    { name: 'Pantalla3', queueId: queueSanduche.id, printerName: 'sanduches' },
   ];
 
   for (const screenConf of screensConfig) {
     const screen = await prisma.screen.upsert({
       where: { name: screenConf.name },
       update: {
-        queueId: screenConf.queueId, // Actualizar cola si la pantalla ya existe
+        queueId: screenConf.queueId,
+        printerName: screenConf.printerName, // Nombre de impresora para impresión centralizada
       },
       create: {
         name: screenConf.name,
         queueId: screenConf.queueId,
+        printerName: screenConf.printerName,
         status: 'OFFLINE',
       },
     });
@@ -442,10 +456,13 @@ async function main() {
       },
     });
 
-    console.log(`Screen ${screenConf.name} created with appearance, preferences, and keyboard config`);
+    console.log(`Screen ${screenConf.name} created (printer: ${screenConf.printerName}) with appearance, preferences, and keyboard config`);
   }
 
   console.log('Seeding completed!');
+  console.log('  - Print Mode: CENTRALIZED');
+  console.log('  - Print URL: ' + centralizedPrintConfig.centralizedPrintUrl);
+  console.log('  - Printers: Pantalla1->linea, Pantalla2->linea2, Pantalla3->sanduches');
 }
 
 main()

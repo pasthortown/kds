@@ -23,24 +23,33 @@ export class PrinterService {
 
   /**
    * Imprime una orden usando el modo configurado (Local o Centralizado)
+   * @param order - La orden a imprimir
+   * @param screenId - ID de la pantalla (requerido para modo CENTRALIZED)
+   * @param printerConfig - Configuración de impresora (requerido para modo LOCAL)
    */
   async printOrder(
     order: Order,
-    printerConfig: PrinterConfig
+    screenId: string,
+    printerConfig?: PrinterConfig | null
   ): Promise<boolean> {
+    const printMode = await this.getPrintMode();
+
+    if (printMode === 'CENTRALIZED') {
+      printerLogger.info(`[PRINT-MODE] Using CENTRALIZED print service for order ${order.identifier}`);
+      return centralizedPrinterService.printOrder(order, screenId);
+    }
+
+    // Modo LOCAL (TCP directo) - requiere printerConfig
+    if (!printerConfig) {
+      printerLogger.warn(`No printer config for LOCAL mode, order ${order.identifier}`);
+      return false;
+    }
+
     if (!printerConfig.enabled) {
       printerLogger.debug(`Printer ${printerConfig.name} is disabled`);
       return false;
     }
 
-    const printMode = await this.getPrintMode();
-
-    if (printMode === 'CENTRALIZED') {
-      printerLogger.info(`[PRINT-MODE] Using CENTRALIZED print service for order ${order.identifier}`);
-      return centralizedPrinterService.printOrder(order, printerConfig);
-    }
-
-    // Modo LOCAL (TCP directo)
     printerLogger.info(`[PRINT-MODE] Using LOCAL (TCP) print for order ${order.identifier}`);
     return this.printOrderLocal(order, printerConfig);
   }

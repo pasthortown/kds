@@ -16,6 +16,7 @@ import {
   Col,
   Radio,
   Typography,
+  Table,
 } from 'antd';
 import {
   SaveOutlined,
@@ -27,10 +28,12 @@ import {
   PrinterOutlined,
   CloudServerOutlined,
   DesktopOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { configApi } from '../services/api';
 
 const { Text } = Typography;
+const { TextArea } = Input;
 
 interface HealthStatus {
   database: boolean;
@@ -38,17 +41,28 @@ interface HealthStatus {
   websocket: boolean;
 }
 
+interface ScreenPrinter {
+  id: string;
+  name: string;
+  number: number;
+  printerName: string;
+}
+
 interface ConfigModes {
   ticketMode: 'POLLING' | 'API';
   printMode: 'LOCAL' | 'CENTRALIZED';
   centralizedPrintUrl: string;
   centralizedPrintPort: number;
+  printTemplate: string;
+  printTemplateType: string;
+  screenPrinters: ScreenPrinter[];
 }
 
 export function Settings() {
   const [loading, setLoading] = useState(true);
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
   const [configModes, setConfigModes] = useState<ConfigModes | null>(null);
+  const [screenPrinters, setScreenPrinters] = useState<ScreenPrinter[]>([]);
   const [testingCentralized, setTestingCentralized] = useState(false);
   const [modesForm] = Form.useForm();
 
@@ -67,6 +81,7 @@ export function Settings() {
       // El health devuelve { status, checks: { database, redis, websocket }, timestamp }
       setHealthStatus(healthRes.data.checks || healthRes.data);
       setConfigModes(modesRes.data);
+      setScreenPrinters(modesRes.data.screenPrinters || []);
 
       modesForm.setFieldsValue(modesRes.data);
     } catch (error) {
@@ -79,12 +94,21 @@ export function Settings() {
   const handleSaveModes = async () => {
     try {
       const values = await modesForm.validateFields();
-      await configApi.updateModes(values);
+      // Incluir screenPrinters en el guardado
+      await configApi.updateModes({ ...values, screenPrinters });
       message.success('Modos de configuracion guardados');
       loadConfig();
     } catch (error) {
       message.error('Error guardando modos de configuracion');
     }
+  };
+
+  const handlePrinterChange = (screenId: string, printerName: string) => {
+    setScreenPrinters(prev =>
+      prev.map(sp =>
+        sp.id === screenId ? { ...sp, printerName } : sp
+      )
+    );
   };
 
   const handleTestCentralizedPrint = async () => {
@@ -258,10 +282,81 @@ export function Settings() {
                               </Form.Item>
                             </Col>
                           </Row>
+
+                          <Form.Item
+                            name="printTemplateType"
+                            label="Tipo de Plantilla"
+                            extra="Identificador del tipo de plantilla (ej: orden_pedido)"
+                          >
+                            <Input
+                              placeholder="orden_pedido"
+                              addonBefore={<FileTextOutlined />}
+                            />
+                          </Form.Item>
+
+                          <Divider orientation="left" style={{ marginTop: 8 }}>
+                            <FileTextOutlined /> Plantilla XML
+                          </Divider>
+
+                          <Form.Item
+                            name="printTemplate"
+                            label="PlantillaXML"
+                            extra="Plantilla XML para el formato de impresion. Debe contener la estructura completa del ticket."
+                          >
+                            <TextArea
+                              rows={8}
+                              placeholder='<?xml version="1.0" encoding="utf-8"?><plantilla id="impresionOrdenPedidoLocal">...</plantilla>'
+                              style={{ fontFamily: 'monospace', fontSize: 12 }}
+                            />
+                          </Form.Item>
+
+                          <Divider orientation="left" style={{ marginTop: 16 }}>
+                            <PrinterOutlined /> Impresoras por Pantalla
+                          </Divider>
+
+                          <Table
+                            dataSource={screenPrinters}
+                            rowKey="id"
+                            size="small"
+                            pagination={false}
+                            columns={[
+                              {
+                                title: '#',
+                                dataIndex: 'number',
+                                width: 50,
+                                align: 'center',
+                              },
+                              {
+                                title: 'Pantalla',
+                                dataIndex: 'name',
+                                width: 200,
+                              },
+                              {
+                                title: 'Impresora',
+                                dataIndex: 'printerName',
+                                render: (value: string, record: ScreenPrinter) => (
+                                  <Input
+                                    value={value}
+                                    onChange={(e) => handlePrinterChange(record.id, e.target.value)}
+                                    placeholder="Nombre de la impresora (ej: linea)"
+                                    size="small"
+                                  />
+                                ),
+                              },
+                            ]}
+                            locale={{ emptyText: 'No hay pantallas configuradas' }}
+                          />
+                          <Text type="secondary" style={{ fontSize: 12, marginTop: 8, display: 'block' }}>
+                            Configure el nombre de la impresora que usara cada pantalla para la impresion centralizada.
+                          </Text>
+
+                          <Divider style={{ marginTop: 16 }} />
+
                           <Button
                             onClick={handleTestCentralizedPrint}
                             loading={testingCentralized}
                             icon={<SyncOutlined />}
+                            type="default"
                           >
                             Probar Conexion
                           </Button>

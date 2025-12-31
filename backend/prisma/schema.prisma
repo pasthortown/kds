@@ -104,14 +104,15 @@ model Channel {
 // ============================================
 
 model Screen {
-  id        String       @id @default(cuid())
-  number    Int          @unique @default(autoincrement())
-  name      String       @unique
-  queueId   String
-  status    ScreenStatus @default(OFFLINE)
-  apiKey    String       @unique @default(cuid())
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  number      Int          @unique @default(autoincrement())
+  name        String       @unique
+  queueId     String
+  status      ScreenStatus @default(OFFLINE)
+  apiKey      String       @unique @default(cuid())
+  printerName String?      // Nombre de la impresora para impresión centralizada
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   queue      Queue         @relation(fields: [queueId], references: [id])
   printer    Printer?
@@ -498,6 +499,8 @@ model GeneralConfig {
   // Configuración del servicio centralizado de impresión
   centralizedPrintUrl    String  @default("") // URL del servicio: http://ip:puerto/api/ImpresionTickets/Impresion
   centralizedPrintPort   Int     @default(5000)
+  printTemplate          String? @db.Text     // Plantilla XML para impresión centralizada
+  printTemplateType      String  @default("orden_pedido") // Tipo de plantilla (ej: orden_pedido)
 
   // Lectura de comandas (Polling)
   pollingInterval        Int     @default(2000) // ms

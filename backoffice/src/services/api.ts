@@ -161,6 +161,9 @@ export const configApi = {
     printMode?: 'LOCAL' | 'CENTRALIZED';
     centralizedPrintUrl?: string;
     centralizedPrintPort?: number;
+    printTemplate?: string;
+    printTemplateType?: string;
+    screenPrinters?: Array<{ id: string; printerName: string }>;
   }) => api.put('/config/modes', data),
   testCentralizedPrint: () => api.post('/config/print/test-centralized'),
 };

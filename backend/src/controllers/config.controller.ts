@@ -247,7 +247,20 @@ export const getConfigModes = asyncHandler(
         printMode: true,
         centralizedPrintUrl: true,
         centralizedPrintPort: true,
+        printTemplate: true,
+        printTemplateType: true,
       },
+    });
+
+    // Obtener pantallas con su printerName para la configuración de impresoras
+    const screens = await prisma.screen.findMany({
+      select: {
+        id: true,
+        name: true,
+        number: true,
+        printerName: true,
+      },
+      orderBy: { number: 'asc' },
     });
 
     res.json({
@@ -255,9 +268,38 @@ export const getConfigModes = asyncHandler(
       printMode: config?.printMode || 'LOCAL',
       centralizedPrintUrl: config?.centralizedPrintUrl || '',
       centralizedPrintPort: config?.centralizedPrintPort || 5000,
+      printTemplate: config?.printTemplate || '',
+      printTemplateType: config?.printTemplateType || 'orden_pedido',
+      screenPrinters: screens.map(s => ({
+        id: s.id,
+        name: s.name,
+        number: s.number,
+        printerName: s.printerName || '',
+      })),
     });
   }
 );
+
+/**
+ * Sanitiza el XML de plantilla para evitar problemas de escape
+ * Remueve doble escapes que pueden venir del JSON
+ */
+function sanitizePrintTemplate(template: string): string {
+  if (!template) return template;
+
+  let sanitized = template;
+
+  // Remover doble escapes de comillas: \" -> "
+  sanitized = sanitized.replace(/\\"/g, '"');
+
+  // Remover escapes de barras invertidas dobles: \\\\ -> \\
+  sanitized = sanitized.replace(/\\\\/g, '\\');
+
+  // Remover espacios/saltos de línea innecesarios al inicio y final
+  sanitized = sanitized.trim();
+
+  return sanitized;
+}
 
 /**
  * PUT /api/config/modes
@@ -265,19 +307,42 @@ export const getConfigModes = asyncHandler(
  */
 export const updateConfigModes = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { ticketMode, printMode, centralizedPrintUrl, centralizedPrintPort } = req.body;
+    const {
+      ticketMode,
+      printMode,
+      centralizedPrintUrl,
+      centralizedPrintPort,
+      printTemplate,
+      printTemplateType,
+      screenPrinters,
+    } = req.body;
 
     const data: any = {};
     if (ticketMode !== undefined) data.ticketMode = ticketMode;
     if (printMode !== undefined) data.printMode = printMode;
     if (centralizedPrintUrl !== undefined) data.centralizedPrintUrl = centralizedPrintUrl;
     if (centralizedPrintPort !== undefined) data.centralizedPrintPort = centralizedPrintPort;
+    // Sanitizar el XML de la plantilla antes de guardar
+    if (printTemplate !== undefined) data.printTemplate = sanitizePrintTemplate(printTemplate);
+    if (printTemplateType !== undefined) data.printTemplateType = printTemplateType;
 
     const config = await prisma.generalConfig.upsert({
       where: { id: 'general' },
       create: { id: 'general', ...data },
       update: data,
     });
+
+    // Actualizar printerName de cada pantalla si se proporcionó
+    if (screenPrinters && Array.isArray(screenPrinters)) {
+      for (const sp of screenPrinters) {
+        if (sp.id && sp.printerName !== undefined) {
+          await prisma.screen.update({
+            where: { id: sp.id },
+            data: { printerName: sp.printerName || null },
+          });
+        }
+      }
+    }
 
     // Si se cambió el modo de tickets, reiniciar/detener polling
     if (ticketMode) {
@@ -298,6 +363,8 @@ export const updateConfigModes = asyncHandler(
         printMode: config.printMode,
         centralizedPrintUrl: config.centralizedPrintUrl,
         centralizedPrintPort: config.centralizedPrintPort,
+        printTemplate: config.printTemplate,
+        printTemplateType: config.printTemplateType,
       },
     });
   }
