@@ -15,6 +15,8 @@ export interface CentralizedPrintPayload {
   idMarca: string;
   data: {
     num_ficha: string;
+    pickup_cfac_id: string;
+    qrPedido: string;
     empresaDelivery: string;
     transaccion: string;
     fecha: string;
@@ -278,6 +280,8 @@ export class CentralizedPrinterService {
       idMarca: '',
       data: {
         num_ficha: order.identifier,
+        pickup_cfac_id: order.identifier,
+        qrPedido: order.identifier,
         empresaDelivery: empresaDelivery,
         transaccion: transaccion,
         fecha: this.formatDate(createdAt),
