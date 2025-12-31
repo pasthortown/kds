@@ -288,6 +288,10 @@ func (s *KDSRegionalService) buildComanda() *KDSComanda {
 }
 
 // buildProducts construye la lista de productos para el KDS
+// Estructura esperada por el KDS:
+// - modifier: String de modificadores separados por coma (ej: "8 Original, 7 Crispy")
+// - content: Array de notas especiales (ej: ["*SIN SAL", "*EXTRA QUESO"])
+// - comments: Comentarios adicionales del producto
 func (s *KDSRegionalService) buildProducts() []KDSProduct {
 	var products []KDSProduct
 
@@ -302,31 +306,31 @@ func (s *KDSRegionalService) buildProducts() []KDSProduct {
 			Amount:    int(item.Quantity),
 		}
 
-		// Agregar modificadores como content
-		var modifiers []string
+		// Construir modificadores como string separado por coma
+		// Formato: "cantidad NombreModificador, cantidad NombreModificador2"
+		var modifierParts []string
 		if item.ModifierGroups != nil {
 			for _, mod := range item.ModifierGroups {
-				modifiers = append(modifiers, fmt.Sprintf("*%s x%d", mod.NameProduct, mod.Quantity))
+				if mod.Quantity > 1 {
+					modifierParts = append(modifierParts, fmt.Sprintf("%d %s", mod.Quantity, mod.NameProduct))
+				} else {
+					modifierParts = append(modifierParts, mod.NameProduct)
+				}
 			}
 		}
-		if len(modifiers) > 0 {
-			product.Content = modifiers
+		if len(modifierParts) > 0 {
+			product.Modifier = strings.Join(modifierParts, ", ")
 		}
+
+		// Content se usa para notas especiales (ej: *SIN SAL)
+		// Por ahora dejamos vacío, se puede agregar lógica si hay notas en la orden
+		// product.Content = []string{}
+
+		// Comments para comentarios adicionales del producto
+		// Por ahora dejamos vacío, se puede agregar lógica si hay comentarios
+		// product.Comments = ""
 
 		products = append(products, product)
-
-		// Agregar modificadores como productos separados (opcional)
-		if item.ModifierGroups != nil {
-			for _, mod := range item.ModifierGroups {
-				modProduct := KDSProduct{
-					ProductID: fmt.Sprintf("%d", mod.ProductId),
-					Name:      mod.NameProduct,
-					Amount:    int(mod.Quantity),
-					Modifier:  fmt.Sprintf("Modificador de %s", item.NameProduct),
-				}
-				products = append(products, modProduct)
-			}
-		}
 	}
 
 	return products
