@@ -28,4 +28,22 @@ class kdsRegional extends sql {
       return json_encode(array("error" => $e->getMessage()));
     }
   }
+
+  function fn_obtener_rst_categoria($rst_id) {
+    $lc_sql = "SELECT rst_categoria FROM Restaurante WHERE rst_id = $rst_id";
+    try {
+      $this->fn_ejecutarquery($lc_sql);
+
+      if ($row = $this->fn_leerarreglo()) {
+        return json_encode(array(
+          "rst_categoria" => $row['rst_categoria']
+        ));
+      }
+
+      return json_encode(array("rst_categoria" => null));
+
+    } catch (Exception $e) {
+      return json_encode(array("error" => $e->getMessage()));
+    }
+  }
 }

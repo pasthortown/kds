@@ -15,6 +15,30 @@ function get_politicas_kds() {
     return toReturn;
 }
 
+/**
+ * Obtiene rst_categoria desde el servidor usando rst_id
+ * @param {number|string} rst_id - ID del restaurante
+ * @returns {string|null} - rst_categoria (GUID) o null si no se encuentra
+ */
+function get_rst_categoria(rst_id) {
+    let toReturn = null;
+
+    $.ajax({
+        async: false,
+        type: "GET",
+        url: "./../kds/config_kds.php",
+        data: { obtener_rst_categoria: 1, rst_id: rst_id },
+        dataType: "json",
+        success: function (datos) {
+            if (datos && datos.rst_categoria) {
+                toReturn = datos.rst_categoria;
+            }
+        }
+    });
+
+    return toReturn;
+}
+
 function fn_get_orden_pedido(statusPos) {
     var send;
     var tipoServicio = $("#txtTipoServicio").val() || "1";
