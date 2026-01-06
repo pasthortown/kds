@@ -263,6 +263,11 @@ router.patch(
   authenticate,
   orderController.updateOrderIdentifier
 );
+router.post(
+  '/orders/update-by-cfac',
+  authenticate,
+  orderController.updateOrderByCfac
+);
 
 // ============================================
 // CONFIG ROUTES

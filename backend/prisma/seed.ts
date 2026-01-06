@@ -226,10 +226,13 @@ async function main() {
   // =====================================================
   // USUARIOS
   // =====================================================
+  // IMPORTANTE: No actualizar password si el usuario ya existe
+  // Esto evita que se reseteen las contraseñas en cada reinicio
+  // =====================================================
   const kfcAdminPassword = await bcrypt.hash('cx-dsi2025', 10);
   await prisma.user.upsert({
     where: { email: 'admin@kfc.com.ec' },
-    update: { password: kfcAdminPassword },
+    update: {}, // NO actualizar nada si ya existe
     create: {
       email: 'admin@kfc.com.ec',
       password: kfcAdminPassword,
@@ -237,14 +240,14 @@ async function main() {
       role: 'ADMIN',
     },
   });
-  console.log('User admin@kfc.com.ec created');
+  console.log('User admin@kfc.com.ec created/verified');
 
   const defaultAdminPassword = process.env.ADMIN_DEFAULT_PASSWORD || 'admin123';
   const adminPassword = await bcrypt.hash(defaultAdminPassword, 10);
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@kds.local';
   await prisma.user.upsert({
     where: { email: adminEmail },
-    update: { password: adminPassword },
+    update: {}, // NO actualizar nada si ya existe
     create: {
       email: adminEmail,
       password: adminPassword,
@@ -252,7 +255,7 @@ async function main() {
       role: 'ADMIN',
     },
   });
-  console.log(`User ${adminEmail} created`);
+  console.log(`User ${adminEmail} created/verified`);
 
   // =====================================================
   // CONFIGURACION GENERAL (con impresión centralizada)

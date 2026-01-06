@@ -286,6 +286,32 @@ export class ApiTicketService {
   }
 
   /**
+   * Obtiene el identifier para una orden
+   * Si nroCheque es "--" o vacío, usa los últimos 2 dígitos del orderId
+   */
+  private getIdentifier(comanda: ApiComanda): string {
+    const nroCheque = comanda.otrosDatos?.nroCheque;
+    const orderId = comanda.orderId || comanda.id || '';
+
+    // Si nroCheque tiene valor válido (no es "--" ni vacío), usarlo
+    if (nroCheque && nroCheque !== '--' && nroCheque.trim() !== '') {
+      return nroCheque;
+    }
+
+    // Sino, extraer los últimos 2 dígitos del orderId
+    if (orderId) {
+      // Extraer solo los números del final del orderId
+      const numbers = orderId.replace(/\D/g, '');
+      if (numbers.length >= 2) {
+        return numbers.slice(-2);
+      }
+      return numbers || orderId.slice(-2) || orderId;
+    }
+
+    return '--';
+  }
+
+  /**
    * Convierte formato API al formato interno del sistema
    */
   private convertToInternalFormat(comanda: ApiComanda): any {
@@ -295,7 +321,7 @@ export class ApiTicketService {
       externalId: comanda.orderId || comanda.id,
       channel: `${comanda.channel.name}-${comanda.channel.type}`,
       customerName: comanda.customer?.name || comanda.otrosDatos?.llamarPor || '',
-      identifier: comanda.otrosDatos?.nroCheque || comanda.orderId,
+      identifier: this.getIdentifier(comanda),
       items,
       createdAt: new Date(), // Siempre usar hora del servidor (el createdAt del cliente no es confiable)
     };

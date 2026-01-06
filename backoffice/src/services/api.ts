@@ -24,7 +24,10 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // No intentar refresh en endpoints de auth (evita loop infinito)
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       const refreshToken = localStorage.getItem('refreshToken');
@@ -40,7 +43,22 @@ api.interceptors.response.use(
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
+          return Promise.reject(error);
         }
+      } else {
+        // No hay refreshToken, ir a login
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+    }
+
+    // Si es 401 en endpoint de auth, limpiar y redirigir
+    if (error.response?.status === 401 && isAuthEndpoint) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
       }
     }
 

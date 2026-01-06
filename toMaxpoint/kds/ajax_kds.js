@@ -330,7 +330,9 @@ function fn_prepare_empty_order_to_kds(statusPos) {
  */
 function fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService) {
     // Obtener datos del contexto del POS
-    var orderId = $("#hide_odp_id").val() || "";
+    // Priorizar cfac_id (KIOSKO/PICKUP) sobre odp_id para hacer UPSERT correcto
+    var cfac_id = $("#txtNumFactura").val() || "";
+    var orderId = cfac_id || $("#hide_odp_id").val() || "";
     var customerName = $("#hide_cli_nombres").val() || "";
     var customerDocument = $("#hide_cli_documento").val() || "";
     var customerPhone = $("#hide_cli_telefono").val() || "";
@@ -722,10 +724,11 @@ function fn_refresh_kds_token(callback) {
 }
 
 /**
- * Actualiza el número de orden (identifier) en el KDS
- * Usado desde factura.php para mostrar los últimos 2 dígitos del cfac_id
- * @param {string} orderId - ID externo de la orden (externalId/odp_id)
- * @param {string} cfac_id - Número de factura del cual se extraen los últimos 2 dígitos
+ * Actualiza/reemplaza una orden existente en el KDS usando el cfac_id
+ * Envía la orden al mismo endpoint /tickets/receive pero con externalId = cfac_id
+ * El backend hace UPSERT por externalId, así que actualiza la orden existente (KIOSKO/PICKUP)
+ * @param {string} orderId - ID de la orden del POS (odp_id) - usado para obtener productos
+ * @param {string} cfac_id - ID de la factura/orden externa (K027F001716470) - usado como externalId
  */
 function fn_update_order_id_kds(orderId, cfac_id) {
     if (!orderId || !cfac_id) {
@@ -753,90 +756,20 @@ function fn_update_order_id_kds(orderId, cfac_id) {
         }
     }
 
-    // Obtener los datos de la orden desde facturación y enviar al KDS
+    // Obtener los datos de la orden desde facturación (productos, etc.)
     var orderData = fn_get_orden_pedido_facturacion(orderId, "PEDIDO TOMADO");
-    if (orderData) {
-        console.log("[KDS] Orden obtenida desde facturación:", orderData);
-
-        // Obtener canales excluidos
-        var politicas = get_politicas_kds();
-        var canalesExcluidos = [];
-        if (politicas && politicas.canales_excluidos && politicas.canales_excluidos.trim() !== "") {
-            canalesExcluidos = politicas.canales_excluidos.split(",").map(function(canal) {
-                return canal.trim().toUpperCase();
-            });
-        }
-
-        // Verificar si el canal está excluido
-        var channelType = (orderData.channel && orderData.channel.type) ? orderData.channel.type.toUpperCase() : "";
-        if (canalesExcluidos.indexOf(channelType) !== -1) {
-            console.log("[KDS] Canal excluido, no se envía al KDS:", channelType);
-            return;
-        }
-
-        // Enviar la orden al KDS
-        fn_communication_with_kds(orderData);
-    } else {
+    if (!orderData) {
         console.warn("[KDS] No se pudo obtener la orden desde facturación");
+        return;
     }
 
-    // Calcular los últimos 2 dígitos del cfac_id
-    var cfacStr = String(cfac_id);
-    var identifier = cfacStr.slice(-2);
+    // IMPORTANTE: Reemplazar id y orderId con cfac_id para hacer UPSERT correcto
+    orderData.id = cfac_id;
+    orderData.orderId = cfac_id;
+    orderData.statusPos = "PEDIDO TOMADO";
 
-    console.log("[KDS] Actualizando identifier de orden " + orderId + " a: " + identifier);
+    console.log("[KDS] Enviando orden con externalId = cfac_id: " + cfac_id);
 
-    // Función interna para enviar la actualización
-    function sendUpdate() {
-        var updateUrl = kds_url + "/orders/" + encodeURIComponent(orderId) + "/identifier";
-
-        $.ajax({
-            url: updateUrl,
-            type: "PATCH",
-            contentType: "application/json",
-            headers: {
-                "Authorization": "Bearer " + kds_auth_token
-            },
-            data: JSON.stringify({ identifier: identifier }),
-            success: function(response) {
-                if (response && response.success) {
-                    console.log("[KDS] Identifier actualizado exitosamente:", response.order);
-                } else {
-                    console.warn("[KDS] Respuesta inesperada:", response);
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error("[KDS] Error actualizando identifier:", error);
-
-                // Si el error es 401, re-autenticar e intentar de nuevo
-                if (xhr.status === 401) {
-                    console.log("[KDS] Token expirado, re-autenticando...");
-                    kds_auth_token = null;
-                    kds_token_timestamp = null;
-
-                    fn_authenticate_kds(function(success) {
-                        if (success) {
-                            sendUpdate();
-                        }
-                    });
-                } else {
-                    console.error("[KDS] Status:", xhr.status);
-                    console.error("[KDS] Response:", xhr.responseText);
-                }
-            }
-        });
-    }
-
-    // Verificar token y enviar
-    if (!fn_is_token_valid()) {
-        fn_authenticate_kds(function(success) {
-            if (success) {
-                sendUpdate();
-            } else {
-                console.error("[KDS] Error de autenticación, no se pudo actualizar el identifier");
-            }
-        });
-    } else {
-        sendUpdate();
-    }
+    // Usar el mismo flujo de fn_communication_with_kds (endpoint /tickets/receive)
+    fn_communication_with_kds(orderData);
 }

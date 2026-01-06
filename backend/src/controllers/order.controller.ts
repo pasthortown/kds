@@ -631,17 +631,21 @@ export const deleteTestOrders = asyncHandler(
  * PATCH /api/orders/:externalId/identifier
  * Actualiza el identificador (número de orden) de una orden existente
  * Usado desde factura.php para actualizar el número mostrado con los últimos 2 dígitos del cfac_id
+ *
+ * Para KIOSKO/PICKUP: Si existe una orden previa con externalId = cfac_id,
+ * se conserva su canal, se elimina esa orden, y se actualiza la orden principal
+ * con el externalId = cfac_id y el canal conservado.
  */
 export const updateOrderIdentifier = asyncHandler(
   async (req: AuthenticatedRequest, res: Response) => {
-    const { externalId } = req.params;
-    const { identifier } = req.body;
+    const { externalId } = req.params; // orderId (odp_id)
+    const { identifier, cfac_id } = req.body;
 
     if (!identifier) {
       throw new AppError(400, 'El campo identifier es requerido');
     }
 
-    // Buscar la orden por externalId
+    // Buscar la orden principal por externalId (odp_id)
     const order = await prisma.order.findUnique({
       where: { externalId },
     });
@@ -650,23 +654,214 @@ export const updateOrderIdentifier = asyncHandler(
       throw new AppError(404, `Orden no encontrada: ${externalId}`);
     }
 
-    // Actualizar el identifier y cambiar statusPos a PEDIDO TOMADO
+    let channelToUse = order.channel;
+    let newExternalId = externalId;
+    let deletedOrderInfo = null;
+
+    // Si se envía cfac_id, buscar si existe una orden previa con ese ID (KIOSKO/PICKUP)
+    if (cfac_id && cfac_id !== externalId) {
+      const previousOrder = await prisma.order.findUnique({
+        where: { externalId: cfac_id },
+        include: { items: true },
+      });
+
+      if (previousOrder) {
+        // Conservar el canal de la orden previa (KIOSKO/PICKUP)
+        channelToUse = previousOrder.channel;
+        newExternalId = cfac_id;
+
+        // Eliminar la orden previa y sus items
+        await prisma.orderItem.deleteMany({
+          where: { orderId: previousOrder.id },
+        });
+        await prisma.order.delete({
+          where: { id: previousOrder.id },
+        });
+
+        deletedOrderInfo = {
+          id: previousOrder.id,
+          externalId: previousOrder.externalId,
+          channel: previousOrder.channel,
+        };
+
+        console.log(`[ORDER] Orden previa eliminada: ${cfac_id} (canal: ${channelToUse})`);
+      }
+    }
+
+    // Actualizar la orden principal con el identifier, canal y externalId
     const updatedOrder = await prisma.order.update({
       where: { externalId },
       data: {
+        externalId: newExternalId,
         identifier,
+        channel: channelToUse,
         statusPos: 'PEDIDO TOMADO'
       },
       include: { items: true },
     });
 
+    console.log(`[ORDER] Orden actualizada: ${externalId} -> ${newExternalId} (canal: ${channelToUse}, identifier: ${identifier})`);
+
     res.json({
       success: true,
-      message: 'Identificador actualizado',
+      message: deletedOrderInfo
+        ? 'Orden fusionada con orden previa (canal conservado)'
+        : 'Identificador actualizado',
       order: {
         id: updatedOrder.id,
         externalId: updatedOrder.externalId,
         identifier: updatedOrder.identifier,
+        channel: updatedOrder.channel,
+      },
+      deletedOrder: deletedOrderInfo,
+    });
+  }
+);
+
+/**
+ * POST /api/orders/update-by-cfac
+ * Actualiza una orden existente buscándola por cfac_id (externalId)
+ * Conserva el customerName y channel original (KIOSKO/PICKUP)
+ * Solo actualiza: products, identifier, statusPos
+ *
+ * Si la orden NO existe, la CREA con los datos proporcionados
+ * usando cfac_id como externalId e identifier
+ *
+ * También elimina la orden duplicada con orderId (odp_id) si existe
+ */
+export const updateOrderByCfac = asyncHandler(
+  async (req: AuthenticatedRequest, res: Response) => {
+    const { cfac_id, orderId, identifier, products, statusPos, channel, customerName } = req.body;
+
+    if (!cfac_id) {
+      throw new AppError(400, 'El campo cfac_id es requerido');
+    }
+
+    // Buscar la orden existente por cfac_id (externalId)
+    const existingOrder = await prisma.order.findUnique({
+      where: { externalId: cfac_id },
+      include: { items: true },
+    });
+
+    let resultOrder;
+    let wasCreated = false;
+
+    if (existingOrder) {
+      // ACTUALIZAR orden existente (conservar customerName y channel)
+      console.log(`[ORDER] Actualizando orden existente: ${cfac_id}`);
+      console.log(`[ORDER] Canal original: ${existingOrder.channel}`);
+      console.log(`[ORDER] Cliente original: ${existingOrder.customerName}`);
+
+      // Eliminar items anteriores
+      await prisma.orderItem.deleteMany({
+        where: { orderId: existingOrder.id },
+      });
+
+      // Crear nuevos items si se proporcionan
+      if (products && Array.isArray(products) && products.length > 0) {
+        await prisma.orderItem.createMany({
+          data: products.map((item: any) => ({
+            orderId: existingOrder.id,
+            name: item.name || item.productId || 'Sin nombre',
+            quantity: item.amount || item.quantity || 1,
+            notes: item.content ? item.content.join(', ') : null,
+            modifier: item.modifier || null,
+            comments: item.comments || null,
+          })),
+        });
+      }
+
+      // Actualizar la orden conservando customerName y channel
+      resultOrder = await prisma.order.update({
+        where: { id: existingOrder.id },
+        data: {
+          identifier: identifier || existingOrder.identifier,
+          statusPos: statusPos || 'PEDIDO TOMADO',
+          // NO actualizamos channel ni customerName - se conservan
+        },
+        include: { items: true },
+      });
+
+      console.log(`[ORDER] Orden actualizada: ${cfac_id} (identifier: ${identifier})`);
+
+    } else {
+      // CREAR orden nueva (no existía en KDS)
+      console.log(`[ORDER] Orden no existe, creando nueva: ${cfac_id}`);
+
+      resultOrder = await prisma.order.create({
+        data: {
+          externalId: cfac_id,
+          identifier: identifier || cfac_id,
+          channel: channel || 'POS',
+          customerName: customerName || null,
+          status: 'PENDING',
+          statusPos: statusPos || 'PEDIDO TOMADO',
+          items: {
+            create: (products || []).map((item: any) => ({
+              name: item.name || item.productId || 'Sin nombre',
+              quantity: item.amount || item.quantity || 1,
+              notes: item.content ? item.content.join(', ') : null,
+              modifier: item.modifier || null,
+              comments: item.comments || null,
+            })),
+          },
+        },
+        include: { items: true },
+      });
+
+      wasCreated = true;
+      console.log(`[ORDER] Orden creada: ${cfac_id} (identifier: ${identifier})`);
+    }
+
+    // Eliminar orden duplicada con orderId (odp_id) si existe y es diferente al cfac_id
+    let deletedDuplicate = null;
+    if (orderId && orderId !== cfac_id) {
+      const duplicateOrder = await prisma.order.findUnique({
+        where: { externalId: orderId },
+      });
+
+      if (duplicateOrder) {
+        // Eliminar items de la orden duplicada
+        await prisma.orderItem.deleteMany({
+          where: { orderId: duplicateOrder.id },
+        });
+        // Eliminar la orden duplicada
+        await prisma.order.delete({
+          where: { id: duplicateOrder.id },
+        });
+
+        deletedDuplicate = {
+          id: duplicateOrder.id,
+          externalId: duplicateOrder.externalId,
+        };
+
+        console.log(`[ORDER] Orden duplicada eliminada: ${orderId}`);
+      }
+    }
+
+    // Notificar a las pantallas via WebSocket
+    if (resultOrder.screenId) {
+      const { websocketService } = await import('../services/websocket.service');
+      if (websocketService) {
+        websocketService.broadcastOrdersUpdate(resultOrder.screenId);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: wasCreated
+        ? 'Orden creada (no existía previamente)'
+        : 'Orden actualizada (canal y cliente conservados)',
+      created: wasCreated,
+      deletedDuplicate,
+      order: {
+        id: resultOrder.id,
+        externalId: resultOrder.externalId,
+        identifier: resultOrder.identifier,
+        channel: resultOrder.channel,
+        customerName: resultOrder.customerName,
+        status: resultOrder.status,
+        itemsCount: resultOrder.items.length,
       },
     });
   }

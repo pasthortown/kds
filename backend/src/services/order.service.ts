@@ -45,11 +45,14 @@ export class OrderService {
 
             // Actualizar orden y crear nuevos items
             // NO cambiar screenId para mantener la asignación original
+            // CONSERVAR channel y customerName originales si existen (KIOSKO/PICKUP)
             await prisma.order.update({
               where: { externalId: order.externalId },
               data: {
-                channel: order.channel,
-                customerName: order.customerName,
+                // Conservar channel original si existe, sino usar el nuevo
+                channel: existing.channel || order.channel,
+                // Conservar customerName original si existe, sino usar el nuevo
+                customerName: existing.customerName || order.customerName,
                 identifier: order.identifier,
                 // No cambiar status ni screenId
                 // Campos opcionales para impresión/visualización
