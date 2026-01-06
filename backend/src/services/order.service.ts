@@ -8,6 +8,9 @@ import { balancerService } from './balancer.service';
  * Servicio para gestión de órdenes
  */
 export class OrderService {
+  // Lock para evitar condiciones de carrera al procesar la misma orden
+  private processingOrders = new Set<string>();
+
   /**
    * Crea o actualiza órdenes desde MAXPOINT
    * IMPORTANTE: Solo retorna órdenes NUEVAS para que el balanceo solo aplique a inserciones,
@@ -18,6 +21,16 @@ export class OrderService {
 
     for (const order of orders) {
       try {
+        // Verificar si ya estamos procesando esta orden (evitar condición de carrera)
+        if (this.processingOrders.has(order.externalId)) {
+          orderLogger.debug(`Order ${order.externalId} already being processed, skipping`);
+          continue;
+        }
+
+        // Marcar como en proceso
+        this.processingOrders.add(order.externalId);
+
+        try {
         // Verificar si ya existe
         const existing = await prisma.order.findUnique({
           where: { externalId: order.externalId },
@@ -133,8 +146,13 @@ export class OrderService {
             statusPos: created.statusPos || undefined,
           });
         }
+        } finally {
+          // Liberar el lock
+          this.processingOrders.delete(order.externalId);
+        }
       } catch (error) {
         orderLogger.error(`Error processing order ${order.externalId}`, { error });
+        this.processingOrders.delete(order.externalId);
       }
     }
 
