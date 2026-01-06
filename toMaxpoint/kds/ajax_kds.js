@@ -64,7 +64,7 @@ function fn_get_orden_pedido(statusPos) {
     data_to_kds = null;
     $.ajax({
         async: false,
-        url: "config_ordenPedido.php",
+        url: "./../ordenpedido/config_ordenPedido.php",
         data: send,
         dataType: "json",
         success: function (datos) {
@@ -77,6 +77,213 @@ function fn_get_orden_pedido(statusPos) {
         }
     });
     return data_to_kds;
+}
+
+/**
+ * Versión para facturación de fn_get_orden_pedido
+ * Obtiene los datos de la orden usando campos de factura.php
+ * @param {string} odp_id - ID de la orden (obligatorio)
+ * @param {string} statusPos - Estado del pedido: "TOMANDO PEDIDO" o "PEDIDO TOMADO"
+ * @returns {Object|null} - Datos de la orden en formato ApiComanda
+ */
+function fn_get_orden_pedido_facturacion(odp_id, statusPos) {
+    if (!odp_id) {
+        console.error("[KDS] fn_get_orden_pedido_facturacion: odp_id es requerido");
+        return null;
+    }
+
+    // Obtener rst_id y cat_id
+    var rst_id = $("#hide_rst_id").val() || "";
+    var cat_id = get_rst_categoria(rst_id) || "";
+
+    // Obtener demás valores de factura.php
+    var tipoServicio = $("#txtTipoServicio").val() || "1";
+    var isFullService = tipoServicio === "2";
+    var customerName = $("#txt_cli_nombres").val() || "";
+    var customerDocument = $("#txt_cli_documento").val() || "";
+    var customerPhone = $("#txt_cli_telefono").val() || "";
+    var customerAddress = $("#txt_cli_direccion").val() || "";
+    var mesaId = $("#txtNumMesa").val() || "";
+    var estacionId = $("#hide_est_id").val() || "";
+
+    var send = {
+        numSplit: 0,
+        cargar_ordenPedidoPendiente: 1,
+        odp_id: odp_id,
+        cat_id: cat_id,
+        rst_id: rst_id
+    };
+
+    var data_to_kds = null;
+    $.ajax({
+        async: false,
+        url: "./../ordenpedido/config_ordenPedido.php",
+        data: send,
+        dataType: "json",
+        success: function (datos) {
+            if (datos && datos.str > 0) {
+                data_to_kds = fn_prepare_data_to_kds_facturacion(datos, statusPos, isFullService, {
+                    odp_id: odp_id,
+                    customerName: customerName,
+                    customerDocument: customerDocument,
+                    customerPhone: customerPhone,
+                    customerAddress: customerAddress,
+                    mesaId: mesaId,
+                    estacionId: estacionId
+                });
+            } else {
+                // Orden vacía
+                data_to_kds = {
+                    id: odp_id,
+                    orderId: odp_id,
+                    createdAt: new Date().toISOString(),
+                    channel: { id: 1, name: "MXP", type: "FACTURACION" },
+                    cashRegister: { cashier: estacionId, name: "Estación " + estacionId },
+                    products: [],
+                    otrosDatos: {
+                        turno: -1,
+                        nroCheque: "1",
+                        llamarPor: customerName,
+                        Fecha: new Date().toLocaleString(),
+                        Direccion: customerAddress
+                    },
+                    statusPos: statusPos || "PEDIDO TOMADO"
+                };
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("[KDS] Error obteniendo orden desde facturación:", error);
+        }
+    });
+
+    return data_to_kds;
+}
+
+/**
+ * Prepara datos de orden para KDS desde facturación
+ */
+function fn_prepare_data_to_kds_facturacion(datos, statusPos, isFullService, params) {
+    var orderId = params.odp_id || "";
+    var customerName = params.customerName || "";
+    var customerAddress = params.customerAddress || "";
+    var mesaId = params.mesaId || "";
+    var estacionId = params.estacionId || "";
+    var numeroCuenta = "--";
+
+    var itemsArray = [];
+    var itemCount = parseInt(datos.str) || 0;
+
+    for (var i = 0; i < itemCount; i++) {
+        if (datos[i]) {
+            itemsArray.push(datos[i]);
+        }
+    }
+
+    var products = [];
+    var dopIdToProductIndex = {};
+    var lastMainProductDopId = null;
+
+    itemsArray.forEach(function(item) {
+        var isSelfAncestor = item.ancestro === item.dop_id;
+        var hasPrice = parseFloat(item.dop_total) > 0;
+        var isComment = item.tipo === 0;
+
+        if (isSelfAncestor && hasPrice && !isComment) {
+            var newProduct = {
+                productId: String(item.plu_id),
+                name: item.magp_desc_impresion,
+                amount: item.dop_cantidad || 1,
+                content: item.notasKDS ? [item.notasKDS] : [],
+                modifier: null,
+                comments: null,
+                _dop_id: item.dop_id,
+                _subitems: [],
+                _comments: []
+            };
+            dopIdToProductIndex[item.dop_id] = products.length;
+            products.push(newProduct);
+            lastMainProductDopId = item.dop_id;
+
+        } else if (!isSelfAncestor) {
+            var parentDopId = item.ancestro;
+            var parentProductIndex = dopIdToProductIndex[parentDopId];
+
+            if (parentProductIndex !== undefined) {
+                if (isComment) {
+                    products[parentProductIndex]._comments.push(item.magp_desc_impresion);
+                } else {
+                    products[parentProductIndex]._subitems.push({
+                        name: item.magp_desc_impresion,
+                        quantity: item.dop_cantidad || 1
+                    });
+                }
+            }
+
+        } else if (isSelfAncestor && !hasPrice) {
+            if (lastMainProductDopId !== null) {
+                var lastProductIndex = dopIdToProductIndex[lastMainProductDopId];
+                if (lastProductIndex !== undefined) {
+                    if (isComment) {
+                        products[lastProductIndex]._comments.push(item.magp_desc_impresion);
+                    } else {
+                        products[lastProductIndex]._subitems.push({
+                            name: item.magp_desc_impresion,
+                            quantity: item.dop_cantidad || 1
+                        });
+                    }
+                }
+            }
+        }
+    });
+
+    products.forEach(function(product) {
+        if (product._comments && product._comments.length > 0) {
+            product.comments = product._comments.join(", ");
+        }
+        if (product._subitems && product._subitems.length > 0) {
+            var modifierItems = [];
+            product._subitems.forEach(function(sub) {
+                if (sub.quantity > 1) {
+                    modifierItems.push(sub.quantity + " " + sub.name);
+                } else {
+                    modifierItems.push(sub.name);
+                }
+            });
+            product.modifier = modifierItems.join(", ");
+        }
+        delete product._dop_id;
+        delete product._subitems;
+        delete product._comments;
+    });
+
+    var channelName = "MXP";
+    var channelType = isFullService ? "FULL SERVICE" : "FAST FOOD";
+    if (mesaId && mesaId !== "" && mesaId !== "0") {
+        channelType = "SALON";
+    }
+
+    var apiComanda = {
+        id: orderId,
+        orderId: orderId,
+        createdAt: new Date().toISOString(),
+        channel: { id: 1, name: channelName, type: channelType },
+        cashRegister: { cashier: estacionId, name: "Estación " + estacionId },
+        products: products,
+        otrosDatos: {
+            turno: -1,
+            nroCheque: numeroCuenta,
+            llamarPor: customerName,
+            Fecha: new Date().toLocaleString(),
+            Direccion: customerAddress
+        },
+        statusPos: statusPos || "PEDIDO TOMADO"
+    };
+
+    if (customerName) {
+        apiComanda.customer = { name: customerName };
+    }
+
+    return apiComanda;
 }
 
 /**
@@ -544,6 +751,33 @@ function fn_update_order_id_kds(orderId, cfac_id) {
             console.log("[KDS] KDS no está activo");
             return;
         }
+    }
+
+    // Obtener los datos de la orden desde facturación y enviar al KDS
+    var orderData = fn_get_orden_pedido_facturacion(orderId, "PEDIDO TOMADO");
+    if (orderData) {
+        console.log("[KDS] Orden obtenida desde facturación:", orderData);
+
+        // Obtener canales excluidos
+        var politicas = get_politicas_kds();
+        var canalesExcluidos = [];
+        if (politicas && politicas.canales_excluidos && politicas.canales_excluidos.trim() !== "") {
+            canalesExcluidos = politicas.canales_excluidos.split(",").map(function(canal) {
+                return canal.trim().toUpperCase();
+            });
+        }
+
+        // Verificar si el canal está excluido
+        var channelType = (orderData.channel && orderData.channel.type) ? orderData.channel.type.toUpperCase() : "";
+        if (canalesExcluidos.indexOf(channelType) !== -1) {
+            console.log("[KDS] Canal excluido, no se envía al KDS:", channelType);
+            return;
+        }
+
+        // Enviar la orden al KDS
+        fn_communication_with_kds(orderData);
+    } else {
+        console.warn("[KDS] No se pudo obtener la orden desde facturación");
     }
 
     // Calcular los últimos 2 dígitos del cfac_id

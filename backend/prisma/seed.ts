@@ -257,12 +257,13 @@ async function main() {
   // =====================================================
   // CONFIGURACION GENERAL (con impresión centralizada)
   // =====================================================
+  // IMPORTANTE: NO sobrescribir URLs de impresión en update para preservar configuración de producción
   await prisma.generalConfig.upsert({
     where: { id: 'general' },
     update: {
       ticketMode: 'API',  // Forzar modo API por defecto
-      // Configuración de impresión centralizada
-      ...centralizedPrintConfig,
+      // NO incluir centralizedPrintUrl ni centralizedPrintUrlBackup en update
+      // para preservar las URLs configuradas en producción
     },
     create: {
       id: 'general',
@@ -278,11 +279,11 @@ async function main() {
       printFontSize: 'small',
       showOrdersAndCounters: true,
       countProducts: false,
-      // Configuración de impresión centralizada
+      // Configuración de impresión centralizada (solo en create)
       ...centralizedPrintConfig,
     },
   });
-  console.log('GeneralConfig created/updated with ticketMode: API, printMode: CENTRALIZED');
+  console.log('GeneralConfig created/updated with ticketMode: API');
 
   // =====================================================
   // CANALES GLOBALES
