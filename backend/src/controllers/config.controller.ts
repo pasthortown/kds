@@ -246,6 +246,7 @@ export const getConfigModes = asyncHandler(
         ticketMode: true,
         printMode: true,
         centralizedPrintUrl: true,
+        centralizedPrintUrlBackup: true,
         centralizedPrintPort: true,
         printTemplate: true,
         printTemplateType: true,
@@ -267,6 +268,7 @@ export const getConfigModes = asyncHandler(
       ticketMode: config?.ticketMode || 'POLLING',
       printMode: config?.printMode || 'LOCAL',
       centralizedPrintUrl: config?.centralizedPrintUrl || '',
+      centralizedPrintUrlBackup: config?.centralizedPrintUrlBackup || '',
       centralizedPrintPort: config?.centralizedPrintPort || 5000,
       printTemplate: config?.printTemplate || '',
       printTemplateType: config?.printTemplateType || 'orden_pedido',
@@ -311,6 +313,7 @@ export const updateConfigModes = asyncHandler(
       ticketMode,
       printMode,
       centralizedPrintUrl,
+      centralizedPrintUrlBackup,
       centralizedPrintPort,
       printTemplate,
       printTemplateType,
@@ -321,6 +324,7 @@ export const updateConfigModes = asyncHandler(
     if (ticketMode !== undefined) data.ticketMode = ticketMode;
     if (printMode !== undefined) data.printMode = printMode;
     if (centralizedPrintUrl !== undefined) data.centralizedPrintUrl = centralizedPrintUrl;
+    if (centralizedPrintUrlBackup !== undefined) data.centralizedPrintUrlBackup = centralizedPrintUrlBackup;
     if (centralizedPrintPort !== undefined) data.centralizedPrintPort = centralizedPrintPort;
     // Sanitizar el XML de la plantilla antes de guardar
     if (printTemplate !== undefined) data.printTemplate = sanitizePrintTemplate(printTemplate);
@@ -362,6 +366,7 @@ export const updateConfigModes = asyncHandler(
         ticketMode: config.ticketMode,
         printMode: config.printMode,
         centralizedPrintUrl: config.centralizedPrintUrl,
+        centralizedPrintUrlBackup: config.centralizedPrintUrlBackup,
         centralizedPrintPort: config.centralizedPrintPort,
         printTemplate: config.printTemplate,
         printTemplateType: config.printTemplateType,
@@ -373,10 +378,12 @@ export const updateConfigModes = asyncHandler(
 /**
  * POST /api/config/print/test-centralized
  * Probar conexión con servicio de impresión centralizado
+ * Query param: ?backup=true para probar la URL de backup
  */
 export const testCentralizedPrint = asyncHandler(
-  async (_req: AuthenticatedRequest, res: Response) => {
-    const result = await centralizedPrinterService.testConnection();
+  async (req: AuthenticatedRequest, res: Response) => {
+    const useBackup = req.query.backup === 'true';
+    const result = await centralizedPrinterService.testConnection(useBackup);
     res.json(result);
   }
 );

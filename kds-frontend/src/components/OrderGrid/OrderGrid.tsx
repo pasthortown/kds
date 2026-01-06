@@ -33,6 +33,9 @@ export function OrderGrid() {
   // Detectar dimensiones de pantalla
   const screenDimensions = useScreenSize(56, footerHeight);
 
+  // Estado para altura real del grid medida
+  const [actualGridHeight, setActualGridHeight] = useState<number | null>(null);
+
   // Medir la altura real disponible del contenedor
   useEffect(() => {
     const measureHeight = () => {
@@ -44,13 +47,24 @@ export function OrderGrid() {
       const footerHeightActual = footerEl ? footerEl.getBoundingClientRect().height : footerHeight;
 
       const available = window.innerHeight - headerHeight - footerHeightActual;
+
+      // También medir el contenedor del grid directamente
+      const gridEl = gridContainerRef.current;
+      const gridRealHeight = gridEl ? gridEl.getBoundingClientRect().height : null;
+
       console.log('[OrderGrid] Measured heights:', {
         windowHeight: window.innerHeight,
         headerHeight,
         footerHeightActual,
         available,
+        gridRealHeight,
+        gridPaddingApplied: gridRealHeight ? gridRealHeight - 32 : null, // menos p-4
       });
+
       setMeasuredHeight(available);
+      if (gridRealHeight) {
+        setActualGridHeight(gridRealHeight);
+      }
     };
 
     measureHeight();
@@ -58,22 +72,26 @@ export function OrderGrid() {
 
     // También medir después de un pequeño delay para asegurar que el DOM está listo
     const timeoutId = setTimeout(measureHeight, 100);
+    // Y otra vez más tarde por si hay re-renders
+    const timeoutId2 = setTimeout(measureHeight, 500);
 
     return () => {
       window.removeEventListener('resize', measureHeight);
       clearTimeout(timeoutId);
+      clearTimeout(timeoutId2);
     };
   }, [footerHeight]);
 
-  // Altura final a usar (medida real o calculada por el hook)
-  const availableHeight = measuredHeight || screenDimensions.availableHeight;
+  // Altura final a usar: PREFERIR la altura real del grid si está disponible
+  // porque es la medición más precisa del espacio real disponible
+  const availableHeight = actualGridHeight || measuredHeight || screenDimensions.availableHeight;
 
-  // Mapeo preciso de tamaños de fuente a PÍXELES reales
+  // Mapeo preciso de tamaños de fuente a PÍXELES reales (sincronizado con OrderCard +4px)
   const productFontSizes: Record<string, number> = {
-    small: 12, medium: 14, large: 16, xlarge: 20, xxlarge: 24,
+    xsmall: 14, small: 16, medium: 18, large: 20, xlarge: 24, xxlarge: 28,
   };
   const modifierFontSizes: Record<string, number> = {
-    xsmall: 14, small: 15, medium: 16, large: 18, xlarge: 20, xxlarge: 22,
+    xsmall: 17, small: 18, medium: 19, large: 20, xlarge: 22, xxlarge: 24,
   };
 
   // Obtener tamaños de fuente configurados
@@ -105,11 +123,46 @@ export function OrderGrid() {
     itemModifierLineHeight,
   });
 
-  // Constantes de diseño - valores reales basados en CSS de OrderCard
-  // Header: padding 8px*2 + ~20px contenido + cliente padding 6px + ~14px = ~48px total
-  const orderHeaderHeight = 50;
-  // Footer: padding 8px*2 + ~16px contenido = ~32px
-  const channelFooterHeight = 32;
+  // Grid padding (p-4 = 16px * 2 lados = 32px vertical)
+  const gridPadding = 32;
+
+  // Tamaños de fuente del header (sincronizados con OrderCard getFontSize)
+  const headerFontSizes: Record<string, number> = {
+    xsmall: 14, small: 16, medium: 18, large: 20, xlarge: 24, xxlarge: 28,
+  };
+  const timerFontSizes: Record<string, number> = {
+    xsmall: 14, small: 16, medium: 18, large: 20, xlarge: 24, xxlarge: 28,
+  };
+  const clientFontSizes: Record<string, number> = {
+    xsmall: 14, small: 15, medium: 16, large: 18, xlarge: 20, xxlarge: 22,
+  };
+  const channelFontSizes: Record<string, number> = {
+    xsmall: 13, small: 14, medium: 15, large: 16, xlarge: 18, xxlarge: 20,
+  };
+
+  // Obtener tamaños de fuente configurados para header/footer
+  const headerFontSizeConfig = appearance?.headerFontSize || 'medium';
+  const timerFontSizeConfig = appearance?.timerFontSize || 'medium';
+  const clientFontSizeConfig = appearance?.clientFontSize || 'small';
+  const channelFontSizeConfig = appearance?.channelFontSize || 'small';
+
+  // Calcular altura dinámica del header de la tarjeta
+  // Row 1 (order + timer): padding 8px*2 + max(header, timer font)
+  const headerRowFontHeight = Math.max(
+    headerFontSizes[headerFontSizeConfig] || 18,
+    timerFontSizes[timerFontSizeConfig] || 18
+  );
+  const headerRowHeight = 16 + headerRowFontHeight; // padding 8px top + 8px bottom
+  // Row 2 (client): padding 6px bottom + font
+  const clientRowHeight = 6 + (clientFontSizes[clientFontSizeConfig] || 15);
+  // Total header (ambas filas si se muestra cliente)
+  const orderHeaderHeight = headerRowHeight + clientRowHeight;
+
+  // Calcular altura dinámica del footer de la tarjeta
+  // padding 8px*2 + font + extra para channelType badge (~6px)
+  const channelFontHeight = channelFontSizes[channelFontSizeConfig] || 15;
+  const channelFooterHeight = 16 + channelFontHeight + 6; // padding + font + badge margin
+
   // Items container: padding 8px arriba, 0 abajo = 8px
   const itemsContainerPadding = 8;
   // Clip-path margin para splits (reducido a 12px)
@@ -117,17 +170,20 @@ export function OrderGrid() {
   // Border de la tarjeta (3px * 2)
   const cardBorder = 6;
 
+  // Altura real disponible para cards (restando grid padding)
+  const cardAvailableHeight = availableHeight - gridPadding;
+
   // Altura disponible para items en orden completa (sin split)
   const singleOrderItemsHeight =
-    availableHeight - orderHeaderHeight - channelFooterHeight - itemsContainerPadding - cardBorder;
+    cardAvailableHeight - orderHeaderHeight - channelFooterHeight - itemsContainerPadding - cardBorder;
 
   // Altura para PRIMERA parte de split (header + items, sin footer)
   const firstPartOfSplitItemsHeight =
-    availableHeight - orderHeaderHeight - clipPathMargin - itemsContainerPadding - cardBorder;
+    cardAvailableHeight - orderHeaderHeight - clipPathMargin - itemsContainerPadding - cardBorder;
 
   // Altura para OTRAS partes de split (sin header, con footer en última)
   const otherPartsItemsHeight =
-    availableHeight - clipPathMargin - channelFooterHeight - itemsContainerPadding - cardBorder;
+    cardAvailableHeight - clipPathMargin - channelFooterHeight - itemsContainerPadding - cardBorder;
 
   // Calcular cuántos items caben basado en altura REAL en píxeles
   // Para decidir si dividir, usamos la altura de orden completa (sin split)
@@ -138,6 +194,10 @@ export function OrderGrid() {
 
   console.log('[OrderGrid] Dynamic heights:', {
     availableHeight,
+    gridPadding,
+    cardAvailableHeight,
+    orderHeaderHeight,
+    channelFooterHeight,
     singleOrderItemsHeight,
     firstPartOfSplitItemsHeight,
     otherPartsItemsHeight,
@@ -146,6 +206,12 @@ export function OrderGrid() {
     dynamicOtherPartsMaxHeight,
     itemProductHeight,
     itemModifierLineHeight,
+    fontConfigs: {
+      header: headerFontSizeConfig,
+      timer: timerFontSizeConfig,
+      client: clientFontSizeConfig,
+      channel: channelFontSizeConfig,
+    },
   });
 
   // Obtener TODAS las órdenes pendientes (no paginar aquí)
@@ -165,31 +231,43 @@ export function OrderGrid() {
     setLastFinished(orderId);
   }, [setLastFinished]);
 
+  // Estimar caracteres por línea basado en el ancho de columna
+  // Con 4 columnas en ~1280px, cada columna es ~300px - padding
+  // Con fuente xlarge (24px), aproximadamente 12-15 caracteres por línea
+  const charsPerLineProduct = 15; // Conservador para productos
+  const charsPerLineModifier = 20; // Modificadores tienen fuente más pequeña
+
   // Calcular la altura REAL en píxeles de un item (considerando modificadores, notas y comentarios)
   const calculateItemHeight = (item: OrderItem): number => {
-    // Altura base del producto (nombre + cantidad)
-    let height = itemProductHeight;
+    // Altura del producto - considerar text wrapping para nombres largos
+    const productNameLength = item.name?.length || 0;
+    const productLines = Math.max(1, Math.ceil(productNameLength / charsPerLineProduct));
+    let height = productLines * itemProductHeight;
 
-    // Altura de modificadores (cada línea separada por coma)
+    // Altura de modificadores (cada línea separada por coma, también con posible wrap)
     if (item.modifier) {
-      const modifierLines = item.modifier.split(',').length;
-      height += modifierLines * itemModifierLineHeight;
+      const modifierParts = item.modifier.split(',');
+      let modifierTotalLines = 0;
+      for (const mod of modifierParts) {
+        const modLength = mod.trim().length;
+        const modLines = Math.max(1, Math.ceil(modLength / charsPerLineModifier));
+        modifierTotalLines += modLines;
+      }
+      height += modifierTotalLines * itemModifierLineHeight;
     }
 
     // Altura de notas - estimar líneas basado en longitud y comas
-    // Las notas son texto que hace wrap, estimamos ~30 caracteres por línea
     if (item.notes) {
       const notesLength = item.notes.length;
       const commaCount = (item.notes.match(/,/g) || []).length;
-      // Estimar líneas: al menos 1, más líneas por cada ~35 caracteres o por comas (lo que sea mayor)
-      const estimatedLines = Math.max(1, Math.ceil(notesLength / 35), commaCount + 1);
+      const estimatedLines = Math.max(1, Math.ceil(notesLength / charsPerLineModifier), commaCount + 1);
       height += estimatedLines * itemModifierLineHeight;
     }
 
     // Altura de comentarios - similar estimación
     if (item.comments) {
       const commentsLength = item.comments.length;
-      const estimatedLines = Math.max(1, Math.ceil(commentsLength / 35));
+      const estimatedLines = Math.max(1, Math.ceil(commentsLength / charsPerLineModifier));
       height += estimatedLines * itemModifierLineHeight;
     }
 
@@ -340,6 +418,34 @@ export function OrderGrid() {
     });
   }, [screenDimensions, availableHeight, allColumns.length, displayColumns.length, currentPage, totalPages, totalPendingOrders]);
 
+  // Debug panel para mostrar cálculos (presionar 'd' para mostrar/ocultar)
+  const [showDebug, setShowDebug] = useState(false);
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'd' && e.ctrlKey) {
+        setShowDebug(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
+
+  const debugInfo = {
+    windowHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
+    actualGridHeight,
+    measuredHeight,
+    availableHeight,
+    gridPadding,
+    cardAvailableHeight,
+    orderHeaderHeight,
+    channelFooterHeight,
+    singleOrderItemsHeight,
+    dynamicSingleOrderMaxHeight,
+    itemProductHeight,
+    itemModifierLineHeight,
+    screenSplit,
+  };
+
   if (displayColumns.length === 0) {
     return (
       <div
@@ -349,6 +455,11 @@ export function OrderGrid() {
           minHeight: 0,
         }}
       >
+        {showDebug && (
+          <div style={{ position: 'fixed', top: 80, left: 10, background: 'rgba(0,0,0,0.9)', color: '#0f0', padding: 10, fontSize: 11, zIndex: 9999, fontFamily: 'monospace' }}>
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
         <div className="text-center">
           <div className="text-6xl mb-4 opacity-30">
             <svg
@@ -387,6 +498,33 @@ export function OrderGrid() {
         alignItems: 'stretch', // Estirar tarjetas al 100% del alto
       }}
     >
+      {/* Debug Panel - Ctrl+D para mostrar/ocultar */}
+      {showDebug && (
+        <div style={{
+          position: 'fixed',
+          top: 80,
+          left: 10,
+          background: 'rgba(0,0,0,0.95)',
+          color: '#0f0',
+          padding: 12,
+          fontSize: 11,
+          zIndex: 9999,
+          fontFamily: 'monospace',
+          borderRadius: 8,
+          maxWidth: 350,
+        }}>
+          <div style={{ marginBottom: 8, color: '#ff0', fontWeight: 'bold' }}>DEBUG (Ctrl+D to hide)</div>
+          <pre style={{ margin: 0 }}>{JSON.stringify(debugInfo, null, 2)}</pre>
+          <div style={{ marginTop: 8, color: '#888', fontSize: 10 }}>
+            Order 1 items: {displayColumns[0]?.items.length || 0} |
+            Total height calc: {displayColumns[0]?.items.reduce((sum, item) => {
+              let h = itemProductHeight;
+              if (item.modifier) h += item.modifier.split(',').length * itemModifierLineHeight;
+              return sum + h;
+            }, 0) || 0}px
+          </div>
+        </div>
+      )}
       {displayColumns.map((column, index) => (
         <OrderCard
           key={`${column.order.id}-${column.partNumber}`}

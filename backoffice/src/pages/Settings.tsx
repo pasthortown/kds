@@ -3,7 +3,6 @@ import {
   Card,
   Form,
   Input,
-  InputNumber,
   Button,
   message,
   Tabs,
@@ -52,6 +51,7 @@ interface ConfigModes {
   ticketMode: 'POLLING' | 'API';
   printMode: 'LOCAL' | 'CENTRALIZED';
   centralizedPrintUrl: string;
+  centralizedPrintUrlBackup: string;
   centralizedPrintPort: number;
   printTemplate: string;
   printTemplateType: string;
@@ -255,33 +255,27 @@ export function Settings() {
                     {({ getFieldValue }) =>
                       getFieldValue('printMode') === 'CENTRALIZED' && (
                         <Card size="small" style={{ marginBottom: 16, backgroundColor: '#fafafa' }}>
-                          <Row gutter={16}>
-                            <Col span={16}>
-                              <Form.Item
-                                name="centralizedPrintUrl"
-                                label="URL del Servicio de Impresion"
-                                rules={[{ required: true, message: 'Ingrese la URL del servicio' }]}
-                              >
-                                <Input
-                                  placeholder="http://192.168.1.100:5000/api/ImpresionTickets/Impresion"
-                                  addonBefore={<CloudServerOutlined />}
-                                />
-                              </Form.Item>
-                            </Col>
-                            <Col span={8}>
-                              <Form.Item
-                                name="centralizedPrintPort"
-                                label="Puerto"
-                              >
-                                <InputNumber
-                                  min={1}
-                                  max={65535}
-                                  style={{ width: '100%' }}
-                                  placeholder="5000"
-                                />
-                              </Form.Item>
-                            </Col>
-                          </Row>
+                          <Form.Item
+                            name="centralizedPrintUrl"
+                            label="URL del Servicio Principal"
+                            rules={[{ required: true, message: 'Ingrese la URL del servicio' }]}
+                          >
+                            <Input
+                              placeholder="http://192.168.1.100:5000/api/ImpresionTickets/Impresion"
+                              addonBefore={<CloudServerOutlined />}
+                            />
+                          </Form.Item>
+
+                          <Form.Item
+                            name="centralizedPrintUrlBackup"
+                            label="URL del Servicio Backup"
+                            extra="Si el servicio principal no responde, se usara esta URL de respaldo"
+                          >
+                            <Input
+                              placeholder="http://192.168.1.101:5000/api/ImpresionTickets/Impresion"
+                              addonBefore={<CloudServerOutlined />}
+                            />
+                          </Form.Item>
 
                           <Form.Item
                             name="printTemplateType"

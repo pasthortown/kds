@@ -6,7 +6,7 @@ export interface ButtonAction {
 
 export interface ComboAction {
   keys: string[];
-  timeWindow: number; // Ventana de tiempo para detectar las teclas en secuencia
+  timeWindow: number;
   action: string;
   handler: () => void;
   onProgress?: (progress: number) => void;
@@ -18,13 +18,10 @@ export class ButtonController {
   private actions: ButtonAction[];
   private combos: ComboAction[];
 
-  // Para secuencia de teclas (combo)
-  private keySequence: { key: string; time: number }[] = [];
-  private comboExecuted: boolean = false;
-
-  // Para evitar que teclas de combo ejecuten acciones simples
-  private pendingComboCheck: ReturnType<typeof setTimeout> | null = null;
-  private comboCheckDelay: number = 250; // Esperar 250ms para ver si llega otra tecla del combo
+  // Nueva lógica para i/g
+  private pendingKey: string | null = null;
+  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+  private readonly COMBO_WAIT_TIME = 1000; // 1 segundo de espera para complemento
 
   constructor(
     actions: ButtonAction[],
@@ -50,55 +47,13 @@ export class ButtonController {
     // Prevenir comportamiento por defecto
     event.preventDefault();
 
-    // Si ya ejecutamos un combo recientemente, ignorar
-    if (this.comboExecuted) {
+    // Lógica especial para i y g (combo de bloqueo)
+    if (key === 'i' || key === 'g') {
+      this.handleComboKeys(key);
       return;
     }
 
-    // Agregar a la secuencia
-    this.keySequence.push({ key, time: now });
-
-    // Limpiar teclas antiguas (más de 2 segundos)
-    this.keySequence = this.keySequence.filter(k => now - k.time < 2000);
-
-    // Verificar si esta tecla es parte de algún combo
-    const isPartOfCombo = this.combos.some(c => c.keys.includes(key));
-
-    if (isPartOfCombo) {
-      // Cancelar check pendiente anterior
-      if (this.pendingComboCheck) {
-        clearTimeout(this.pendingComboCheck);
-      }
-
-      // Verificar combo inmediatamente
-      if (this.checkAndExecuteCombo()) {
-        return; // Combo ejecutado, no hacer nada más
-      }
-
-      // Guardar la tecla actual para ejecutar si el combo no se completa
-      const pendingKey = key;
-
-      // Si no se completó el combo, esperar un poco por si llega otra tecla
-      this.pendingComboCheck = setTimeout(() => {
-        this.pendingComboCheck = null;
-
-        // Verificar de nuevo por si llegó otra tecla
-        if (this.checkAndExecuteCombo()) {
-          return;
-        }
-
-        // No se completó combo, ejecutar la acción simple de la tecla original
-        this.executeSimpleAction(pendingKey);
-
-        // Limpiar secuencia
-        this.keySequence = [];
-      }, this.comboCheckDelay);
-
-      return; // No ejecutar acción simple aún, esperar timeout
-    }
-
-    // Tecla que NO es parte de combo - ejecutar inmediatamente
-    // Debounce
+    // Para otras teclas, ejecutar con debounce normal
     if (now - this.lastActionTime < this.debounceTime) {
       return;
     }
@@ -106,48 +61,74 @@ export class ButtonController {
     this.executeSimpleAction(key);
   }
 
-  private checkAndExecuteCombo(): boolean {
+  private handleComboKeys(key: string): void {
     const now = Date.now();
 
-    for (const combo of this.combos) {
-      // Obtener teclas recientes dentro de la ventana del combo
-      const recentKeys = this.keySequence.filter(k => now - k.time < combo.timeWindow);
-      const recentKeyNames = recentKeys.map(k => k.key);
+    // Si hay una tecla pendiente
+    if (this.pendingKey !== null) {
+      // Cancelar el timeout pendiente
+      if (this.pendingTimeout) {
+        clearTimeout(this.pendingTimeout);
+        this.pendingTimeout = null;
+      }
 
-      // Verificar si todas las teclas del combo están presentes
-      const allKeysPresent = combo.keys.every(k => recentKeyNames.includes(k));
+      const previousKey = this.pendingKey;
+      this.pendingKey = null;
 
-      if (allKeysPresent) {
-        this.comboExecuted = true;
+      // Verificar qué combinación tenemos
+      if ((previousKey === 'i' && key === 'g') || (previousKey === 'g' && key === 'i')) {
+        // Combo i+g o g+i → bloquear pantalla
+        console.log('[ButtonController] Combo detectado: bloqueo de pantalla');
+        this.executeCombo();
+        return;
+      }
 
-        if (combo.onProgress) {
-          combo.onProgress(100);
+      if (previousKey === key) {
+        // Misma tecla dos veces (i+i o g+g) → ejecutar acción solo 1 vez
+        console.log(`[ButtonController] Doble ${key} detectado: ejecutar acción una vez`);
+        if (now - this.lastActionTime >= this.debounceTime) {
+          this.executeSimpleAction(key);
         }
-
-        // Ejecutar handler del combo
-        combo.handler();
-        this.lastActionTime = now;
-
-        // Limpiar
-        this.keySequence = [];
-        if (this.pendingComboCheck) {
-          clearTimeout(this.pendingComboCheck);
-          this.pendingComboCheck = null;
-        }
-
-        // Resetear después de 1 segundo (para poder encender/apagar rápido)
-        setTimeout(() => {
-          this.comboExecuted = false;
-          if (combo.onProgress) {
-            combo.onProgress(0);
-          }
-        }, 1000);
-
-        return true;
+        return;
       }
     }
 
-    return false;
+    // No hay tecla pendiente, guardar esta y esperar 500ms
+    this.pendingKey = key;
+    console.log(`[ButtonController] Tecla ${key} recibida, esperando 500ms...`);
+
+    this.pendingTimeout = setTimeout(() => {
+      // No llegó complemento, ejecutar la acción de la tecla
+      if (this.pendingKey === key) {
+        console.log(`[ButtonController] Timeout: ejecutando acción de ${key}`);
+        this.pendingKey = null;
+        this.pendingTimeout = null;
+        this.executeSimpleAction(key);
+      }
+    }, this.COMBO_WAIT_TIME);
+  }
+
+  private executeCombo(): void {
+    // Buscar el combo de toggle power (g+i)
+    const combo = this.combos.find(c =>
+      c.keys.includes('g') && c.keys.includes('i')
+    );
+
+    if (combo) {
+      if (combo.onProgress) {
+        combo.onProgress(100);
+      }
+
+      combo.handler();
+      this.lastActionTime = Date.now();
+
+      // Resetear progreso después de 1 segundo
+      setTimeout(() => {
+        if (combo.onProgress) {
+          combo.onProgress(0);
+        }
+      }, 1000);
+    }
   }
 
   private executeSimpleAction(key: string): void {
@@ -169,11 +150,10 @@ export class ButtonController {
   public destroy(): void {
     document.removeEventListener('keydown', this.handleKeyDown);
 
-    if (this.pendingComboCheck) {
-      clearTimeout(this.pendingComboCheck);
+    if (this.pendingTimeout) {
+      clearTimeout(this.pendingTimeout);
     }
 
-    this.keySequence = [];
-    this.comboExecuted = false;
+    this.pendingKey = null;
   }
 }

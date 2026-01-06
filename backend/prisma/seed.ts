@@ -31,7 +31,9 @@ const queueChannelsData = [
 ];
 
 // Colores de canal por apariencia (para cada pantalla)
+// Incluye canales con sufijo -SALON (verde) y -LLEVAR (morado)
 const channelColorsData = [
+  // Canales base
   { channel: 'Local', color: '#7ed321', textColor: '#ffffff' },
   { channel: 'Kiosko-Efectivo', color: '#0299d0', textColor: '#ffffff' },
   { channel: 'Kiosko-Tarjeta', color: '#d0021b', textColor: '#ffffff' },
@@ -41,6 +43,14 @@ const channelColorsData = [
   { channel: 'Glovo', color: '#ffc244', textColor: '#000000' },
   { channel: 'Drive', color: '#9b59b6', textColor: '#ffffff' },
   { channel: 'Delivery', color: '#e74c3c', textColor: '#ffffff' },
+  // Canales KIOSKO con tipo (SALON=verde, LLEVAR=morado)
+  { channel: 'KIOSKO EFECTIVO-SALON', color: '#02d01d', textColor: '#ffffff' },
+  { channel: 'KIOSKO EFECTIVO-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
+  { channel: 'KIOSKO TARJETA-SALON', color: '#02d01d', textColor: '#ffffff' },
+  { channel: 'KIOSKO TARJETA-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
+  // Canales MXP con tipo (SALON=verde, LLEVAR=morado)
+  { channel: 'MXP-SALON', color: '#02d01d', textColor: '#ffffff' },
+  { channel: 'MXP-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
 ];
 
 // Colores SLA por tiempo (minutos)
@@ -70,7 +80,7 @@ const baseAppearance = {
   accentColor: '#e94560',
   // Header
   headerFontFamily: 'monospace',
-  headerFontSize: 'large',
+  headerFontSize: 'xlarge',
   headerFontWeight: 'bold',
   headerFontStyle: 'normal',
   headerBgColor: '',
@@ -78,7 +88,7 @@ const baseAppearance = {
   showHeader: true,
   // Timer
   timerFontFamily: 'monospace',
-  timerFontSize: 'large',
+  timerFontSize: 'xxlarge',
   timerFontWeight: 'bold',
   timerFontStyle: 'normal',
   timerTextColor: '#ffffff',
@@ -136,7 +146,7 @@ const baseAppearance = {
   // Comentarios
   commentsFontFamily: 'monospace',
   commentsFontSize: 'large',
-  commentsFontWeight: '600',  // Semi-Bold
+  commentsFontWeight: 'semibold',
   commentsFontStyle: 'italic',
   commentsTextColor: '#4b824d',
   commentsBgColor: '',
@@ -144,7 +154,7 @@ const baseAppearance = {
   showComments: true,
   // Canal
   channelFontFamily: 'monospace',
-  channelFontSize: 'xlarge',
+  channelFontSize: 'xxlarge',
   channelFontWeight: 'bold',
   channelFontStyle: 'normal',
   channelTextColor: '#ffffff',
@@ -200,9 +210,11 @@ const baseKeyboard = {
 };
 
 // Configuración de impresión centralizada
+// Usa 127.0.0.1 por defecto para evitar que se direccionen impresiones a otros locales
 const centralizedPrintConfig = {
   printMode: 'CENTRALIZED',
-  centralizedPrintUrl: 'http://10.101.27.21:5000/api/ImpresionTickets/Impresion',
+  centralizedPrintUrl: 'http://127.0.0.1:5000/api/ImpresionTickets/Impresion',
+  centralizedPrintUrlBackup: '',
   centralizedPrintPort: 5000,
   printTemplateType: 'orden_pedido',
   printTemplate: `<?xml version="1.0" encoding="utf-8"?><plantilla id="impresionOrdenPedidoLocal"><salto/><parametro alineacion="centrado" estilo="bold|fontB">datafono</parametro><salto/><etiqueta estilo="bold|fontB" tamano="2" alineacion="izquierda">    #Medio     #Pedido       #Paquete     #Bebidas </etiqueta><salto/><etiqueta estilo="default" alineacion="izquierda">_________ _________ _________ _________</etiqueta><salto/><etiqueta estilo="default" alineacion="izquierda">| </etiqueta><parametro estilo="fontB" alineacion="izquierda">medio</parametro><etiqueta estilo="default" alineacion="izquierda">    | |       | |       | |       |</etiqueta><salto/><etiqueta estilo="default">----------------------------------------</etiqueta><salto/><parametro alineacion="centrado" estilo="bold|fontB">tituloPickup</parametro><salto/><parametro alineacion="centrado" estilo="bold|fontB">tipoPickup</parametro><salto/><etiqueta estilo="bold" alineacion="izquierda">MESA: </etiqueta><parametro estilo="bold" alineacion="izquierda">mesa</parametro><salto/><etiqueta estilo="bold" alineacion="izquierda">TRANSACIÓN #: </etiqueta><parametro estilo="bold" alineacion="izquierda">transaccion</parametro><salto/><etiqueta estilo="bold" alineacion="izquierda"># Cuenta:</etiqueta><parametro estilo="bold" alineacion="izquierda">numeroCuenta</parametro><salto/><parametro alineacion="izquierda" estilo="bold" sizeToMultiply="1">observacion</parametro><salto/><etiqueta estilo="default" alineacion="izquierda">Canal: </etiqueta><parametro estilo="default" alineacion="izquierda">canal</parametro><salto/><etiqueta estilo="default" alineacion="izquierda">Cajero/a: </etiqueta><parametro estilo="default" alineacion="izquierda">cajero</parametro><salto/><etiqueta estilo="default" alineacion="izquierda">FECHA: </etiqueta><parametro estilo="default" alineacion="izquierda">fecha</parametro><salto/><salto/><etiqueta estilo="default">------------------------------------------</etiqueta><etiquetaCentrada estilo="bold" tamano="5">CANT</etiquetaCentrada><etiquetaCentrada estilo="bold" tamano="1"/><etiquetaIzquierda estilo="bold" tamano="32">DESCRIPCIÓN</etiquetaIzquierda><salto/><etiqueta estilo="default">------------------------------------------</etiqueta><salto/><registrosDetalle estilo="bold"><item alineacion="centrado" tamano="5">cantidad</item><espacio alineacion="izquierda" tamano="1"/><item alineacion="izquierda" tamano="32">producto</item></registrosDetalle><salto/><etiqueta estilo="default" alineacion="centrado">------------------------------------------</etiqueta><salto/><salto/><parametro alineacion="izquierda" estilo="default">qrDireccionTitulo</parametro><salto/><qr alineacion="centrado">qrDireccion</qr><qr alineacion="centrado">qrPedido</qr><salto/><salto/><salto/><salto/><salto/></plantilla>`,

@@ -97,6 +97,12 @@ export function useKeyboardController() {
 
       const order = currentOrders[index];
       if (order) {
+        // Ignorar órdenes en estado "TOMANDO PEDIDO" - no pueden ser impresas/finalizadas
+        if (order.statusPos?.toUpperCase() === 'TOMANDO PEDIDO') {
+          console.log(`[Keyboard] Orden #${order.identifier} en estado TOMANDO PEDIDO - ignorada`);
+          return;
+        }
+
         // MODO PRUEBA: Solo remover localmente, NO enviar al backend + generar PDF
         if (isTestMode) {
           // Guardar órdenes originales la primera vez
@@ -230,7 +236,7 @@ export function useKeyboardController() {
     const combos = [
       {
         keys: ['g', 'i'], // ← + →
-        timeWindow: 1500, // Las dos teclas deben llegar en 1.5 segundos
+        timeWindow: 3000, // Las dos teclas deben llegar en 3 segundos
         action: 'togglePower',
         handler: handleTogglePower,
         onProgress: handleComboProgress,

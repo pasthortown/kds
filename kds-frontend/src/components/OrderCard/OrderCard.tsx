@@ -37,18 +37,18 @@ const defaultChannelColors: Record<string, string> = {
 
 const getFontSize = (size?: string, type: 'header' | 'product' | 'modifier' | 'timer' | 'client' | 'quantity' | 'subitem' | 'notes' | 'comments' | 'channel' = 'product'): string => {
   const sizes: Record<string, Record<string, string>> = {
-    header: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
-    timer: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
-    client: { xsmall: '10px', small: '11px', medium: '12px', large: '14px', xlarge: '16px', xxlarge: '18px' },
-    quantity: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
-    product: { xsmall: '10px', small: '12px', medium: '14px', large: '16px', xlarge: '20px', xxlarge: '24px' },
-    subitem: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
-    modifier: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
-    notes: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
-    comments: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
-    channel: { xsmall: '9px', small: '10px', medium: '11px', large: '12px', xlarge: '14px', xxlarge: '16px' },
+    header: { xsmall: '14px', small: '16px', medium: '18px', large: '20px', xlarge: '24px', xxlarge: '28px' },
+    timer: { xsmall: '14px', small: '16px', medium: '18px', large: '20px', xlarge: '24px', xxlarge: '28px' },
+    client: { xsmall: '14px', small: '15px', medium: '16px', large: '18px', xlarge: '20px', xxlarge: '22px' },
+    quantity: { xsmall: '14px', small: '16px', medium: '18px', large: '20px', xlarge: '24px', xxlarge: '28px' },
+    product: { xsmall: '14px', small: '16px', medium: '18px', large: '20px', xlarge: '24px', xxlarge: '28px' },
+    subitem: { xsmall: '17px', small: '18px', medium: '19px', large: '20px', xlarge: '22px', xxlarge: '24px' },
+    modifier: { xsmall: '17px', small: '18px', medium: '19px', large: '20px', xlarge: '22px', xxlarge: '24px' },
+    notes: { xsmall: '17px', small: '18px', medium: '19px', large: '20px', xlarge: '22px', xxlarge: '24px' },
+    comments: { xsmall: '17px', small: '18px', medium: '19px', large: '20px', xlarge: '22px', xxlarge: '24px' },
+    channel: { xsmall: '13px', small: '14px', medium: '15px', large: '16px', xlarge: '18px', xxlarge: '20px' },
   };
-  return sizes[type]?.[size || 'medium'] || sizes[type]?.medium || '14px';
+  return sizes[type]?.[size || 'medium'] || sizes[type]?.medium || '18px';
 };
 
 const getFontWeight = (weight?: string): number => {

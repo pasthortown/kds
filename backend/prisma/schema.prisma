@@ -497,8 +497,9 @@ model GeneralConfig {
   printMode              String  @default("LOCAL") // LOCAL | CENTRALIZED
 
   // Configuración del servicio centralizado de impresión
-  centralizedPrintUrl    String  @default("") // URL del servicio: http://ip:puerto/api/ImpresionTickets/Impresion
-  centralizedPrintPort   Int     @default(5000)
+  centralizedPrintUrl       String  @default("") // URL del servicio principal: http://ip:puerto/api/ImpresionTickets/Impresion
+  centralizedPrintUrlBackup String  @default("") // URL del servicio backup: se usa si la principal falla
+  centralizedPrintPort      Int     @default(5000)
   printTemplate          String? @db.Text     // Plantilla XML para impresión centralizada
   printTemplateType      String  @default("orden_pedido") // Tipo de plantilla (ej: orden_pedido)
 

@@ -60,6 +60,7 @@ export class CentralizedPrinterService {
    */
   async getCentralizedConfig(): Promise<{
     url: string;
+    urlBackup: string;
     port: number;
     printTemplate: string;
   } | null> {
@@ -73,6 +74,7 @@ export class CentralizedPrinterService {
 
     return {
       url: config.centralizedPrintUrl,
+      urlBackup: config.centralizedPrintUrlBackup || '',
       port: config.centralizedPrintPort || 5000,
       printTemplate: config.printTemplate || '',
     };
@@ -93,6 +95,8 @@ export class CentralizedPrinterService {
 
   /**
    * Imprime una orden usando el servicio centralizado
+   * Prueba ambas URLs en paralelo y usa la que responda primero (dentro de 500ms)
+   * Si ninguna responde rápido, intenta secuencialmente con reintentos
    */
   async printOrder(order: Order, screenId: string): Promise<boolean> {
     const centralConfig = await this.getCentralizedConfig();
@@ -120,9 +124,142 @@ export class CentralizedPrinterService {
 
     printerLogger.debug('Centralized print payload:', { payload });
 
+    // Si hay URL de backup, probar ambas en paralelo
+    if (centralConfig.urlBackup) {
+      const fastResult = await this.tryFastestUrl(
+        centralConfig.url,
+        centralConfig.urlBackup,
+        payload,
+        order,
+        printerName
+      );
+
+      if (fastResult) {
+        return true;
+      }
+
+      // Si la prueba rápida falló, intentar secuencialmente con reintentos completos
+      printerLogger.info(`Fast parallel print failed for order ${order.identifier}, trying sequential with retries...`);
+    }
+
+    // Intentar con URL principal (con reintentos)
+    const primarySuccess = await this.tryPrintWithUrl(
+      centralConfig.url,
+      payload,
+      order,
+      printerName,
+      'PRIMARY'
+    );
+
+    if (primarySuccess) {
+      return true;
+    }
+
+    // Si falló la principal y hay URL de backup, intentar con backup (con reintentos)
+    if (centralConfig.urlBackup) {
+      printerLogger.info(
+        `Primary URL failed for order ${order.identifier}, trying backup URL with retries...`
+      );
+
+      const backupSuccess = await this.tryPrintWithUrl(
+        centralConfig.urlBackup,
+        payload,
+        order,
+        printerName,
+        'BACKUP'
+      );
+
+      if (backupSuccess) {
+        return true;
+      }
+    }
+
+    printerLogger.error(
+      `Failed to print order ${order.identifier} via centralized service (both primary and backup failed)`
+    );
+    return false;
+  }
+
+  /**
+   * Prueba ambas URLs en paralelo y usa la que responda primero (dentro de 500ms)
+   */
+  private async tryFastestUrl(
+    primaryUrl: string,
+    backupUrl: string,
+    payload: CentralizedPrintPayload,
+    order: Order,
+    printerName: string
+  ): Promise<boolean> {
+    const FAST_TIMEOUT = 500; // 500ms para considerar "rápido"
+
+    printerLogger.info(`Trying both URLs in parallel for order ${order.identifier}...`);
+
+    // Crear promesas para ambas URLs con timeout rápido
+    const primaryPromise = this.sendToCentralizedServiceFast(primaryUrl, payload, FAST_TIMEOUT)
+      .then(() => ({ url: primaryUrl, type: 'PRIMARY' as const, success: true }))
+      .catch(() => ({ url: primaryUrl, type: 'PRIMARY' as const, success: false }));
+
+    const backupPromise = this.sendToCentralizedServiceFast(backupUrl, payload, FAST_TIMEOUT)
+      .then(() => ({ url: backupUrl, type: 'BACKUP' as const, success: true }))
+      .catch(() => ({ url: backupUrl, type: 'BACKUP' as const, success: false }));
+
+    // Esperar a que ambas terminen
+    const results = await Promise.all([primaryPromise, backupPromise]);
+
+    // Ver cuál tuvo éxito
+    const successResult = results.find(r => r.success);
+
+    if (successResult) {
+      // Registrar impresión exitosa
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { printedAt: new Date() },
+      });
+
+      printerLogger.info(
+        `Order ${order.identifier} sent via FAST [${successResult.type}] (printer: ${printerName})`
+      );
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Envía al servicio con timeout rápido (para prueba paralela)
+   */
+  private async sendToCentralizedServiceFast(
+    url: string,
+    payload: CentralizedPrintPayload,
+    timeout: number
+  ): Promise<void> {
+    const response = await axios.post(url, payload, {
+      timeout,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+    if (response.status >= 400) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    if (response.data?.error === true) {
+      throw new Error(`Service error: ${response.data.mensaje}`);
+    }
+  }
+
+  /**
+   * Intenta imprimir con una URL específica con reintentos
+   */
+  private async tryPrintWithUrl(
+    url: string,
+    payload: CentralizedPrintPayload,
+    order: Order,
+    printerName: string,
+    urlType: 'PRIMARY' | 'BACKUP'
+  ): Promise<boolean> {
     for (let attempt = 1; attempt <= this.retries; attempt++) {
       try {
-        await this.sendToCentralizedService(centralConfig.url, payload);
+        await this.sendToCentralizedService(url, payload);
 
         // Registrar impresión exitosa
         await prisma.order.update({
@@ -131,18 +268,18 @@ export class CentralizedPrinterService {
         });
 
         printerLogger.info(
-          `Order ${order.identifier} sent to centralized print service (printer: ${printerName})`
+          `Order ${order.identifier} sent to centralized print service [${urlType}] (printer: ${printerName})`
         );
         return true;
       } catch (error) {
         printerLogger.warn(
-          `Centralized print attempt ${attempt}/${this.retries} failed for order ${order.identifier}`,
+          `Centralized print [${urlType}] attempt ${attempt}/${this.retries} failed for order ${order.identifier}`,
           { error }
         );
 
         if (attempt === this.retries) {
-          printerLogger.error(
-            `Failed to print order ${order.identifier} via centralized service after ${this.retries} attempts`
+          printerLogger.warn(
+            `All ${this.retries} attempts failed for [${urlType}] URL`
           );
           return false;
         }
@@ -330,16 +467,24 @@ export class CentralizedPrinterService {
 
   /**
    * Prueba la conexión con el servicio centralizado
+   * @param useBackup - Si es true, prueba la URL de backup en lugar de la principal
    */
-  async testConnection(): Promise<{ success: boolean; message: string }> {
+  async testConnection(useBackup: boolean = false): Promise<{ success: boolean; message: string }> {
     const config = await this.getCentralizedConfig();
     if (!config) {
       return { success: false, message: 'Servicio centralizado no configurado' };
     }
 
+    const url = useBackup ? config.urlBackup : config.url;
+    const urlType = useBackup ? 'BACKUP' : 'PRINCIPAL';
+
+    if (!url) {
+      return { success: false, message: `URL ${urlType} no configurada` };
+    }
+
     try {
       // Hacer POST con payload mínimo para verificar que el servicio responde
-      const response = await axios.post(config.url, {}, {
+      const response = await axios.post(url, {}, {
         timeout: 5000,
         headers: { 'Content-Type': 'application/json' },
         validateStatus: () => true, // Aceptar cualquier código de respuesta
@@ -349,17 +494,17 @@ export class CentralizedPrinterService {
       if (response.status < 500) {
         return {
           success: true,
-          message: `Servicio activo. Respuesta: ${response.data?.mensaje || response.status}`,
+          message: `Servicio ${urlType} activo. Respuesta: ${response.data?.mensaje || response.status}`,
         };
       }
 
       return {
         success: false,
-        message: `Error del servidor: ${response.status}`,
+        message: `Error del servidor ${urlType}: ${response.status}`,
       };
     } catch (error: unknown) {
       const message = axios.isAxiosError(error)
-        ? `Error de conexión: ${error.message}`
+        ? `Error de conexión ${urlType}: ${error.message}`
         : 'Error desconocido';
 
       return { success: false, message };

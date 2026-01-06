@@ -160,12 +160,14 @@ export const configApi = {
     ticketMode?: 'POLLING' | 'API';
     printMode?: 'LOCAL' | 'CENTRALIZED';
     centralizedPrintUrl?: string;
+    centralizedPrintUrlBackup?: string;
     centralizedPrintPort?: number;
     printTemplate?: string;
     printTemplateType?: string;
     screenPrinters?: Array<{ id: string; printerName: string }>;
   }) => api.put('/config/modes', data),
-  testCentralizedPrint: () => api.post('/config/print/test-centralized'),
+  testCentralizedPrint: (useBackup?: boolean) =>
+    api.post(`/config/print/test-centralized${useBackup ? '?backup=true' : ''}`),
 };
 
 // Mirror KDS - DESACTIVADO
