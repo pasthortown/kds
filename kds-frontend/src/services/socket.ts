@@ -77,12 +77,20 @@ class SocketService {
   }
 
   finishOrder(orderId: string): void {
+    console.log(`[Socket] finishOrder llamado con orderId=${orderId}`);
+    console.log(`[Socket] socket exists: ${!!this.socket}, connected: ${this.socket?.connected}`);
+
     if (this.socket && this.socket.connected) {
-      this.socket.emit('order:finish', {
+      const payload = {
         orderId,
         screenId: this.screenId,
         timestamp: Date.now(),
-      });
+      };
+      console.log(`[Socket] Emitiendo order:finish con payload:`, JSON.stringify(payload));
+      this.socket.emit('order:finish', payload);
+      console.log(`[Socket] order:finish emitido exitosamente`);
+    } else {
+      console.error(`[Socket] NO SE PUDO EMITIR order:finish - socket no conectado`);
     }
   }
 

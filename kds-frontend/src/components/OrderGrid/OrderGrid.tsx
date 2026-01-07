@@ -52,15 +52,6 @@ export function OrderGrid() {
       const gridEl = gridContainerRef.current;
       const gridRealHeight = gridEl ? gridEl.getBoundingClientRect().height : null;
 
-      console.log('[OrderGrid] Measured heights:', {
-        windowHeight: window.innerHeight,
-        headerHeight,
-        footerHeightActual,
-        available,
-        gridRealHeight,
-        gridPaddingApplied: gridRealHeight ? gridRealHeight - 32 : null, // menos p-4
-      });
-
       setMeasuredHeight(available);
       if (gridRealHeight) {
         setActualGridHeight(gridRealHeight);
@@ -115,13 +106,6 @@ export function OrderGrid() {
   const itemModifierLineHeight = Math.ceil(
     (modifierFontSizes[modifierFontSize] || 11) * modifierLineHeight + modifierMarginTop
   );
-
-  console.log('[OrderGrid] Calculated item heights:', {
-    productFontSize,
-    modifierFontSize,
-    itemProductHeight,
-    itemModifierLineHeight,
-  });
 
   // Grid padding (p-4 = 16px * 2 lados = 32px vertical)
   const gridPadding = 32;
@@ -192,41 +176,13 @@ export function OrderGrid() {
   const dynamicFirstPartOfSplitMaxHeight = Math.max(itemProductHeight * 2, firstPartOfSplitItemsHeight);
   const dynamicOtherPartsMaxHeight = Math.max(itemProductHeight * 2, otherPartsItemsHeight);
 
-  console.log('[OrderGrid] Dynamic heights:', {
-    availableHeight,
-    gridPadding,
-    cardAvailableHeight,
-    orderHeaderHeight,
-    channelFooterHeight,
-    singleOrderItemsHeight,
-    firstPartOfSplitItemsHeight,
-    otherPartsItemsHeight,
-    dynamicSingleOrderMaxHeight,
-    dynamicFirstPartOfSplitMaxHeight,
-    dynamicOtherPartsMaxHeight,
-    itemProductHeight,
-    itemModifierLineHeight,
-    fontConfigs: {
-      header: headerFontSizeConfig,
-      timer: timerFontSizeConfig,
-      client: clientFontSizeConfig,
-      channel: channelFontSizeConfig,
-    },
-  });
-
   // Obtener TODAS las órdenes pendientes (no paginar aquí)
   const allOrders = useOrderStore((state) => state.orders);
   const currentPage = useOrderStore((state) => state.currentPage);
   const { setLastFinished } = useOrderStore();
 
-  // Debug: Log cuando cambian las órdenes
-  useEffect(() => {
-    console.log('[OrderGrid] Orders in store:', allOrders.length, allOrders.map(o => o.id));
-  }, [allOrders]);
-
   // Handler para finalizar orden via touch/click
   const handleFinishOrder = useCallback((orderId: string) => {
-    console.log('[Touch] Finishing order:', orderId);
     socketService.finishOrder(orderId);
     setLastFinished(orderId);
   }, [setLastFinished]);
@@ -381,17 +337,6 @@ export function OrderGrid() {
 
   // Calcular total de páginas basándose en columnas totales
   const totalPages = Math.max(1, Math.ceil(allColumns.length / columnsPerScreen));
-  const totalPendingOrders = allOrders.length;
-
-  console.log('[OrderGrid] Simple pagination:', {
-    totalPages,
-    currentPage,
-    totalColumns: allColumns.length,
-    columnsPerScreen,
-    displayingColumns: displayColumns.length,
-    startIndex: (currentPage - 1) * columnsPerScreen,
-    endIndex: (currentPage - 1) * columnsPerScreen + columnsPerScreen,
-  });
 
   // Actualizar totalPages en el store basándose en columnas
   useEffect(() => {
@@ -400,23 +345,6 @@ export function OrderGrid() {
       setTotalPages(totalPages);
     }
   }, [totalPages]);
-
-  // Log de debugging para ver las dimensiones
-  useEffect(() => {
-    console.log('[OrderGrid] Screen dimensions:', {
-      viewportHeight: screenDimensions.viewportHeight,
-      availableHeight,
-      diagonalInches: screenDimensions.diagonalInches.toFixed(1),
-      screenCategory: screenDimensions.screenCategory,
-    });
-    console.log('[OrderGrid] Pagination:', {
-      allColumnsCount: allColumns.length,
-      displayColumnsCount: displayColumns.length,
-      currentPage,
-      totalPages,
-      totalPendingOrders,
-    });
-  }, [screenDimensions, availableHeight, allColumns.length, displayColumns.length, currentPage, totalPages, totalPendingOrders]);
 
   // Debug panel para mostrar cálculos (presionar 'd' para mostrar/ocultar)
   const [showDebug, setShowDebug] = useState(false);

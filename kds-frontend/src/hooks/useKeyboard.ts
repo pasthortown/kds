@@ -93,15 +93,30 @@ export function useKeyboardController() {
 
   const handleFinishOrder = useCallback(
     (index: number) => {
-      if (isStandby) return;
+      console.log(`[Keyboard] handleFinishOrder llamado con index=${index}`);
+      console.log(`[Keyboard] isStandby=${isStandby}`);
+      console.log(`[Keyboard] currentOrders.length=${currentOrders.length}`);
+      console.log(`[Keyboard] currentOrders=`, JSON.stringify(currentOrders.map(o => ({ id: o.id, identifier: o.identifier, statusPos: o.statusPos }))));
+
+      if (isStandby) {
+        console.log(`[Keyboard] BLOQUEADO: pantalla en standby`);
+        return;
+      }
 
       const order = currentOrders[index];
+      console.log(`[Keyboard] Orden en index ${index}:`, order ? JSON.stringify({ id: order.id, identifier: order.identifier, statusPos: order.statusPos }) : 'undefined');
+
       if (order) {
         // Ignorar órdenes en estado "TOMANDO PEDIDO" - no pueden ser impresas/finalizadas
-        if (order.statusPos?.toUpperCase() === 'TOMANDO PEDIDO') {
-          console.log(`[Keyboard] Orden #${order.identifier} en estado TOMANDO PEDIDO - ignorada`);
+        const statusPosUpper = order.statusPos?.toUpperCase();
+        console.log(`[Keyboard] statusPos original="${order.statusPos}", upper="${statusPosUpper}"`);
+
+        if (statusPosUpper === 'TOMANDO PEDIDO') {
+          console.log(`[Keyboard] BLOQUEADO: Orden #${order.identifier} en estado TOMANDO PEDIDO`);
           return;
         }
+
+        console.log(`[Keyboard] PERMITIDO: Orden #${order.identifier} puede ser finalizada`);
 
         // MODO PRUEBA: Solo remover localmente, NO enviar al backend + generar PDF
         if (isTestMode) {
@@ -122,8 +137,10 @@ export function useKeyboardController() {
           addLog(`[BOTONERA] Orden #${order.identifier} finalizada (SIMULADO)`);
         } else {
           // MODO PRODUCCIÓN: Enviar al backend normalmente
-          console.log(`[Keyboard] Finishing order at index ${index}:`, order.id);
+          console.log(`[Keyboard] PRODUCCION: Enviando finish para orden ${order.id} (identifier: ${order.identifier})`);
+          console.log(`[Keyboard] Socket connected:`, socketService.getSocket()?.connected);
           socketService.finishOrder(order.id);
+          console.log(`[Keyboard] socketService.finishOrder() ejecutado`);
         }
       }
     },
