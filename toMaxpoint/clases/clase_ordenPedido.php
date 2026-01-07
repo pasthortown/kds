@@ -89,7 +89,7 @@ class menuPedido extends sql {
                 $new_lc_datos[16] = isset($lc_datos[16]) ? $lc_datos[16] : '';
                 $new_lc_datos[17] = isset($lc_datos[17]) ? $lc_datos[17] : '';
 
-                $lc_sql = "EXEC [facturacion].[USPactualizarOrdenPedidoApp] '$new_lc_datos[0]','".utf8_decode($new_lc_datos[1])."','$new_lc_datos[2]','$new_lc_datos[3]','$new_lc_datos[4]','$new_lc_datos[5]','$new_lc_datos[6]', '$new_lc_datos[7]', '$new_lc_datos[8]', '$new_lc_datos[9]', '$new_lc_datos[10]', '$new_lc_datos[11]', '$new_lc_datos[12]', '$new_lc_datos[13]', '$new_lc_datos[14]', '$new_lc_datos[15]', '$new_lc_datos[17]'";
+                $lc_sql = "EXEC [facturacion].[USPactualizarOrdenPedidoApp] '$new_lc_datos[0]','".$new_lc_datos[1]."','$new_lc_datos[2]','$new_lc_datos[3]','$new_lc_datos[4]','$new_lc_datos[5]','$new_lc_datos[6]', '$new_lc_datos[7]', '$new_lc_datos[8]', '$new_lc_datos[9]', '$new_lc_datos[10]', '$new_lc_datos[11]', '$new_lc_datos[12]', '$new_lc_datos[13]', '$new_lc_datos[14]', '$new_lc_datos[15]', '$new_lc_datos[17]'";
 
                 try {
                     $this->fn_ejecutarquery($lc_sql);
@@ -1895,7 +1895,7 @@ class menuPedido extends sql {
                             $DateTime = new DateTime();
                             $formattedDateTime = $DateTime->format('Y-m-d\TH:i:s.u\Z');
 
-                            $nombre = utf8_decode($datos[1]);
+                            $nombre = $datos[1];
                             $nombres = explode(' ', $nombre);
                             $count = count($nombres) / 2;
 
@@ -2541,5 +2541,31 @@ class menuPedido extends sql {
             $_SESSION['fb_mensaje_puntos']="POLITICA URL MASIVO CLIENTE NO CONFIGURADA";
             return -1;
         }
+    }      
+    function validarOrigenOrdenKioskoPickup($idCadena, $idRestaurante, $codigo = null, $codigoPickup = null) {
+        $this->lc_regs = array();
+
+        $lc_sql = "EXEC [pedido].[TRANSACCIONES_validar_origen_orden] $idCadena, $idRestaurante, '$codigo', '$codigoPickup'";
+
+        if ($this->fn_ejecutarquery($lc_sql)) {
+            while ($row = $this->fn_leerarreglo()) {
+                $this->lc_regs[] = array(
+                    "transaccion" => isset($row['transaccion']) ? $row['transaccion'] : null,
+                    "cliente" => isset($row['cliente']) ? utf8_encode($row['cliente']) : null,
+                    "clienteDocumento" => isset($row['clienteDocumento']) ? $row['clienteDocumento'] : null,
+                    "orden" => isset($row['orden']) ? $row['orden'] : null,
+                    "codigo_app" => isset($row['codigo_app']) ? $row['codigo_app'] : null,
+                    "tipo" => isset($row['tipo']) ? $row['tipo'] : null,
+                    "estado" => isset($row['estado']) ? $row['estado'] : null,
+                    "created_at" => isset($row['created_at']) ? $row['created_at'] : null,
+                    "pendiente" => isset($row['pendiente']) ? $row['pendiente'] : 0,
+                    "encontrado" => isset($row['encontrado']) ? $row['encontrado'] : 0,
+                    "origen" => isset($row['origen']) ? $row['origen'] : null,
+                    "mensaje" => isset($row['mensaje']) ? utf8_encode($row['mensaje']) : null
+                );
+            }
+        }
+        $this->lc_regs['str'] = $this->fn_numregistro();
+        return json_encode($this->lc_regs);
     }
 }

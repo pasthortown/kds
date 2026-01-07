@@ -11,6 +11,7 @@ import { logger } from '../utils/logger';
 export interface ApiComanda {
   id: string;
   orderId: string;
+  posId?: string; // ID interno del POS (odp_id)
   createdAt: string;
   channel: {
     id: number;
@@ -287,7 +288,7 @@ export class ApiTicketService {
 
   /**
    * Obtiene el identifier para una orden
-   * Si nroCheque es "--" o vacío, usa los últimos 2 dígitos del orderId
+   * Devuelve el orderId completo (cfac_id) - el frontend se encarga de mostrar solo los últimos dígitos
    */
   private getIdentifier(comanda: ApiComanda): string {
     const nroCheque = comanda.otrosDatos?.nroCheque;
@@ -298,14 +299,10 @@ export class ApiTicketService {
       return nroCheque;
     }
 
-    // Sino, extraer los últimos 2 dígitos del orderId
+    // Devolver el orderId completo (cfac_id)
+    // El frontend se encarga de mostrar solo los últimos 2 dígitos
     if (orderId) {
-      // Extraer solo los números del final del orderId
-      const numbers = orderId.replace(/\D/g, '');
-      if (numbers.length >= 2) {
-        return numbers.slice(-2);
-      }
-      return numbers || orderId.slice(-2) || orderId;
+      return orderId;
     }
 
     return '--';
@@ -319,6 +316,7 @@ export class ApiTicketService {
 
     const orderData: any = {
       externalId: comanda.orderId || comanda.id,
+      posId: comanda.posId || null, // ID interno del POS (odp_id)
       channel: `${comanda.channel.name}-${comanda.channel.type}`,
       customerName: comanda.customer?.name || comanda.otrosDatos?.llamarPor || '',
       identifier: this.getIdentifier(comanda),

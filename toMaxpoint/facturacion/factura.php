@@ -1858,12 +1858,12 @@ if (!isset($_SESSION['validado'])) {
                                                         <script type="text/javascript" src="../js/calendario.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_propina.js"></script>
                                                         <script type="text/javascript" src="../js/alertify.js"></script>
+                                                        <script type="text/javascript" src="../kds/ajax_kds.js"></script>
                                                         <script type="text/javascript" src="../js/jquery.countdown360.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_ValidaDocumento.js"></script>
                                                         <script type="text/javascript" src="../js/teclado.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_pagoServicioTarjeta.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_facturacion.js"></script>
-                                                        <script type="text/javascript" src="../kds/ajax_kds.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_clientes.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_credito_sin_cupon.js"></script>
                                                         <script type="text/javascript" src="../js/ajax_pagoBanda.js"></script>

@@ -426,6 +426,7 @@ model KeyboardConfig {
 model Order {
   id            String      @id @default(cuid())
   externalId    String      @unique // ID de MAXPOINT
+  posId         String?     // ID interno del POS (odp_id) - diferente del externalId que puede ser cfac_id
   screenId      String?
   channel       String
   customerName  String?

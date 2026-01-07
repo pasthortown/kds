@@ -95,7 +95,7 @@ function fn_get_orden_pedido_facturacion(odp_id, statusPos) {
     // Obtener rst_id y cat_id
     var rst_id = $("#hide_rst_id").val() || "";
     var cat_id = get_rst_categoria(rst_id) || "";
-
+    var posId = $("#hide_odp_id").val() || "";
     // Obtener demás valores de factura.php
     var tipoServicio = $("#txtTipoServicio").val() || "1";
     var isFullService = tipoServicio === "2";
@@ -124,6 +124,7 @@ function fn_get_orden_pedido_facturacion(odp_id, statusPos) {
             if (datos && datos.str > 0) {
                 data_to_kds = fn_prepare_data_to_kds_facturacion(datos, statusPos, isFullService, {
                     odp_id: odp_id,
+                    posId: posId, // ID interno del POS (hide_odp_id)
                     customerName: customerName,
                     customerDocument: customerDocument,
                     customerPhone: customerPhone,
@@ -136,8 +137,9 @@ function fn_get_orden_pedido_facturacion(odp_id, statusPos) {
                 data_to_kds = {
                     id: odp_id,
                     orderId: odp_id,
+                    posId: posId, // ID interno del POS (hide_odp_id)
                     createdAt: new Date().toISOString(),
-                    channel: { id: 1, name: "MXP", type: "FACTURACION" },
+                    channel: { id: 1, name: "MXP", type: "SALON" },
                     cashRegister: { cashier: estacionId, name: "Estación " + estacionId },
                     products: [],
                     otrosDatos: {
@@ -164,6 +166,7 @@ function fn_get_orden_pedido_facturacion(odp_id, statusPos) {
  */
 function fn_prepare_data_to_kds_facturacion(datos, statusPos, isFullService, params) {
     var orderId = params.odp_id || "";
+    var posId = params.posId || params.odp_id || ""; // ID interno del POS
     var customerName = params.customerName || "";
     var customerAddress = params.customerAddress || "";
     var mesaId = params.mesaId || "";
@@ -265,6 +268,7 @@ function fn_prepare_data_to_kds_facturacion(datos, statusPos, isFullService, par
     var apiComanda = {
         id: orderId,
         orderId: orderId,
+        posId: posId, // ID interno del POS (hide_odp_id)
         createdAt: new Date().toISOString(),
         channel: { id: 1, name: channelName, type: channelType },
         cashRegister: { cashier: estacionId, name: "Estación " + estacionId },
@@ -298,11 +302,12 @@ function fn_prepare_empty_order_to_kds(statusPos) {
     return {
         id: orderId,
         orderId: orderId,
+        posId: orderId,
         createdAt: new Date().toISOString(),
         channel: {
             id: 1,
-            name: "POS",
-            type: "FAST FOOD"
+            name: "MXP",
+            type: "SALON"
         },
         cashRegister: {
             cashier: estacionId,
@@ -332,7 +337,8 @@ function fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService) {
     // Obtener datos del contexto del POS
     // Priorizar cfac_id (KIOSKO/PICKUP) sobre odp_id para hacer UPSERT correcto
     var cfac_id = $("#txtNumFactura").val() || "";
-    var orderId = cfac_id || $("#hide_odp_id").val() || "";
+    var odp_id = $("#hide_odp_id").val() || ""; // ID interno del POS (siempre el odp_id)
+    var orderId = cfac_id || odp_id;
     var customerName = $("#hide_cli_nombres").val() || "";
     var customerDocument = $("#hide_cli_documento").val() || "";
     var customerPhone = $("#hide_cli_telefono").val() || "";
@@ -471,6 +477,7 @@ function fn_prepare_data_to_kds_from_order(datos, statusPos, isFullService) {
     var apiComanda = {
         id: orderId,
         orderId: orderId,
+        posId: odp_id, // Siempre el odp_id (ID interno del POS)
         createdAt: new Date().toISOString(),
         channel: {
             id: 1,
@@ -764,11 +771,13 @@ function fn_update_order_id_kds(orderId, cfac_id) {
     }
 
     // IMPORTANTE: Reemplazar id y orderId con cfac_id para hacer UPSERT correcto
+    // Pero preservar posId como el orderId original (odp_id)
+    orderData.posId = orderId; // Mantener el odp_id original como posId
     orderData.id = cfac_id;
     orderData.orderId = cfac_id;
     orderData.statusPos = "PEDIDO TOMADO";
 
-    console.log("[KDS] Enviando orden con externalId = cfac_id: " + cfac_id);
+    console.log("[KDS] Enviando orden con externalId = cfac_id: " + cfac_id + ", posId = " + orderId);
 
     // Usar el mismo flujo de fn_communication_with_kds (endpoint /tickets/receive)
     fn_communication_with_kds(orderData);

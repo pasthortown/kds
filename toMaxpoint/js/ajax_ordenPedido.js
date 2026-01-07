@@ -9214,6 +9214,25 @@ function mostrarModalCodigoKiosko(mostrar) {
     }
 }
 
+// Alterno: entrada con nombre distinto para permitir cambios futuros sin afectar al flujo original.
+function mostrarModalBuscadorCodigoKioskoPickup(mostrar) {
+    $("#inpCodigoOrdenPedidoBuscador").val("");
+    if (mostrar) {
+        try {
+            $("#hRetomarOrdenBuscador").html("Retomar Orden <b/>");
+            $("#mdlKioskoCodigoBuscador").fadeIn(100);
+            darFocoFijo($("#inpCodigoOrdenPedidoBuscador"), true);
+            activarFocusLectorBarra(false);
+        } catch (e) {
+            console.error('Error al mostrar modal alterno de kiosko', e);
+        }
+    } else {
+        $("#mdlKioskoCodigoBuscador").fadeOut(100);
+        activarFocusLectorBarra(true);
+
+    }
+}
+
 // Kiosko y pickup
 let flag = false;
 function leerCodigoOrdenPedido(codigo) {
@@ -11537,3 +11556,214 @@ function escucharModalNombrarPicada() {
         revelarTecladoNombrarPicada('ocultar');
     });
 }
+
+function leerCodigoOrdenPedidoBuscador(codigo) {
+    cerrarTecladoBuscador();
+    lecturaCodigosManualPickup();
+        let send = { "verificarCodigoOrdenApp": 1 };
+        send.codigo = codigo;
+    $.ajax({
+        async: true,
+        type: 'POST',
+        dataType: 'json',
+        contentType: 'application/x-www-form-urlencoded',
+        url: 'config_ordenPedido.php',
+        data: send,
+        success: function (mapped) {
+            var codigoPickup = mapped || null;
+            
+            var send = {
+                validarOrigenOrdenKioskoPickup: 1,
+                codigo: codigo,
+                codigoPickup: codigoPickup
+            };
+
+            $.ajax({
+                async: true,
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/x-www-form-urlencoded',
+                url: 'config_ordenPedido.php',
+                data: send,
+                success: function (datos) {
+                    try {
+                        if (!datos) {
+                            alertify.error('Código no corresponde a ninguna Orden');
+                            return;
+                        }
+
+                        var row = datos[0];
+                        var encontrado = (row.encontrado == 1 || row.encontrado === true || row.encontrado === 'true');
+                        var pendiente = (row.pendiente == 1 || row.pendiente === true || row.pendiente === 'true');
+
+                        if (encontrado && pendiente) {
+                            // Orden pendiente: llamar retomar según tipo
+                            $("#mdlKioskoCodigo").hide();
+                            $("#mdlKioskoCodigoAlt").hide();
+                            reimpresionkiosko = 0;
+                            objetoOrden.factura = row.transaccion;                            
+                            objetoOrden.tipo = row.tipo || objetoOrden.tipo;
+                            // llamar retomar usando la factura seteada
+                            retomarOrdenKiosko(objetoOrden.factura);
+                        } else if (encontrado && !pendiente) {
+                            alertify.error(row.mensaje || 'Esta orden ya fue procesada.');
+                        } else {
+                            alertify.error(row.mensaje || 'El codigo no corresponde a ninguna Orden.');
+                        }
+
+                    } catch (e) {
+                        console.error('Error procesando respuesta del stored procedure', e);
+                        alertify.error('Error al validar la orden.');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus, errorThrown);
+                    alertify.error('Error al conectar con el servidor.');
+                }
+            });
+
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+            console.log('Error mapeando codigoPickup:', textStatus, errorThrown);
+            // Intentar igualmente la validación sin codigoPickup
+            $.ajax({
+                async: true,
+                type: 'POST',
+                dataType: 'json',
+                contentType: 'application/x-www-form-urlencoded',
+                url: 'config_ordenPedido.php',
+                data: { validarOrigenOrdenKioskoPickup: 1, codigo: codigo, codigoPickup: null },
+                success: function (datos) {
+                    try {
+                        if (!datos) {
+                            alertify.error('Código no corresponde a ninguna Orden');
+                            return;
+                        }
+                        var row = datos[0];
+                        var encontrado = (row.encontrado == 1 || row.encontrado === true || row.encontrado === 'true');
+                        var pendiente = (row.pendiente == 1 || row.pendiente === true || row.pendiente === 'true');
+                        if (encontrado && pendiente) {
+                            $("#mdlKioskoCodigo").hide();
+                            $("#mdlKioskoCodigoAlt").hide();
+                            // asegurarse que el contexto de retomar esté actualizado
+                            reimpresionkiosko = 0;
+                            if (row.tipo && row.tipo.toUpperCase() === 'PICKUP') {
+                                objetoOrden.factura = row.codigo_app;
+                            } else {
+                                objetoOrden.factura = row.transaccion;
+                            }
+                            objetoOrden.tipo = row.tipo || objetoOrden.tipo;
+                            retomarOrdenKiosko(objetoOrden.factura);
+                        } else if (encontrado && !pendiente) {
+                            alertify.error(row.mensaje || 'Orden ya fue procesada y no está pendiente');
+                        } else {
+                            alertify.error(row.mensaje || 'Código no corresponde a ninguna Orden');
+                        }
+                    } catch (e) {
+                        console.error('Error procesando respuesta del SP', e);
+                        alertify.error('Error al validar la orden.');
+                    }
+                },
+                error: function () {
+                    alertify.error('Error al conectar con el servidor.');
+                }
+            });
+        }
+    });
+}
+
+// -------------------- Teclado / handlers para el modal BUSCADOR --------------------
+$('#inpCodigoOrdenPedidoBuscador').click(function () {
+    cerrarTecladoBuscador();
+    $("#cancel_div_buscador").hide();
+    fn_alfaNumericoOrderBuscador("#inpCodigoOrdenPedidoBuscador");
+    $("#keyboard_div_buscador").show();
+    // poner foco en el input para que el teclado físico envíe los eventos al campo
+    $("#inpCodigoOrdenPedidoBuscador").focus();
+    $("#btn_cancelar_teclado_buscador").attr("onclick", "cerrarTecladoBuscador()");
+    $("#btn_ok_teclado_buscador").attr("onclick", "cerrarTecladoBuscador()");
+});
+
+var cerrarTecladoBuscador = function () {
+    $("#keyboard_div_buscador").hide();
+    $("#cancel_div_buscador").show();
+}
+
+function fn_alfaNumericoOrderBuscador(e) {
+    console.log("fn_alfaNumericoOrderBuscador");
+    console.log(e);
+    try {
+        if (!$(e.target).closest("#keyboard_div_buscador").length) { toggleDiv('keyboard_div_buscador'); }
+    } catch (err) {
+        // e puede ser un selector string, en ese caso no tiene target
+    }
+
+    $("#keyboard_div_buscador").empty();
+    var posicion = $(e).position ? $(e).position() : { left: 0, top: 0 };
+
+    var leftPos = 155;
+    var topPos = 300;
+    leftPos: posicion.left;
+    topPos: posicion.top;
+
+    num0 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'0'),fn_listarPro()>0</button>";
+    num1 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'1'),fn_listarPro()>1</button>";
+    num2 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'2'),fn_listarPro()>2</button>";
+    num3 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'3'),fn_listarPro()>3</button>";
+    num4 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'4'),fn_listarPro()>4</button>";
+    num5 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'5'),fn_listarPro()>5</button>";
+    num6 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'6'),fn_listarPro()>6</button>";
+    num7 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'7'),fn_listarPro()>7</button>";
+    num8 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'8'),fn_listarPro()>8</button>";
+    num9 = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'9'),fn_listarPro()>9</button>";
+    cadQ = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'Q'),fn_listarPro()>Q</button>";
+    cadW = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'W'),fn_listarPro()>W</button>";
+    cadE = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'E'),fn_listarPro()>E</button>";
+    cadR = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'R'),fn_listarPro()>R</button>";
+    cadT = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'T'),fn_listarPro()>T</button>";
+    cadY = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'Y'),fn_listarPro()>Y</button>";
+    cadU = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'U'),fn_listarPro()>U</button>";
+    cadI = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'I'),fn_listarPro()>I</button>";
+    cadO = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", 'O'),fn_listarPro()>O</button>";
+    cadP = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'P'),fn_listarPro()>P</button>";
+    cadA = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'A'),fn_listarPro()>A</button>";
+    cadS = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'S'),fn_listarPro()>S</button>";
+    cadD = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'D'),fn_listarPro()>D</button>";
+    cadF = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'F'),fn_listarPro()>F</button>";
+    cadG = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'G'),fn_listarPro()>G</button>";
+    cadH = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'H'),fn_listarPro()>H</button>";
+    cadJ = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'J'),fn_listarPro()>J</button>";
+    cadK = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'K'),fn_listarPro()>K</button>";
+    cadL = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'L'),fn_listarPro()>L</button>";
+    cadZ = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'Z'),fn_listarPro()>Z</button>";
+    cadX = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'X'),fn_listarPro()>X</button>";
+    cadC = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'C'),fn_listarPro()>C</button>";
+    cadV = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'V'),fn_listarPro()>V</button>";
+    cadB = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'B'),fn_listarPro()>B</button>";
+    cadN = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'N'),fn_listarPro()>N</button>";
+    cadM = "<button class='btnVirtual' onclick=fn_agregarCaracter(" + $(e).attr("id") + ",'M'),fn_listarPro()>M</button>";
+
+    arroba = "<button class='btnVirtualBorrar' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", '@'),fn_listarPro()>@</button>";
+    guion = "<button class='btnVirtualBorrar' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", '-'),fn_listarPro()>-</button>";
+    barraBaja = "<button class='btnVirtualBorrar' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", '_'),fn_listarPro()>_</button>";
+
+    numeral = "<button class='btnVirtualBorrar' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", '#'),fn_listarPro()>#</button>";
+    espacio = "<button class='btnEspaciadora' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", '---'),fn_listarPro()>Espacio</button>";
+    coma = "<button class='btnVirtualBorrar' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", ','),fn_listarPro()>,</button>";
+    punto = "<button class='btnVirtualBorrar' onclick=fn_agregarCaracter(" + $(e).attr("id") + ", '.'),fn_listarPro()>.</button>";
+    borrarCaracter = "<button class='btnVirtualBorrar' onclick=fn_eliminarNumero(" + $(e).attr("id") + "),fn_listarPro()>&larr;</button>";
+    borrarTodo = "<button class='btnVirtualBorrar' onclick=fn_eliminarTodo(" + $(e).attr("id") + ")()>&lArr;</button>";
+    btnOk = "<button class='btnVirtualOK' onclick=leerCodigoOrdenPedidoBuscador(" + $(e).attr("id") + ".value)>OK</button>";
+    btnCancelar = "<button class='btnVirtualCancelar' onclick=cerrarTecladoBuscador()>Cancelar</button>";
+
+    $("#keyboard_div_buscador").css({
+        display: "block",
+        position: "center",
+        top: topPos,
+        width: "740px",
+    })
+
+    $("#keyboard_div_buscador").append(num1 + num2 + num3 + num4 + num5 + num6 + num7 + num8 + num9 + num0 + borrarCaracter + "<br/>" + cadQ + cadW + cadE + cadR + cadT + cadY + cadU + cadI + cadO + cadP + borrarTodo + "<br/>" + arroba + cadA + cadS + cadD + cadF + cadG + cadH + cadJ + cadK + cadL + guion + "<br/>" + numeral + barraBaja + cadZ + cadX + cadC + cadV + cadB + cadN + cadM + coma + punto + "<br/>" + btnCancelar + espacio + btnOk);
+}
+
+// -------------------- fin teclado buscador --------------------

@@ -31,11 +31,26 @@ export class OrderService {
         this.processingOrders.add(order.externalId);
 
         try {
-        // Verificar si ya existe
-        const existing = await prisma.order.findUnique({
+        // Verificar si ya existe por externalId
+        let existing = await prisma.order.findUnique({
           where: { externalId: order.externalId },
           include: { items: true },
         });
+
+        // Si no existe por externalId pero viene posId, buscar por posId
+        // Esto permite actualizar el externalId cuando llega el cfac_id desde facturación
+        let shouldUpdateExternalId = false;
+        if (!existing && order.posId) {
+          const existingByPosId = await prisma.order.findFirst({
+            where: { posId: order.posId },
+            include: { items: true },
+          });
+          if (existingByPosId) {
+            existing = existingByPosId;
+            shouldUpdateExternalId = true; // Marcar para actualizar externalId
+            orderLogger.debug(`Order found by posId ${order.posId}, will update externalId to ${order.externalId}`);
+          }
+        }
 
         if (existing) {
           // Ya existe, verificar si viene vacía (sin items) para eliminarla
@@ -59,36 +74,46 @@ export class OrderService {
             // Actualizar orden y crear nuevos items
             // NO cambiar screenId para mantener la asignación original
             // CONSERVAR channel y customerName originales si existen (KIOSKO/PICKUP)
-            await prisma.order.update({
-              where: { externalId: order.externalId },
-              data: {
-                // Conservar channel original si existe, sino usar el nuevo
-                channel: existing.channel || order.channel,
-                // Conservar customerName original si existe, sino usar el nuevo
-                customerName: existing.customerName || order.customerName,
-                identifier: order.identifier,
-                // No cambiar status ni screenId
-                // Campos opcionales para impresión/visualización
-                comments: order.comments || null,
-                templateHTML: order.templateHTML || null,
-                valuesHTML: order.valuesHTML || null,
-                statusPos: order.statusPos || null,
-                items: {
-                  create: order.items.map((item) => ({
-                    name: item.name,
-                    quantity: item.quantity,
-                    notes: item.notes,
-                    modifier: item.modifier,
-                    comments: item.comments,
-                  })),
-                },
+            const updateData: any = {
+              // Conservar channel original si existe, sino usar el nuevo
+              channel: existing.channel || order.channel,
+              // Conservar customerName original si existe, sino usar el nuevo
+              customerName: existing.customerName || order.customerName,
+              // Conservar posId: usar el nuevo si viene, sino mantener el existente
+              posId: order.posId || existing.posId || null,
+              identifier: order.identifier,
+              // No cambiar status ni screenId
+              // Campos opcionales para impresión/visualización
+              comments: order.comments || null,
+              templateHTML: order.templateHTML || null,
+              valuesHTML: order.valuesHTML || null,
+              statusPos: order.statusPos || null,
+              items: {
+                create: order.items.map((item) => ({
+                  name: item.name,
+                  quantity: item.quantity,
+                  notes: item.notes,
+                  modifier: item.modifier,
+                  comments: item.comments,
+                })),
               },
+            };
+
+            // Si se encontró por posId, actualizar también el externalId (cfac_id)
+            if (shouldUpdateExternalId) {
+              updateData.externalId = order.externalId;
+              orderLogger.info(`Updating externalId from ${existing.externalId} to ${order.externalId} (cfac_id)`);
+            }
+
+            await prisma.order.update({
+              where: { id: existing.id }, // Usar id interno para el where
+              data: updateData,
               include: {
                 items: true,
               },
             });
 
-            orderLogger.debug(`Order updated (no rebalancing): ${existing.identifier}`);
+            orderLogger.debug(`Order updated (no rebalancing): ${order.identifier}`);
           }
           // NO agregar a newOrders - las actualizaciones no se redistribuyen
         } else {
@@ -96,6 +121,7 @@ export class OrderService {
           const created = await prisma.order.create({
             data: {
               externalId: order.externalId,
+              posId: order.posId || null, // ID interno del POS (odp_id)
               channel: order.channel,
               customerName: order.customerName,
               identifier: order.identifier,
@@ -126,6 +152,7 @@ export class OrderService {
           newOrders.push({
             id: created.id,
             externalId: created.externalId,
+            posId: created.posId || undefined,
             channel: created.channel,
             customerName: created.customerName || undefined,
             identifier: created.identifier,
@@ -190,6 +217,7 @@ export class OrderService {
       return {
         id: order.id,
         externalId: order.externalId,
+        posId: order.posId || undefined,
         screenId: order.screenId || undefined,
         channel: order.channel,
         customerName: order.customerName || undefined,
@@ -252,6 +280,7 @@ export class OrderService {
       return {
         id: order.id,
         externalId: order.externalId,
+        posId: order.posId || undefined,
         screenId: order.screenId || undefined,
         channel: order.channel,
         customerName: order.customerName || undefined,
@@ -314,6 +343,7 @@ export class OrderService {
     return orders.map((order) => ({
       id: order.id,
       externalId: order.externalId,
+      posId: order.posId || undefined,
       screenId: order.screenId || undefined,
       channel: order.channel,
       customerName: order.customerName || undefined,

@@ -477,6 +477,12 @@ $pedidoAplicaPicada = $tomaPedido->pedidoAplicaPicada();
             <div id="Pedidoskiosko">
                 <ul id="listaPedidosKiosko"></ul>
             </div>
+            <!-- Buscador de Pedidos Kiosko y Pickup -->
+            <div id="pedidosKioskoAccionesBuscador" style="display:flex;justify-content:center;align-items:center;padding: 0px 0px;margin:1px;">
+                <button type="button" id="btnAccionPedidosKioskoBuscador" class="boton_Accion" style="margin: 0; width: 100%!important" title="Buscar pedidos" aria-label="Buscar pedidos" onclick="mostrarModalBuscadorCodigoKioskoPickup(true)">
+                    <i class="bi bi-search" style="font-size:18px; margin:1px; vertical-align:middle;"></i>
+                </button>
+            </div>
             <div id="nfrmcn_srs_sstm" class="nfrmcn_srs_sstm" onclick="fn_salirSistema()" style="min-height:100px;height:auto;">
                 <div id="informacionFidelizacion">
                     <?php
@@ -1307,6 +1313,33 @@ $pedidoAplicaPicada = $tomaPedido->pedidoAplicaPicada();
             </div>
         </div>
     </div>
+    <!-- Modal Buscador atajo de ordenes kiosko y pickup -->
+    <div id="mdlKioskoCodigoBuscador" class="modal_cargando" style="display: none">
+        <div class="modal-dialog" style="margin: 200px auto;width:400px;">
+            <div class="modal-content">
+                <div class="modal-headertipo" style="background-color: #2e6e9e;">
+                    <h3 id="hRetomarOrdenBuscador" class="modal-title" style="color:#dfeffc; text-align: center;"></h3>
+                </div>
+                <div class="modal-body" style="text-align: center;">
+                    <p class="parrafoPromocion"><b>Leer código QR de la orden</b></p>
+                    <div>
+                        <img src="../imagenes/qr.jpg" width="100"/>
+                    </div>
+                    <input inputmode="none"
+                           id="inpCodigoOrdenPedidoBuscador"
+                           type="input"
+                           onchange="leerCodigoOrdenPedidoBuscador(this.value)"
+                           class="codigoPromocion"
+                           style="margin-top: 10px;"
+                           value=""/>
+                </div>
+                <div id="keyboard_div_buscador"></div>
+                <div id="cancel_div_buscador" class="modal-footer">
+                    <button type="button" id="btn_cancelModalBuscador" class="btn btn-secondary" onclick="mostrarModalBuscadorCodigoKioskoPickup(false)">Cancelar
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Kiosko y Pickup -->
     <div id="mdlOpciones" class="modal_cargando" style="display: none">
         <div class="modal-dialog" style="margin: 200px auto; width:600px;">
@@ -1873,6 +1906,7 @@ $pedidoAplicaPicada = $tomaPedido->pedidoAplicaPicada();
             integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
             crossorigin="anonymous"></script>-->
     <script type="text/javascript" src="../js/jquery-ui.js"></script>
+    <script type="text/javascript" src="../kds/ajax_kds.js"></script>
     <script type="text/javascript" src="../js/cndjs/cloudflare/ajax/libs/dayjs/1.10.7/dayjs.min.js"></script>
     <!-- Scripts para scroll-->
     <script type="text/javascript" src="../js/mousewheel.js"></script>
@@ -1890,7 +1924,6 @@ $pedidoAplicaPicada = $tomaPedido->pedidoAplicaPicada();
     <script type="text/javascript" src="../js/teclado.js"></script>
     <!-- Toma Pedido -->
     <script type="text/javascript" src="../js/ajax_ordenPedido.js"></script>
-    <script type="text/javascript" src="../kds/ajax_kds.js"></script>
     <script type="text/javascript" src="../js/ajax_bloquear_acceso.js"></script>
     <script type="text/javascript" src="../js/cnd/jsdelivr/net/npm/sweetalert2@9.js"></script>
     <!--<script src="https://cdn.jsdelivr.net/npm/promise-polyfill"></script>-->

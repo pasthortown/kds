@@ -246,6 +246,7 @@ export interface OrderItem {
 export interface Order {
   id: string;
   externalId: string;
+  posId?: string; // ID interno del POS (odp_id)
   screenId?: string;
   channel: string;
   channelType?: string; // SALON, LLEVAR, etc.
