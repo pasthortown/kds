@@ -299,17 +299,28 @@ export function OrderCard({
                 {config.showOrderNumber && showIdentifier && `${identifierMessage} #${order.identifier.slice(-2)}`}
               </span>
               {config.showTimer && (
-                <span
+                <div
                   style={{
-                    color: config.timerTextColor,
-                    fontFamily: config.timerFontFamily,
-                    fontWeight: getFontWeight(config.timerFontWeight),
-                    fontStyle: getFontStyle(config.timerFontStyle),
-                    fontSize: getFontSize(config.timerFontSize, 'timer'),
+                    backgroundColor: '#000000',
+                    borderRadius: '0 5px 0 0',
+                    padding: '2px 0 7px 10px',
+                    marginRight: '-12px',
+                    marginTop: '-8px',
+                    marginBottom: '-8px',
                   }}
                 >
-                  {elapsedTime.formatted}
-                </span>
+                  <span
+                    style={{
+                      color: config.timerTextColor,
+                      fontFamily: config.timerFontFamily,
+                      fontWeight: getFontWeight(config.timerFontWeight),
+                      fontStyle: getFontStyle(config.timerFontStyle),
+                      fontSize: getFontSize(config.timerFontSize, 'timer'),
+                    }}
+                  >
+                    {elapsedTime.formatted}
+                  </span>
+                </div>
               )}
             </div>
 
