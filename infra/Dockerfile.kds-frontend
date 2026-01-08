@@ -15,8 +15,8 @@ WORKDIR /app
 # Copiar archivos de dependencias
 COPY kds-frontend/package*.json ./
 
-# Instalar dependencias
-RUN npm ci
+# Instalar dependencias (incluyendo devDependencies para build)
+RUN npm ci --include=dev
 
 # Copiar codigo fuente
 COPY kds-frontend/ .
