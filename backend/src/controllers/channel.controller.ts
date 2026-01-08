@@ -276,17 +276,18 @@ export const deleteChannel = asyncHandler(
  */
 export const seedChannels = asyncHandler(
   async (_req: AuthenticatedRequest, res: Response) => {
+    // SALON = verde (#02d01d), LLEVAR = púrpura (#891cb4)
+    // Orden: primero SALON, luego LLEVAR; KIOSKO > MXP > PICKUP > DOMICILIO
     const defaultChannels = [
-      { name: 'Local', backgroundColor: '#7ed321', textColor: '#ffffff', priority: 10 },
-      { name: 'Kiosko-Efectivo', backgroundColor: '#0299d0', textColor: '#ffffff', priority: 9 },
-      { name: 'Kiosko-Tarjeta', backgroundColor: '#d0021b', textColor: '#ffffff', priority: 8 },
-      { name: 'PedidosYa', backgroundColor: '#d0021b', textColor: '#ffffff', priority: 7 },
-      { name: 'RAPPI', backgroundColor: '#ff5a00', textColor: '#ffffff', priority: 6 },
-      { name: 'UberEats', backgroundColor: '#06c167', textColor: '#ffffff', priority: 5 },
-      { name: 'Glovo', backgroundColor: '#ffc244', textColor: '#000000', priority: 4 },
-      { name: 'Drive', backgroundColor: '#9b59b6', textColor: '#ffffff', priority: 3 },
-      { name: 'APP', backgroundColor: '#bd10e0', textColor: '#ffffff', priority: 2 },
-      { name: 'Delivery', backgroundColor: '#e74c3c', textColor: '#ffffff', priority: 1 },
+      { name: 'KIOSKO EFECTIVO-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 9 },
+      { name: 'KIOSKO TARJETA-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 8 },
+      { name: 'MXP-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 7 },
+      { name: 'PICKUP-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 6 },
+      { name: 'KIOSKO EFECTIVO-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 5 },
+      { name: 'KIOSKO TARJETA-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 4 },
+      { name: 'MXP-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 3 },
+      { name: 'PICKUP-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 2 },
+      { name: 'DIMICILIO-DOMICILIO', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 1 },
     ];
 
     let created = 0;

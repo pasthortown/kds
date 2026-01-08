@@ -4,53 +4,47 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 // Canales globales del sistema
+// SALON = verde (#02d01d), LLEVAR = púrpura (#891cb4)
+// Orden: primero SALON, luego LLEVAR; KIOSKO > MXP > PICKUP > DOMICILIO
 const defaultChannels = [
-  { name: 'Local', backgroundColor: '#7ed321', textColor: '#ffffff', priority: 10 },
-  { name: 'Kiosko-Efectivo', backgroundColor: '#0299d0', textColor: '#ffffff', priority: 9 },
-  { name: 'Kiosko-Tarjeta', backgroundColor: '#d0021b', textColor: '#ffffff', priority: 8 },
-  { name: 'PedidosYa', backgroundColor: '#d0021b', textColor: '#ffffff', priority: 7 },
-  { name: 'RAPPI', backgroundColor: '#ff5a00', textColor: '#ffffff', priority: 6 },
-  { name: 'UberEats', backgroundColor: '#06c167', textColor: '#ffffff', priority: 5 },
-  { name: 'Glovo', backgroundColor: '#ffc244', textColor: '#000000', priority: 4 },
-  { name: 'Drive', backgroundColor: '#9b59b6', textColor: '#ffffff', priority: 3 },
-  { name: 'Delivery', backgroundColor: '#e74c3c', textColor: '#ffffff', priority: 1 },
+  { name: 'KIOSKO EFECTIVO-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 9 },
+  { name: 'KIOSKO TARJETA-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 8 },
+  { name: 'MXP-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 7 },
+  { name: 'PICKUP-SALON', backgroundColor: '#02d01d', textColor: '#ffffff', priority: 6 },
+  { name: 'KIOSKO EFECTIVO-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 5 },
+  { name: 'KIOSKO TARJETA-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 4 },
+  { name: 'MXP-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 3 },
+  { name: 'PICKUP-LLEVAR', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 2 },
+  { name: 'DIMICILIO-DOMICILIO', backgroundColor: '#891cb4', textColor: '#ffffff', priority: 1 },
 ];
 
 // Canales de cola (para cada cola)
+// SALON = verde (#02d01d), LLEVAR = púrpura (#891cb4)
+// Orden: primero SALON, luego LLEVAR; KIOSKO > MXP > PICKUP > DOMICILIO
 const queueChannelsData = [
-  { channel: 'Local', color: '#7ed321', priority: 10 },
-  { channel: 'Kiosko-Efectivo', color: '#0299d0', priority: 9 },
-  { channel: 'Kiosko-Tarjeta', color: '#d0021b', priority: 8 },
-  { channel: 'PedidosYa', color: '#d0021b', priority: 7 },
-  { channel: 'RAPPI', color: '#ff5a00', priority: 6 },
-  { channel: 'UberEats', color: '#06c167', priority: 5 },
-  { channel: 'Glovo', color: '#ffc244', priority: 4 },
-  { channel: 'Drive', color: '#9b59b6', priority: 3 },
-  { channel: 'Delivery', color: '#e74c3c', priority: 1 },
-  { channel: 'APP', color: '#dc21d6', priority: 0 },
+  { channel: 'KIOSKO EFECTIVO-SALON', color: '#02d01d', priority: 9 },
+  { channel: 'KIOSKO TARJETA-SALON', color: '#02d01d', priority: 8 },
+  { channel: 'MXP-SALON', color: '#02d01d', priority: 7 },
+  { channel: 'PICKUP-SALON', color: '#02d01d', priority: 6 },
+  { channel: 'KIOSKO EFECTIVO-LLEVAR', color: '#891cb4', priority: 5 },
+  { channel: 'KIOSKO TARJETA-LLEVAR', color: '#891cb4', priority: 4 },
+  { channel: 'MXP-LLEVAR', color: '#891cb4', priority: 3 },
+  { channel: 'PICKUP-LLEVAR', color: '#891cb4', priority: 2 },
+  { channel: 'DIMICILIO-DOMICILIO', color: '#891cb4', priority: 1 },
 ];
 
 // Colores de canal por apariencia (para cada pantalla)
-// Incluye canales con sufijo -SALON (verde) y -LLEVAR (morado)
+// SALON = verde (#02d01d), LLEVAR = púrpura (#891cb4)
 const channelColorsData = [
-  // Canales base
-  { channel: 'Local', color: '#7ed321', textColor: '#ffffff' },
-  { channel: 'Kiosko-Efectivo', color: '#0299d0', textColor: '#ffffff' },
-  { channel: 'Kiosko-Tarjeta', color: '#d0021b', textColor: '#ffffff' },
-  { channel: 'PedidosYa', color: '#d0021b', textColor: '#ffffff' },
-  { channel: 'RAPPI', color: '#ff5a00', textColor: '#ffffff' },
-  { channel: 'UberEats', color: '#06c167', textColor: '#ffffff' },
-  { channel: 'Glovo', color: '#ffc244', textColor: '#000000' },
-  { channel: 'Drive', color: '#9b59b6', textColor: '#ffffff' },
-  { channel: 'Delivery', color: '#e74c3c', textColor: '#ffffff' },
-  // Canales KIOSKO con tipo (SALON=verde, LLEVAR=morado)
   { channel: 'KIOSKO EFECTIVO-SALON', color: '#02d01d', textColor: '#ffffff' },
   { channel: 'KIOSKO EFECTIVO-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
   { channel: 'KIOSKO TARJETA-SALON', color: '#02d01d', textColor: '#ffffff' },
   { channel: 'KIOSKO TARJETA-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
-  // Canales MXP con tipo (SALON=verde, LLEVAR=morado)
   { channel: 'MXP-SALON', color: '#02d01d', textColor: '#ffffff' },
   { channel: 'MXP-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
+  { channel: 'PICKUP-SALON', color: '#02d01d', textColor: '#ffffff' },
+  { channel: 'PICKUP-LLEVAR', color: '#891cb4', textColor: '#ffffff' },
+  { channel: 'DIMICILIO-DOMICILIO', color: '#891cb4', textColor: '#ffffff' },
 ];
 
 // Colores SLA por tiempo (minutos)
