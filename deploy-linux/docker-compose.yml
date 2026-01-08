@@ -1,0 +1,156 @@
+# =============================================================================
+# KDS System - Docker Compose (Despliegue Simple)
+# =============================================================================
+# Uso:
+#   docker-compose up -d          # Levantar todo
+#   docker-compose logs -f        # Ver logs
+#   docker-compose down           # Detener todo
+#   docker-compose down -v        # Detener y eliminar volumenes
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL - Base de datos principal
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: kds-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kds}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kds_secure_password_2025}
+      POSTGRES_DB: ${POSTGRES_DB:-kds}
+      TZ: ${TZ:-America/Bogota}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kds} -d ${POSTGRES_DB:-kds}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kds-network
+
+  # ---------------------------------------------------------------------------
+  # Redis - Cache y Pub/Sub
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: kds-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass "${REDIS_PASSWORD:-redis_secure_password_2025}"
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secure_password_2025}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - kds-network
+
+  # ---------------------------------------------------------------------------
+  # Backend - API Node.js/Express
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backend
+    container_name: kds-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-kds}:${POSTGRES_PASSWORD:-kds_secure_password_2025}@postgres:5432/${POSTGRES_DB:-kds}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secure_password_2025}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-kds_jwt_secret_key_very_secure_2025_production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-kds_jwt_refresh_secret_key_very_secure_2025}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1h}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      HEARTBEAT_INTERVAL: ${HEARTBEAT_INTERVAL:-10000}
+      HEARTBEAT_TIMEOUT: ${HEARTBEAT_TIMEOUT:-30000}
+      TZ: ${TZ:-America/Bogota}
+      RESTAURANT_ID: ${RESTAURANT_ID:-K027}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/config/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    networks:
+      - kds-network
+
+  # ---------------------------------------------------------------------------
+  # KDS Frontend - Pantallas de cocina
+  # ---------------------------------------------------------------------------
+  kds-frontend:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.kds-frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_WS_URL: ${VITE_WS_URL:-}
+    container_name: kds-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${KDS_FRONTEND_PORT:-8080}:80"
+    networks:
+      - kds-network
+
+  # ---------------------------------------------------------------------------
+  # Backoffice - Panel de administracion
+  # ---------------------------------------------------------------------------
+  backoffice:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.backoffice
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    container_name: kds-backoffice
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${BACKOFFICE_PORT:-8081}:80"
+    networks:
+      - kds-network
+
+# -----------------------------------------------------------------------------
+# Volumenes persistentes
+# -----------------------------------------------------------------------------
+volumes:
+  postgres_data:
+    driver: local
+    name: kds-postgres-data
+  redis_data:
+    driver: local
+    name: kds-redis-data
+
+# -----------------------------------------------------------------------------
+# Red interna
+# -----------------------------------------------------------------------------
+networks:
+  kds-network:
+    driver: bridge
+    name: kds-network
