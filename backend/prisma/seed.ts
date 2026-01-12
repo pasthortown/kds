@@ -251,6 +251,20 @@ async function main() {
   });
   console.log(`User ${adminEmail} created/verified`);
 
+  // Usuario Soporte KFC
+  const soportePassword = await bcrypt.hash('jcjajplae*88', 10);
+  await prisma.user.upsert({
+    where: { email: 'soporte@kfc.com.ec' },
+    update: {}, // NO actualizar nada si ya existe
+    create: {
+      email: 'soporte@kfc.com.ec',
+      password: soportePassword,
+      name: 'Soporte KFC',
+      role: 'ADMIN',
+    },
+  });
+  console.log('User soporte@kfc.com.ec created/verified');
+
   // =====================================================
   // CONFIGURACION GENERAL (con impresión centralizada)
   // =====================================================
