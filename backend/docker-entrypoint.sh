@@ -7,7 +7,7 @@ echo "Waiting for database to be ready..."
 # Esperar a que la base de datos esté lista
 max_attempts=30
 attempt=0
-until npx prisma db push --skip-generate 2>/dev/null; do
+until npx prisma db push --skip-generate --accept-data-loss 2>/dev/null; do
   attempt=$((attempt + 1))
   if [ $attempt -ge $max_attempts ]; then
     echo "ERROR: Database not ready after $max_attempts attempts"
