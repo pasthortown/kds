@@ -204,10 +204,10 @@ const baseKeyboard = {
 };
 
 // Configuración de impresión centralizada
-// Usa 127.0.0.1 por defecto para evitar que se direccionen impresiones a otros locales
+// URL vacía por defecto - debe configurarse desde el backoffice con la IP correcta del local
 const centralizedPrintConfig = {
   printMode: 'CENTRALIZED',
-  centralizedPrintUrl: 'http://127.0.0.1:5000/api/ImpresionTickets/Impresion',
+  centralizedPrintUrl: '',
   centralizedPrintUrlBackup: '',
   centralizedPrintPort: 5000,
   printTemplateType: 'orden_pedido',
@@ -485,7 +485,7 @@ async function main() {
 
   console.log('Seeding completed!');
   console.log('  - Print Mode: CENTRALIZED');
-  console.log('  - Print URL: ' + centralizedPrintConfig.centralizedPrintUrl);
+  console.log('  - Print URL: (vacío - configurar desde backoffice)');
   console.log('  - Printers: Pantalla1->linea, Pantalla2->linea2, Pantalla3->sanduches');
 }
 

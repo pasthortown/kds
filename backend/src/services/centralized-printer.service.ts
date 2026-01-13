@@ -42,8 +42,8 @@ interface RegistroDetalle {
  * Envía las órdenes a un servicio HTTP externo para impresión
  */
 export class CentralizedPrinterService {
-  private retries: number = 3;
-  private timeout: number = 10000; // 10 segundos
+  private retries: number = 2; // Reducido para failover más rápido
+  private timeout: number = 8000; // 8 segundos
 
   /**
    * Verifica si el modo centralizado está habilitado
@@ -95,10 +95,10 @@ export class CentralizedPrinterService {
 
   /**
    * Imprime una orden usando el servicio centralizado
-   * 1. Primero hace health check a ambas URLs (sin plantilla para no imprimir)
-   * 2. Envía la impresión solo al servicio que responda
-   * 3. Si ambos responden, usa el principal
-   * 4. Si ninguno responde, intenta con el principal
+   * Flujo con failover rápido:
+   * 1. Intenta con URL principal (1 intento rápido)
+   * 2. Si falla, intenta con URL backup inmediatamente
+   * 3. Si backup también falla, reintenta con la que respondió mejor
    */
   async printOrder(order: Order, screenId: string): Promise<boolean> {
     const centralConfig = await this.getCentralizedConfig();
@@ -126,159 +126,90 @@ export class CentralizedPrinterService {
 
     printerLogger.debug('Centralized print payload:', { payload });
 
-    // Determinar qué URL usar basándose en health check
-    const targetUrl = await this.determineTargetUrl(
-      centralConfig.url,
-      centralConfig.urlBackup,
-      order.identifier
-    );
+    const primaryUrl = centralConfig.url;
+    const backupUrl = centralConfig.urlBackup;
 
-    // Intentar imprimir con la URL seleccionada
-    const success = await this.tryPrintWithUrl(
-      targetUrl.url,
-      payload,
-      order,
-      printerName,
-      targetUrl.type
-    );
+    // Si no hay backup configurado, usar solo la principal con reintentos
+    if (!backupUrl) {
+      printerLogger.info(`[${order.identifier}] No backup URL configured, using PRIMARY only`);
+      return this.tryPrintWithUrl(primaryUrl, payload, order, printerName, 'PRIMARY');
+    }
 
-    if (success) {
+    // Estrategia de failover rápido: intentar PRIMARY primero (1 intento)
+    printerLogger.info(`[${order.identifier}] Trying PRIMARY URL first...`);
+    const primarySuccess = await this.trySinglePrint(primaryUrl, payload, order, printerName, 'PRIMARY');
+
+    if (primarySuccess) {
       return true;
     }
 
-    // Si falló y hay otra URL disponible, intentar con la alternativa
-    if (targetUrl.alternativeUrl) {
-      printerLogger.info(
-        `${targetUrl.type} URL failed for order ${order.identifier}, trying alternative...`
-      );
+    // PRIMARY falló - intentar BACKUP inmediatamente (1 intento)
+    printerLogger.info(`[${order.identifier}] PRIMARY failed, trying BACKUP URL immediately...`);
+    const backupSuccess = await this.trySinglePrint(backupUrl, payload, order, printerName, 'BACKUP');
 
-      const alternativeSuccess = await this.tryPrintWithUrl(
-        targetUrl.alternativeUrl,
-        payload,
-        order,
-        printerName,
-        targetUrl.type === 'PRIMARY' ? 'BACKUP' : 'PRIMARY'
-      );
+    if (backupSuccess) {
+      return true;
+    }
 
-      if (alternativeSuccess) {
-        return true;
-      }
+    // Ambos fallaron en el primer intento - hacer reintentos con ambos
+    printerLogger.info(`[${order.identifier}] Both URLs failed, retrying with delays...`);
+
+    // Reintentar PRIMARY
+    await this.delay(1000);
+    const primaryRetry = await this.trySinglePrint(primaryUrl, payload, order, printerName, 'PRIMARY');
+    if (primaryRetry) {
+      return true;
+    }
+
+    // Reintentar BACKUP
+    await this.delay(1000);
+    const backupRetry = await this.trySinglePrint(backupUrl, payload, order, printerName, 'BACKUP');
+    if (backupRetry) {
+      return true;
     }
 
     printerLogger.error(
-      `Failed to print order ${order.identifier} via centralized service (all attempts failed)`
+      `Failed to print order ${order.identifier} via centralized service (all attempts failed on both URLs)`
     );
     return false;
   }
 
   /**
-   * Determina qué URL usar para imprimir basándose en health check
-   * Hace health check en paralelo y usa el primero en responder
+   * Intenta imprimir una sola vez (sin reintentos)
+   * Para failover rápido entre URLs
    */
-  private async determineTargetUrl(
-    primaryUrl: string,
-    backupUrl: string,
-    orderIdentifier: string
-  ): Promise<{ url: string; type: 'PRIMARY' | 'BACKUP'; alternativeUrl?: string }> {
-    const HEALTH_TIMEOUT = 2000; // 2 segundos para health check
-
-    // Si no hay backup, usar principal directamente
-    if (!backupUrl) {
-      printerLogger.info(`[${orderIdentifier}] No backup URL, using PRIMARY`);
-      return { url: primaryUrl, type: 'PRIMARY' };
-    }
-
-    printerLogger.info(`[${orderIdentifier}] Checking service availability...`);
-
-    // Crear promesas de health check para ambas URLs
-    // Enviamos payload vacío (sin plantilla) para verificar disponibilidad sin imprimir
-    const healthPayload = {};
-
-    const primaryHealth = this.healthCheck(primaryUrl, healthPayload, HEALTH_TIMEOUT)
-      .then(() => ({ url: primaryUrl, type: 'PRIMARY' as const, available: true, time: Date.now() }))
-      .catch(() => ({ url: primaryUrl, type: 'PRIMARY' as const, available: false, time: Date.now() }));
-
-    const backupHealth = this.healthCheck(backupUrl, healthPayload, HEALTH_TIMEOUT)
-      .then(() => ({ url: backupUrl, type: 'BACKUP' as const, available: true, time: Date.now() }))
-      .catch(() => ({ url: backupUrl, type: 'BACKUP' as const, available: false, time: Date.now() }));
-
-    // Usar Promise.race para obtener el primero en responder
-    // Pero también necesitamos saber si ambos están disponibles
-    const raceResult = await Promise.race([
-      primaryHealth.then(r => ({ ...r, first: true })),
-      backupHealth.then(r => ({ ...r, first: true }))
-    ]);
-
-    // Esperar un poco más para ver si el otro también responde
-    const results = await Promise.all([primaryHealth, backupHealth]);
-    const primaryResult = results.find(r => r.type === 'PRIMARY')!;
-    const backupResult = results.find(r => r.type === 'BACKUP')!;
-
-    printerLogger.info(
-      `[${orderIdentifier}] Health check results - PRIMARY: ${primaryResult.available}, BACKUP: ${backupResult.available}`
-    );
-
-    // Lógica de selección:
-    // 1. Si ambos disponibles, usar PRIMARY
-    // 2. Si solo uno disponible, usar ese
-    // 3. Si ninguno disponible, usar PRIMARY (intentar de todas formas)
-    // 4. Si respuestas en destiempo, usar el primero en responder
-
-    if (primaryResult.available && backupResult.available) {
-      // Ambos disponibles - usar PRIMARY
-      printerLogger.info(`[${orderIdentifier}] Both available, using PRIMARY`);
-      return { url: primaryUrl, type: 'PRIMARY', alternativeUrl: backupUrl };
-    }
-
-    if (primaryResult.available && !backupResult.available) {
-      // Solo PRIMARY disponible
-      printerLogger.info(`[${orderIdentifier}] Only PRIMARY available`);
-      return { url: primaryUrl, type: 'PRIMARY' };
-    }
-
-    if (!primaryResult.available && backupResult.available) {
-      // Solo BACKUP disponible
-      printerLogger.info(`[${orderIdentifier}] Only BACKUP available`);
-      return { url: backupUrl, type: 'BACKUP' };
-    }
-
-    // Ninguno disponible - usar el primero en responder (aunque con error) o PRIMARY por defecto
-    if (raceResult.type === 'BACKUP') {
-      printerLogger.info(`[${orderIdentifier}] None available, BACKUP responded first, trying BACKUP`);
-      return { url: backupUrl, type: 'BACKUP', alternativeUrl: primaryUrl };
-    }
-
-    printerLogger.info(`[${orderIdentifier}] None available, defaulting to PRIMARY`);
-    return { url: primaryUrl, type: 'PRIMARY', alternativeUrl: backupUrl };
-  }
-
-  /**
-   * Health check - envía payload vacío para verificar disponibilidad sin imprimir
-   * Cualquier respuesta (incluso error de validación) indica que el servicio está activo
-   */
-  private async healthCheck(
+  private async trySinglePrint(
     url: string,
-    payload: object,
-    timeout: number
-  ): Promise<void> {
-    const response = await axios.post(url, payload, {
-      timeout,
-      headers: { 'Content-Type': 'application/json' },
-      validateStatus: () => true, // Aceptar cualquier código de respuesta
-    });
+    payload: CentralizedPrintPayload,
+    order: Order,
+    printerName: string,
+    urlType: 'PRIMARY' | 'BACKUP'
+  ): Promise<boolean> {
+    try {
+      await this.sendToCentralizedService(url, payload);
 
-    // Si el servidor responde (incluso con error 4xx), está disponible
-    // Solo 5xx o timeout significa no disponible
-    if (response.status >= 500) {
-      throw new Error(`Server error: ${response.status}`);
+      // Registrar impresión exitosa
+      await prisma.order.update({
+        where: { id: order.id },
+        data: { printedAt: new Date() },
+      });
+
+      printerLogger.info(
+        `Order ${order.identifier} sent to centralized print service [${urlType}] (printer: ${printerName})`
+      );
+      return true;
+    } catch (error) {
+      printerLogger.warn(
+        `Centralized print [${urlType}] failed for order ${order.identifier}`,
+        { error: error instanceof Error ? error.message : error }
+      );
+      return false;
     }
-
-    // Servicio disponible (aunque responda con error de validación)
-    printerLogger.debug(`Health check OK for ${url}: ${response.status}`);
   }
 
   /**
    * Intenta imprimir con una URL específica con reintentos
+   * Se usa cuando solo hay URL principal (sin backup)
    */
   private async tryPrintWithUrl(
     url: string,
