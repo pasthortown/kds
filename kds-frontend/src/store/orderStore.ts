@@ -6,6 +6,8 @@ interface OrderState {
   currentPage: number;
   totalPages: number;
   lastFinishedOrderId: string | null;
+  // Contador de pulsaciones para cancelar órdenes en "TOMANDO PEDIDO"
+  cancelCounters: Record<string, number>;
 
   // Actions
   setOrders: (orders: Order[]) => void;
@@ -16,13 +18,18 @@ interface OrderState {
   calculatePages: (ordersPerPage: number) => void;
   setTotalPages: (pages: number) => void;
   setLastFinished: (orderId: string | null) => void;
+  // Acciones para contador de cancelación
+  incrementCancelCounter: (orderId: string) => number;
+  resetCancelCounter: (orderId: string) => void;
+  getCancelCounter: (orderId: string) => number;
 }
 
-export const useOrderStore = create<OrderState>((set) => ({
+export const useOrderStore = create<OrderState>((set, get) => ({
   orders: [],
   currentPage: 1,
   totalPages: 1,
   lastFinishedOrderId: null,
+  cancelCounters: {},
 
   setOrders: (orders) =>
     set({
@@ -92,6 +99,26 @@ export const useOrderStore = create<OrderState>((set) => ({
 
   setLastFinished: (orderId) =>
     set({ lastFinishedOrderId: orderId }),
+
+  incrementCancelCounter: (orderId) => {
+    const currentCount = get().cancelCounters[orderId] || 0;
+    const newCount = currentCount + 1;
+    set((state) => ({
+      cancelCounters: {
+        ...state.cancelCounters,
+        [orderId]: newCount,
+      },
+    }));
+    return newCount;
+  },
+
+  resetCancelCounter: (orderId) =>
+    set((state) => {
+      const { [orderId]: _, ...rest } = state.cancelCounters;
+      return { cancelCounters: rest };
+    }),
+
+  getCancelCounter: (orderId) => get().cancelCounters[orderId] || 0,
 }));
 
 // Selectores
@@ -110,3 +137,11 @@ export const usePagination = () =>
     currentPage: state.currentPage,
     totalPages: state.totalPages,
   }));
+
+// Selector para obtener contador de cancelación de una orden
+export const useCancelCounter = (orderId: string) =>
+  useOrderStore((state) => state.cancelCounters[orderId] || 0);
+
+// Selector para obtener todos los contadores de cancelación
+export const useCancelCounters = () =>
+  useOrderStore((state) => state.cancelCounters);

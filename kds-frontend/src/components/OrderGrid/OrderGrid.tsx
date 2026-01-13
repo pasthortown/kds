@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useCallback, useRef, useState } from 'react';
 import { OrderCard } from '../OrderCard';
-import { useOrderStore } from '../../store/orderStore';
+import { useOrderStore, useCancelCounters } from '../../store/orderStore';
 import { useAppearance, usePreference } from '../../store/configStore';
 import { socketService } from '../../services/socket';
 import type { Order, OrderItem } from '../../types';
@@ -180,6 +180,9 @@ export function OrderGrid() {
   const allOrders = useOrderStore((state) => state.orders);
   const currentPage = useOrderStore((state) => state.currentPage);
   const { setLastFinished } = useOrderStore();
+
+  // Obtener contadores de cancelación para todas las órdenes
+  const cancelCounters = useCancelCounters();
 
   // Handler para finalizar orden via touch/click
   const handleFinishOrder = useCallback((orderId: string) => {
@@ -492,6 +495,7 @@ export function OrderGrid() {
           showName={preference?.showName ?? true}
           onFinish={handleFinishOrder}
           touchEnabled={touchEnabled}
+          cancelCount={cancelCounters[column.order.id] || 0}
         />
       ))}
 

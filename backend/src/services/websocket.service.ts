@@ -79,6 +79,11 @@ export class WebSocketService {
         await this.handleOrderUndo(socket, data);
       });
 
+      // Cancelar orden (desde pantalla KDS - 3 pulsaciones en "TOMANDO PEDIDO")
+      socket.on('order:cancel', async (data: { orderId: string; screenId: string }) => {
+        await this.handleOrderCancel(socket, data);
+      });
+
       // Desconexión
       socket.on('disconnect', () => {
         this.handleDisconnect(socket);
@@ -281,6 +286,31 @@ export class WebSocketService {
       }
     } catch (error) {
       wsLogger.error('Error restoring order', { error, data });
+    }
+  }
+
+  /**
+   * Maneja cancelación de orden (desde pantalla KDS)
+   */
+  private async handleOrderCancel(
+    socket: Socket,
+    data: { orderId: string; screenId: string }
+  ): Promise<void> {
+    try {
+      wsLogger.info(`Cancelling order ${data.orderId} from screen ${data.screenId}`);
+
+      await orderService.cancelOrder(data.orderId, 'Cancelada desde pantalla KDS');
+
+      socket.emit('order:cancelled', { orderId: data.orderId });
+
+      // Actualizar órdenes de la pantalla
+      const orders = await balancerService.getOrdersForScreen(data.screenId);
+      socket.emit('orders:update', { orders });
+
+      wsLogger.info(`Order cancelled successfully: ${data.orderId}`);
+    } catch (error) {
+      wsLogger.error('Error cancelling order', { error, data });
+      socket.emit('error', { message: 'Failed to cancel order' });
     }
   }
 

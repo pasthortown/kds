@@ -22,6 +22,8 @@ interface OrderCardProps {
   // Touch/Click handler
   onFinish?: (orderId: string) => void;
   touchEnabled?: boolean;
+  // Contador de cancelación (para órdenes en "TOMANDO PEDIDO")
+  cancelCount?: number;
 }
 
 // Colores por defecto de canales
@@ -94,6 +96,7 @@ export function OrderCard({
   showName = true,
   onFinish,
   touchEnabled = false,
+  cancelCount = 0,
 }: OrderCardProps) {
   // Obtener cardColors y channelColors de appearance o legacy props
   const cardColors = appearance.cardColors || legacyCardColors || [];
@@ -220,6 +223,9 @@ export function OrderCard({
   // Detectar si la orden está en estado "TOMANDO PEDIDO" para animación
   const isOrderTaking = order.statusPos?.toUpperCase() === 'TOMANDO PEDIDO';
 
+  // Detectar si la orden está por cancelarse (contador >= 2)
+  const isPendingCancel = isOrderTaking && cancelCount >= 2;
+
   // Determinar clip-path para efecto de papel rasgado
   const getClipPath = () => {
     if (!isSplit) return undefined;
@@ -236,9 +242,23 @@ export function OrderCard({
     }
   };
 
+  // Determinar la clase CSS según el estado
+  const getCardClassName = () => {
+    if (isPendingCancel) return 'order-cancelling';
+    if (isOrderTaking) return 'order-taking';
+    return '';
+  };
+
+  // Determinar el color del borde según el estado
+  const getBorderColor = () => {
+    if (isPendingCancel) return '#dc3545'; // Rojo para cancelación pendiente
+    if (isOrderTaking) return '#ffc107'; // Dorado para "TOMANDO PEDIDO"
+    return timeColor.color; // Color SLA normal
+  };
+
   return (
     <div
-      className={isOrderTaking ? 'order-taking' : ''}
+      className={getCardClassName()}
       style={{
         display: 'flex',
         flexDirection: 'column',
@@ -262,14 +282,18 @@ export function OrderCard({
           flexDirection: 'column',
           minHeight: 0,
           background: cardColor,
-          border: `3px solid ${isOrderTaking ? '#ffc107' : timeColor.color}`,
-          borderTop: !isFirstPart && isSplit ? 'none' : `3px solid ${isOrderTaking ? '#ffc107' : timeColor.color}`,
-          borderBottom: !isLastPart && isSplit ? 'none' : `3px solid ${isOrderTaking ? '#ffc107' : timeColor.color}`,
+          border: `3px solid ${getBorderColor()}`,
+          borderTop: !isFirstPart && isSplit ? 'none' : `3px solid ${getBorderColor()}`,
+          borderBottom: !isLastPart && isSplit ? 'none' : `3px solid ${getBorderColor()}`,
           borderRadius: isSplit
             ? isFirstPart ? '8px 8px 0 0' : isLastPart ? '0 0 8px 8px' : '0'
             : '8px',
           overflow: 'hidden',
-          boxShadow: isOrderTaking ? '0 0 20px rgba(255, 193, 7, 0.6)' : '0 2px 8px rgba(0,0,0,0.15)',
+          boxShadow: isPendingCancel
+            ? '0 0 20px rgba(220, 53, 69, 0.8)'
+            : isOrderTaking
+              ? '0 0 20px rgba(255, 193, 7, 0.6)'
+              : '0 2px 8px rgba(0,0,0,0.15)',
           clipPath: getClipPath(),
         }}
       >

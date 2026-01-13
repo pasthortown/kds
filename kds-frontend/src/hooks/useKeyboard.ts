@@ -80,7 +80,7 @@ export function useKeyboardController() {
   const ordersPerPage = config?.appearance?.columnsPerScreen || 4;
   const currentOrders = useCurrentPageOrders(ordersPerPage);
 
-  const { setPage, removeOrder } = useOrderStore();
+  const { setPage, removeOrder, incrementCancelCounter, resetCancelCounter } = useOrderStore();
   const { isStandby, toggleStandby, setComboProgress, showCombo } =
     useScreenStore();
 
@@ -107,12 +107,42 @@ export function useKeyboardController() {
       console.log(`[Keyboard] Orden en index ${index}:`, order ? JSON.stringify({ id: order.id, identifier: order.identifier, statusPos: order.statusPos }) : 'undefined');
 
       if (order) {
-        // Ignorar órdenes en estado "TOMANDO PEDIDO" - no pueden ser impresas/finalizadas
         const statusPosUpper = order.statusPos?.toUpperCase();
         console.log(`[Keyboard] statusPos original="${order.statusPos}", upper="${statusPosUpper}"`);
 
+        // Manejo especial para órdenes en estado "TOMANDO PEDIDO"
+        // Contador: 1ra vez = inicia, 2da vez = rojo, 3ra vez = cancela
         if (statusPosUpper === 'TOMANDO PEDIDO') {
-          console.log(`[Keyboard] BLOQUEADO: Orden #${order.identifier} en estado TOMANDO PEDIDO`);
+          const newCount = incrementCancelCounter(order.id);
+          console.log(`[Keyboard] Orden #${order.identifier} en TOMANDO PEDIDO - contador: ${newCount}`);
+
+          if (newCount < 3) {
+            // Aún no se cancela, solo incrementa contador
+            console.log(`[Keyboard] Contador incrementado a ${newCount} (se cancela en 3)`);
+            if (isTestMode) {
+              addLog(`[BOTONERA] Orden #${order.identifier} - pulsación ${newCount}/3 para cancelar`);
+            }
+            return;
+          }
+
+          // 3ra pulsación: cancelar la orden
+          console.log(`[Keyboard] CANCELANDO orden #${order.identifier} (3 pulsaciones alcanzadas)`);
+          resetCancelCounter(order.id);
+
+          if (isTestMode) {
+            // Guardar órdenes originales la primera vez
+            if (!getOriginalOrders()) {
+              saveOriginalOrders([...orders]);
+              addLog('Órdenes originales guardadas (botonera)');
+            }
+            removeOrder(order.id);
+            addLog(`[BOTONERA] Orden #${order.identifier} CANCELADA (SIMULADO)`);
+          } else {
+            // MODO PRODUCCIÓN: Enviar cancelación al backend
+            console.log(`[Keyboard] PRODUCCION: Enviando cancel para orden ${order.id}`);
+            socketService.cancelOrder(order.id);
+            console.log(`[Keyboard] socketService.cancelOrder() ejecutado`);
+          }
           return;
         }
 
@@ -144,7 +174,7 @@ export function useKeyboardController() {
         }
       }
     },
-    [currentOrders, isStandby, isTestMode, orders, removeOrder, addLog, saveOriginalOrders, getOriginalOrders]
+    [currentOrders, isStandby, isTestMode, orders, removeOrder, addLog, saveOriginalOrders, getOriginalOrders, incrementCancelCounter, resetCancelCounter]
   );
 
   const handleNavigation = useCallback(
