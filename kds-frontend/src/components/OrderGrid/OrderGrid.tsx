@@ -193,15 +193,41 @@ export function OrderGrid() {
   const charsPerLineProduct = 15; // Conservador para productos
   const charsPerLineModifier = 20; // Modificadores tienen fuente más pequeña
 
+  // Obtener configuración de visibilidad de campos
+  const showSubitems = appearance?.showSubitems !== false;
+  const showModifiers = appearance?.showModifiers !== false;
+  const showNotes = appearance?.showNotes !== false;
+  const showComments = appearance?.showComments !== false;
+
   // Calcular la altura REAL en píxeles de un item (considerando modificadores, notas y comentarios)
+  // SOLO si están visibles según la configuración de apariencia
   const calculateItemHeight = (item: OrderItem): number => {
     // Altura del producto - considerar text wrapping para nombres largos
     const productNameLength = item.name?.length || 0;
     const productLines = Math.max(1, Math.ceil(productNameLength / charsPerLineProduct));
     let height = productLines * itemProductHeight;
 
+    // Altura de notas especiales - justo después del producto
+    // Solo incluir si showNotes está habilitado
+    if (showNotes && item.notes) {
+      const notesLength = item.notes.length;
+      const commaCount = (item.notes.match(/,/g) || []).length;
+      const estimatedLines = Math.max(1, Math.ceil(notesLength / charsPerLineModifier), commaCount + 1);
+      height += estimatedLines * itemModifierLineHeight;
+    }
+
+    // Altura de subitems - cada subitem ocupa una línea
+    // Solo incluir si showSubitems está habilitado
+    if (showSubitems && 'subitems' in item) {
+      const subitems = (item as unknown as { subitems: Array<{ name: string; quantity: number }> }).subitems;
+      if (Array.isArray(subitems)) {
+        height += subitems.length * itemModifierLineHeight;
+      }
+    }
+
     // Altura de modificadores (cada línea separada por coma, también con posible wrap)
-    if (item.modifier) {
+    // Solo incluir si showModifiers está habilitado
+    if (showModifiers && item.modifier) {
       const modifierParts = item.modifier.split(',');
       let modifierTotalLines = 0;
       for (const mod of modifierParts) {
@@ -212,16 +238,9 @@ export function OrderGrid() {
       height += modifierTotalLines * itemModifierLineHeight;
     }
 
-    // Altura de notas - estimar líneas basado en longitud y comas
-    if (item.notes) {
-      const notesLength = item.notes.length;
-      const commaCount = (item.notes.match(/,/g) || []).length;
-      const estimatedLines = Math.max(1, Math.ceil(notesLength / charsPerLineModifier), commaCount + 1);
-      height += estimatedLines * itemModifierLineHeight;
-    }
-
     // Altura de comentarios - similar estimación
-    if (item.comments) {
+    // Solo incluir si showComments está habilitado
+    if (showComments && item.comments) {
       const commentsLength = item.comments.length;
       const estimatedLines = Math.max(1, Math.ceil(commentsLength / charsPerLineModifier));
       height += estimatedLines * itemModifierLineHeight;
@@ -325,6 +344,10 @@ export function OrderGrid() {
     modifierFontSize,
     itemProductHeight,
     itemModifierLineHeight,
+    showSubitems,
+    showModifiers,
+    showNotes,
+    showComments,
   ]);
 
   // Paginar columnas de manera simple: SIEMPRE llenar todas las columnas por página
